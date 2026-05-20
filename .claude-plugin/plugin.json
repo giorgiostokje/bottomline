@@ -1,6 +1,21 @@
 {
   "name": "bottomline",
-  "description": "Powerline-style statusline for Claude Code with git, project, and usage bars.",
-  "version": "1.0.0",
-  "license": "MIT"
+  "version": "0.1.0",
+  "description": "Powerline-style statusline for Claude Code with gradient backgrounds, themes, and language bars for PHP, Go, JS, Python, Rust, Ruby, Java, Swift, Elixir, and Git.",
+  "author": {
+    "name": "Giorgio Stokje",
+    "url": "https://github.com/giorgiostokje"
+  },
+  "homepage": "https://github.com/giorgiostokje/bottomline",
+  "repository": "https://github.com/giorgiostokje/bottomline",
+  "license": "MIT",
+  "keywords": [
+    "statusline",
+    "powerline",
+    "statusbar",
+    "themes",
+    "language-bars",
+    "productivity"
+  ],
+  "skills": ["./skills/"]
 }

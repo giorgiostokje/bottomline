@@ -31,17 +31,22 @@ Powerline-style statusline for Claude Code. Renders a gradient bar of ANSI segme
 
 ## Installation
 
-### Using a skill (recommended)
+### Via Claude Code plugin system (recommended)
 
-Open Claude Code and run:
+Add this repo as a marketplace source, then install the plugin:
+
+```
+/plugin marketplace add giorgiostokje/bottomline
+/plugin install bottomline@giorgiostokje/bottomline
+```
+
+Once installed, run the setup skill to wire the statusline:
 
 ```
 /bottomline:setup
 ```
 
-The skill checks prerequisites, clones the repository if needed, wires `statusLine.command`, and creates your user config file.
-
-### Manual
+### Manual clone
 
 **1. Clone the repository:**
 
