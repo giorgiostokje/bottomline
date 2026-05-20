@@ -13,7 +13,11 @@
         "name": "Giorgio Stokje"
       },
       "category": "productivity",
-      "source": ".",
+      "source": {
+        "source": "github",
+        "repo": "giorgiostokje/bottomline",
+        "ref": "main"
+      },
       "homepage": "https://github.com/giorgiostokje/bottomline"
     }
   ]
