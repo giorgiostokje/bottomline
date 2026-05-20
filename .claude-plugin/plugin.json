@@ -1,6 +1,6 @@
 {
   "name": "bottomline",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Powerline-style statusline for Claude Code with gradient backgrounds, themes, and language bars for PHP, Go, JS, Python, Rust, Ruby, Java, Swift, Elixir, and Git.",
   "author": {
     "name": "Giorgio Stokje",
