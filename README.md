@@ -1,8 +1,8 @@
 # Bottomline
 
-Powerline-style statusline for Claude Code. Renders a gradient bar of ANSI segments below every response, plus optional extra bars with language ecosystem info, git details, or anything you write yourself.
+[![Tests](https://github.com/giorgiostokje/bottomline/actions/workflows/tests.yml/badge.svg)](https://github.com/giorgiostokje/bottomline/actions/workflows/tests.yml)
 
-> **Screenshot** — add one here once the plugin is published.
+Powerline-style statusline for Claude Code. Renders a gradient bar of ANSI segments below every response, plus optional extra bars with language ecosystem info, git details, or anything you write yourself.
 
 ---
 
@@ -46,7 +46,7 @@ The skill checks prerequisites, clones the repository if needed, wires `statusLi
 **1. Clone the repository:**
 
 ```bash
-git clone https://github.com/giorgio-stokje/bottomline ~/.claude/bottomline
+git clone https://github.com/giorgiostokje/bottomline ~/.claude/bottomline
 ```
 
 **2. Add the `statusLine` block to `~/.claude/settings.json`:**
