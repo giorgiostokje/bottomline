@@ -12,16 +12,11 @@ Use this skill when creating a new colour theme for Bottomline.
 Before saving a theme, detect where Bottomline is installed:
 
 ```bash
-if   [[ -f "$HOME/.claude/plugins/marketplaces/bottomline/bottomline.sh" ]]; then
-  echo "$HOME/.claude/plugins/marketplaces/bottomline"
-elif [[ -f "$HOME/.claude/bottomline/bottomline.sh" ]]; then
-  echo "$HOME/.claude/bottomline"
-else
-  echo "NOT_FOUND"
-fi
+[[ -n "${CLAUDE_PLUGIN_ROOT:-}" && -f "$CLAUDE_PLUGIN_ROOT/bottomline.sh" ]] \
+  && echo "$CLAUDE_PLUGIN_ROOT" || echo "NOT_FOUND"
 ```
 
-Store the output as `BL_DIR`. If the result is `NOT_FOUND`, stop and ask the user where they installed Bottomline.
+Store the output as `BL_DIR`. If the result is `NOT_FOUND`, ask the user where they installed Bottomline and use their answer as `BL_DIR`.
 
 ## Theme File Location
 

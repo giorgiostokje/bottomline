@@ -13,7 +13,7 @@ Powerline-style statusline for Claude Code. Renders a gradient bar of ANSI segme
 - **Themes** — activate a named colour palette with one setting
 - **Bars** — one or more extra lines below the main statusline, rendered by shell scripts or defined inline in JSON
 - **Auto-bars** — bars that appear automatically when a project's signal file (e.g. `composer.json`) is detected
-- **10 built-in language bars** — PHP, JavaScript, Go, Python, Rust, Ruby, Java, Swift, Elixir, and Git
+- **11 built-in bars** — 10 language bars (PHP, JavaScript, Go, Python, Rust, Ruby, Java, Swift, Elixir, Git) plus opt-in `random-facts`
 - **Nerd Font, emoji, or text-only icons**
 - **Skills** — `/bottomline:setup`, `/bottomline:configure`, `/bottomline:debug`, `/bottomline:create-bar`, `/bottomline:create-theme`
 
@@ -474,7 +474,7 @@ When `inherit_colors` is `true`, all auto-detected bars behave as if `colors: "i
 
 #### Registered signal files
 
-The `auto_bars.scripts` array maps bar names to the signal files that trigger them. The full list is defined in the plugin's `settings.json`. The auto-detected bars are the ten built-in language bars listed below.
+The `auto_bars.scripts` array maps bar names to the signal files that trigger them. The full list is defined in the plugin's `settings.json`. The ten language bars are auto-detectable; `random-facts` has no signal file and must be added explicitly.
 
 ---
 
@@ -728,9 +728,10 @@ Contributions welcome — bug reports, new bars, new themes, and improvements to
 **Bug reports** — include the output of:
 
 ```bash
-# Auto-detect plugin dir (marketplace or manual clone)
-BL_DIR="$HOME/.claude/plugins/marketplaces/bottomline"
-[[ ! -f "$BL_DIR/bottomline.sh" ]] && BL_DIR="$HOME/.claude/bottomline"
+# Set BL_DIR to wherever you installed Bottomline, e.g.:
+#   BL_DIR="$HOME/.claude/plugins/marketplaces/bottomline"   # marketplace
+#   BL_DIR="$HOME/.claude/bottomline"                        # manual clone
+BL_DIR="/path/to/bottomline"
 
 echo '{}' | bash "$BL_DIR/bottomline.sh"
 jq '.' "$BL_DIR/settings.json"

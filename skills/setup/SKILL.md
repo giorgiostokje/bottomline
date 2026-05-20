@@ -17,16 +17,11 @@ Use this skill when installing Bottomline, verifying it is working, or uninstall
 Before doing anything else, detect where Bottomline is installed:
 
 ```bash
-if   [[ -f "$HOME/.claude/plugins/marketplaces/bottomline/bottomline.sh" ]]; then
-  echo "$HOME/.claude/plugins/marketplaces/bottomline"
-elif [[ -f "$HOME/.claude/bottomline/bottomline.sh" ]]; then
-  echo "$HOME/.claude/bottomline"
-else
-  echo "NOT_FOUND"
-fi
+[[ -n "${CLAUDE_PLUGIN_ROOT:-}" && -f "$CLAUDE_PLUGIN_ROOT/bottomline.sh" ]] \
+  && echo "$CLAUDE_PLUGIN_ROOT" || echo "NOT_FOUND"
 ```
 
-Store the output as `BL_DIR`. If the result is `NOT_FOUND`, stop and tell the user Bottomline is not installed at any known location, then ask where they cloned it. Every path in this skill that refers to the plugin installation uses `$BL_DIR`.
+Store the output as `BL_DIR`. If the result is `NOT_FOUND`, ask the user where they installed Bottomline and use their answer as `BL_DIR`. Every path in this skill that refers to the plugin installation uses `$BL_DIR`.
 
 ## Check current state
 

@@ -26,7 +26,7 @@ EM_UP='↑'      EM_DOWN='↓'  EM_CLOCK='⏱' EM_CAL='📅'  EM_COST='💰'
 EM_WARN='⚠'   EM_DANGER='🛑'
 
 # ── Pure utilities ────────────────────────────────────────────────────────────
-_BL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_BL_DIR="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 source "$_BL_DIR/lib/functions.sh"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
