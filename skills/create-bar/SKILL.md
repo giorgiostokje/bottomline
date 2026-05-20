@@ -89,8 +89,9 @@ These are exported by `bottomline.sh` before your script runs:
   ```
 
 **Plugin built-in bar** (available across all projects):
-- Save to: `$HOME/.claude/bottomline/bars/<name>.sh`
-- Optionally register for auto-detection in `$HOME/.claude/bottomline/settings.json`:
+- Save to: `<plugin-dir>/bars/<name>.sh` (e.g. `$HOME/.claude/plugins/marketplaces/bottomline/bars/<name>.sh` for marketplace installs, or `$HOME/.claude/bottomline/bars/<name>.sh` for manual clones).
+- To contribute it to the plugin itself, submit a PR to the GitHub repo.
+- Optionally register for auto-detection by adding an entry to `auto_bars.scripts` in `settings.json` (plugin file — not a user config).
   ```json
   "auto_bars": {
     "scripts": [
@@ -153,10 +154,20 @@ Use `flush "$_bar_gradient"` at the end instead of `flush "$BOTTOMLINE_GRADIENT"
 
 ## Testing Your Bar
 
-Set the required env vars and run the script directly:
+First detect where Bottomline is installed:
 
 ```bash
-BOTTOMLINE_LIB="$HOME/.claude/bottomline/lib" \
+if   [[ -f "$HOME/.claude/plugins/marketplaces/bottomline/bottomline.sh" ]]; then
+  BL_DIR="$HOME/.claude/plugins/marketplaces/bottomline"
+elif [[ -f "$HOME/.claude/bottomline/bottomline.sh" ]]; then
+  BL_DIR="$HOME/.claude/bottomline"
+fi
+```
+
+Then set the required env vars and run the script directly:
+
+```bash
+BOTTOMLINE_LIB="$BL_DIR/lib" \
 BOTTOMLINE_TEXT_HEX="#e2d5c3" \
 BOTTOMLINE_ACCENT_HEX="#da7756" \
 BOTTOMLINE_WARN_HEX="#f4a261" \
@@ -169,7 +180,7 @@ BOTTOMLINE_ICON_TYPE=nerd \
 BOTTOMLINE_IC_DANGER=$'\xef\x81\x9e' \
 BOTTOMLINE_PROJECT_DIR="$(pwd)" \
 BOTTOMLINE_GRADIENT='["#2e1f14","#160f0a"]' \
-bash "$HOME/.claude/bottomline/bars/mybar.sh"
+bash "$BL_DIR/bars/mybar.sh"
 ```
 
 Or test the full stack (replace the path with a directory matching your bar's
@@ -177,5 +188,5 @@ guard condition):
 
 ```bash
 echo '{"workspace":{"current_dir":"/path/to/project"}}' \
-  | bash "$HOME/.claude/bottomline/bottomline.sh"
+  | bash "$BL_DIR/bottomline.sh"
 ```

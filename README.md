@@ -154,7 +154,9 @@ Three files are **deep-merged** at runtime, highest priority first:
 |---|---|---|
 | 1 (highest) | `<project>/.claude/bottomline.json` | Project overrides |
 | 2 | `~/.claude/bottomline.json` | User overrides |
-| 3 (lowest) | `~/.claude/bottomline/settings.json` | Shipped defaults — do not edit |
+| 3 (lowest) | `<plugin-dir>/settings.json` | Shipped defaults — do not edit |
+
+`<plugin-dir>` is the root of the Bottomline installation. For marketplace installs it is `~/.claude/plugins/marketplaces/bottomline`; for a manual clone to the default location it is `~/.claude/bottomline`.
 
 **Merge rules:** Objects are merged recursively — a partial object in a higher-priority file fills in only the keys it defines. Arrays and scalars: the highest-priority non-null value wins entirely.
 
@@ -165,6 +167,8 @@ Create `~/.claude/bottomline.json` if it doesn't exist yet — start with an emp
 ```
 
 Create `<project>/.claude/bottomline.json` at the project root the same way. Add only the keys you want to override; everything else falls through from lower-priority files.
+
+Whether to commit `<project>/.claude/bottomline.json` is up to you: commit it to share colours and thresholds across a team, or add it to `.gitignore` to keep it personal.
 
 ---
 
@@ -198,7 +202,7 @@ Set colours under `appearance.colors`. All values are `#rrggbb` hex strings.
 
 #### Themes
 
-A theme is a named JSON file in `~/.claude/bottomline/themes/` that sets some or all colours. Themes override all per-file colour settings, regardless of which config level activates them.
+A theme is a named JSON file in `<plugin-dir>/themes/` that sets some or all colours. Themes override all per-file colour settings, regardless of which config level activates them.
 
 Activate a theme at any config level:
 
@@ -376,7 +380,7 @@ A bar is an additional line rendered below the main statusline. Bars are defined
 }
 ```
 
-`script` is a bare name (resolved from `<project>/.claude/bottomline/bars/<name>.sh` or `~/.claude/bottomline/bars/<name>.sh`) or a path with `/` (supports `~` expansion).
+`script` is a bare name (resolved from `<project>/.claude/bottomline/bars/<name>.sh` first, then `<plugin-dir>/bars/<name>.sh`) or a path with `/` (supports `~` expansion).
 
 #### Inline segment bars
 
@@ -583,7 +587,7 @@ All keys, their types, and which config files they belong in.
 
 | Key | Type | Description |
 |---|---|---|
-| `appearance.theme` | `string` | Name of a theme file in `~/.claude/bottomline/themes/`. Overrides all colour settings. |
+| `appearance.theme` | `string` | Name of a theme file in `<plugin-dir>/themes/`. Overrides all colour settings. |
 | `appearance.colors.text` | `#rrggbb` | Primary text colour |
 | `appearance.colors.accent` | `#rrggbb` | Icon and highlight colour |
 | `appearance.colors.warning` | `#rrggbb` | Warning threshold colour |
@@ -724,8 +728,12 @@ Contributions welcome — bug reports, new bars, new themes, and improvements to
 **Bug reports** — include the output of:
 
 ```bash
-echo '{}' | bash ~/.claude/bottomline/bottomline.sh
-jq '.' ~/.claude/bottomline/settings.json
+# Auto-detect plugin dir (marketplace or manual clone)
+BL_DIR="$HOME/.claude/plugins/marketplaces/bottomline"
+[[ ! -f "$BL_DIR/bottomline.sh" ]] && BL_DIR="$HOME/.claude/bottomline"
+
+echo '{}' | bash "$BL_DIR/bottomline.sh"
+jq '.' "$BL_DIR/settings.json"
 jq '.' ~/.claude/bottomline.json 2>/dev/null
 bash --version | head -1
 command -v jq && jq --version

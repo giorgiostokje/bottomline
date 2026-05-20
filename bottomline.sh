@@ -3,7 +3,7 @@
 # Config precedence (highest → lowest):
 #   <project>/.claude/bottomline.json  — project overrides
 #   ~/.claude/bottomline.json          — user overrides
-#   ~/.claude/bottomline/settings.json — shipped defaults
+#   <plugin-dir>/settings.json         — shipped defaults
 
 input=$(cat)
 
@@ -59,7 +59,7 @@ secs_until_reset() {
 # ── Config loading ────────────────────────────────────────────────────────────
 cdir=$(j '.workspace.current_dir'); [[ -z "$cdir" ]] && cdir=$(j '.cwd')
 
-SETTINGS_CFG="$HOME/.claude/bottomline/settings.json"
+SETTINGS_CFG="$_BL_DIR/settings.json"
 USER_CFG="$HOME/.claude/bottomline.json"
 PROJ_CFG=""
 [[ -n "$cdir" && -f "$cdir/.claude/bottomline.json" ]] && PROJ_CFG="$cdir/.claude/bottomline.json"
@@ -87,7 +87,7 @@ unset _s_json _u_json _p_json
 cfg_str()  { printf '%s' "$MERGED_CFG" | jq -r "$1 // empty" 2>/dev/null; }
 cfg_json() { printf '%s' "$MERGED_CFG" | jq -c "$1 // empty" 2>/dev/null; }
 
-# ── Read config (defaults live in ~/.claude/bottomline/settings.json) ─────────
+# ── Read config (defaults live in <plugin-dir>/settings.json) ────────────────
 CFG_TEXT_HEX=$(cfg_str  '.appearance.colors.text')
 CFG_ACCENT_HEX=$(cfg_str '.appearance.colors.accent')
 CFG_WARN_HEX=$(cfg_str  '.appearance.colors.warning')
@@ -109,7 +109,7 @@ CFG_SEP_RAW=$(cfg_str  '.segments.separator')
 # colors take priority over all per-file color settings.
 _theme_name=$(cfg_str '.appearance.theme')
 if [[ -n "$_theme_name" ]]; then
-  _theme_file="$HOME/.claude/bottomline/themes/${_theme_name}.json"
+  _theme_file="$_BL_DIR/themes/${_theme_name}.json"
   if [[ -f "$_theme_file" ]]; then
     _v=$(jq -r '.colors.text       // empty' "$_theme_file" 2>/dev/null); [[ -n "$_v" ]] && CFG_TEXT_HEX="$_v"
     _v=$(jq -r '.colors.accent     // empty' "$_theme_file" 2>/dev/null); [[ -n "$_v" ]] && CFG_ACCENT_HEX="$_v"
@@ -296,7 +296,7 @@ threshold_resolve() {
 # Resolve a bar script value to an executable path.
 # Names containing "/" are treated as literal paths (~ expanded).
 # Bare names (no slash) are searched as <name>.sh in:
-#   <project>/.claude/bottomline/bars/ then ~/.claude/bottomline/bars/
+#   <project>/.claude/bottomline/bars/ then <plugin-dir>/bars/
 resolve_bar_script() {
   local name="$1"
   [[ -z "$name" || "$name" == "null" ]] && return
@@ -309,7 +309,7 @@ resolve_bar_script() {
     candidate="$cdir/.claude/bottomline/bars/${name}.sh"
     [[ -f "$candidate" ]] && printf '%s' "$candidate" && return
   fi
-  candidate="$HOME/.claude/bottomline/bars/${name}.sh"
+  candidate="$_BL_DIR/bars/${name}.sh"
   [[ -f "$candidate" ]] && printf '%s' "$candidate"
 }
 
@@ -646,7 +646,7 @@ if (( bar_count > 0 )); then
   export BOTTOMLINE_IC_DANGER="$IC_DANGER"
   export BOTTOMLINE_PROJECT_DIR="$cdir"
   export BOTTOMLINE_GRADIENT="$CFG_BG"
-export BOTTOMLINE_LIB="$HOME/.claude/bottomline/lib"
+  export BOTTOMLINE_LIB="$_BL_DIR/lib"
 
   for ((bi=0; bi<bar_count; bi++)); do
     bar=$(printf '%s' "$CFG_BARS" | jq -c ".[$bi]" 2>/dev/null)

@@ -12,6 +12,22 @@ Use this skill when installing Bottomline, verifying it is working, or uninstall
 > `%USERPROFILE%` (e.g. `C:\Users\YourName`). In Git Bash and WSL, `$HOME`
 > expands automatically — no substitution needed.
 
+## Detect plugin path
+
+Before doing anything else, detect where Bottomline is installed:
+
+```bash
+if   [[ -f "$HOME/.claude/plugins/marketplaces/bottomline/bottomline.sh" ]]; then
+  echo "$HOME/.claude/plugins/marketplaces/bottomline"
+elif [[ -f "$HOME/.claude/bottomline/bottomline.sh" ]]; then
+  echo "$HOME/.claude/bottomline"
+else
+  echo "NOT_FOUND"
+fi
+```
+
+Store the output as `BL_DIR`. If the result is `NOT_FOUND`, stop and tell the user Bottomline is not installed at any known location, then ask where they cloned it. Every path in this skill that refers to the plugin installation uses `$BL_DIR`.
+
 ## Check current state
 
 ```bash
@@ -117,7 +133,7 @@ Update `statusLine.command` to point directly to `bottomline.sh`:
 
 ```bash
 tmp=$(mktemp) \
-  && jq --arg cmd "$HOME/.claude/bottomline/bottomline.sh" '
+  && jq --arg cmd "$BL_DIR/bottomline.sh" '
        if .statusLine == null
        then .statusLine = {"type": "command", "command": $cmd, "refreshInterval": 60}
        else .statusLine.command = $cmd | .statusLine.type = "command"
@@ -154,7 +170,7 @@ Skip this step if they have a Nerd Font installed.
 **3. Verify:**
 
 ```bash
-echo '{}' | bash "$HOME/.claude/bottomline/bottomline.sh"
+echo '{}' | bash "$BL_DIR/bottomline.sh"
 ```
 
 Expected: one line of ANSI-coloured powerline text. If you see nothing, run the

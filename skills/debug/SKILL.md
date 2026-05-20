@@ -8,12 +8,28 @@ description: Diagnoses and fixes Bottomline statusline problems — blank output
 Use this skill when the statusline produces no output, icons render as boxes,
 a bar is missing, colours are wrong, or the statusLine command isn't firing.
 
+## Detect plugin path
+
+Before running any commands below, detect where Bottomline is installed:
+
+```bash
+if   [[ -f "$HOME/.claude/plugins/marketplaces/bottomline/bottomline.sh" ]]; then
+  echo "$HOME/.claude/plugins/marketplaces/bottomline"
+elif [[ -f "$HOME/.claude/bottomline/bottomline.sh" ]]; then
+  echo "$HOME/.claude/bottomline"
+else
+  echo "NOT_FOUND"
+fi
+```
+
+Store the output as `BL_DIR`. If the result is `NOT_FOUND`, stop and tell the user Bottomline is not installed at any known location. Every path in this skill that refers to the plugin installation uses `$BL_DIR`.
+
 Work through this checklist in order — each step rules out a class of failure.
 
 ## 1. Manual script test
 
 ```bash
-echo '{}' | bash "$HOME/.claude/bottomline/bottomline.sh"
+echo '{}' | bash "$BL_DIR/bottomline.sh"
 ```
 
 - **Output appears:** the script works; the issue is in hook wiring (step 2).
@@ -28,7 +44,7 @@ Confirm `statusLine.command` points to `bottomline.sh`:
 jq '.statusLine.command // "not configured"' "$HOME/.claude/settings.json"
 ```
 
-Expected: a path ending in `bottomline/bottomline.sh`.
+Expected: a path ending in `bottomline.sh`.
 
 If it is `"not configured"` or points elsewhere, run the **setup** skill to
 wire it correctly.
@@ -79,7 +95,7 @@ Check what config is actually active after the three-layer merge:
 
 ```bash
 jq -n \
-  --argjson s "$(jq '.' "$HOME/.claude/bottomline/settings.json")" \
+  --argjson s "$(jq '.' "$BL_DIR/settings.json")" \
   --argjson u "$(jq '.' "$HOME/.claude/bottomline.json" 2>/dev/null || echo null)" \
   --argjson p "$(jq '.' "$(pwd)/.claude/bottomline.json" 2>/dev/null || echo null)" '
   def dmerge(a; b):
@@ -106,7 +122,7 @@ the symptom only appears once a user- or project-level config exists.
 Check:
 
 ```bash
-jq '.' "$HOME/.claude/bottomline/settings.json" && echo "valid" || echo "INVALID JSON"
+jq '.' "$BL_DIR/settings.json" && echo "valid" || echo "INVALID JSON"
 ```
 
 If invalid, open `settings.json` and look for trailing commas (the most common
@@ -126,7 +142,7 @@ for _f in "$HOME/.claude/bottomline.json" "$(pwd)/.claude/bottomline.json"; do
   # Theme file existence (needs bash, not jq)
   _theme=$(jq -r '.appearance.theme // empty' "$_f" 2>/dev/null)
   if [[ -n "$_theme" ]]; then
-    _tf="$HOME/.claude/bottomline/themes/${_theme}.json"
+    _tf="$BL_DIR/themes/${_theme}.json"
     [[ -f "$_tf" ]] || echo "  appearance.theme: \"$_theme\" — file not found at $_tf"
   fi
   unset _theme _tf
@@ -218,21 +234,21 @@ A bar that should auto-detect is missing. Check in order:
 ls /path/to/project/composer.json   # (replace with your signal file)
 
 # Is auto-bar detection enabled?
-jq '.auto_bars.enabled' "$HOME/.claude/bottomline/settings.json"
+jq '.auto_bars.enabled' "$BL_DIR/settings.json"
 jq '.auto_bars.enabled' "$HOME/.claude/bottomline.json" 2>/dev/null
 
 # Is the bar name in auto_bars.disabled?
-jq '.auto_bars.disabled' "$HOME/.claude/bottomline/settings.json"
+jq '.auto_bars.disabled' "$BL_DIR/settings.json"
 jq '.auto_bars.disabled' "$HOME/.claude/bottomline.json" 2>/dev/null
 
 # Is the bar registered in auto_bars.scripts?
-jq '.auto_bars.scripts' "$HOME/.claude/bottomline/settings.json"
+jq '.auto_bars.scripts' "$BL_DIR/settings.json"
 ```
 
 Test the bar directly with `BOTTOMLINE_PROJECT_DIR` set:
 
 ```bash
-BOTTOMLINE_LIB="$HOME/.claude/bottomline/lib" \
+BOTTOMLINE_LIB="$BL_DIR/lib" \
 BOTTOMLINE_TEXT_HEX="#e2d5c3" BOTTOMLINE_ACCENT_HEX="#da7756" \
 BOTTOMLINE_WARN_HEX="#f4a261" BOTTOMLINE_DANGER_HEX="#e05a4e" \
 BOTTOMLINE_BG_R=46 BOTTOMLINE_BG_G=31 BOTTOMLINE_BG_B=20 \
@@ -240,7 +256,7 @@ BOTTOMLINE_SEP=$'\xee\x82\xb4' BOTTOMLINE_BOLD=$'\e[1m' BOTTOMLINE_RESET=$'\e[0m
 BOTTOMLINE_ICON_TYPE=nerd BOTTOMLINE_IC_DANGER=$'\xef\x81\x9e' \
 BOTTOMLINE_PROJECT_DIR="/path/to/project" \
 BOTTOMLINE_GRADIENT='["#2e1f14","#160f0a"]' \
-bash "$HOME/.claude/bottomline/bars/php.sh"
+bash "$BL_DIR/bars/php.sh"
 ```
 
 If this produces output but the full stack doesn't: `project_aware` may be

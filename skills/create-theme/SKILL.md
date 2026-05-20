@@ -7,11 +7,27 @@ description: Creates a new named colour theme for the Bottomline statusline. Use
 
 Use this skill when creating a new colour theme for Bottomline.
 
+## Detect plugin path
+
+Before saving a theme, detect where Bottomline is installed:
+
+```bash
+if   [[ -f "$HOME/.claude/plugins/marketplaces/bottomline/bottomline.sh" ]]; then
+  echo "$HOME/.claude/plugins/marketplaces/bottomline"
+elif [[ -f "$HOME/.claude/bottomline/bottomline.sh" ]]; then
+  echo "$HOME/.claude/bottomline"
+else
+  echo "NOT_FOUND"
+fi
+```
+
+Store the output as `BL_DIR`. If the result is `NOT_FOUND`, stop and ask the user where they installed Bottomline.
+
 ## Theme File Location
 
 Save themes to:
 ```
-$HOME/.claude/bottomline/themes/<name>.json
+$BL_DIR/themes/<name>.json
 ```
 
 The `<name>` is what users set in their config: `"appearance": { "theme": "<name>" }`.
@@ -69,7 +85,7 @@ Write the extracted colours to the theme file:
 ```bash
 # Replace <name> with the chosen theme name
 jq '{colors: .appearance.colors}' "<source-config>" \
-  > "$HOME/.claude/bottomline/themes/<name>.json"
+  > "$BL_DIR/themes/<name>.json"
 ```
 
 Then replace the inline `colors` block in the source config with `appearance.theme` and remove `appearance.colors`:

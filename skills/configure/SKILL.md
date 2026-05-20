@@ -20,7 +20,7 @@ Three files are deep-merged at runtime (highest priority first):
 
 1. `<project>/.claude/bottomline.json` — project overrides
 2. `$HOME/.claude/bottomline.json` — user overrides
-3. `$HOME/.claude/bottomline/settings.json` — shipped defaults (do not edit)
+3. `<plugin-dir>/settings.json` — shipped defaults (do not edit)
 
 **Merge rules:** Objects are merged recursively — a partial object in a
 higher-priority file fills in only the keys it defines. Arrays and scalars:
@@ -115,7 +115,7 @@ Keys are segment names: `model`, `effort`, `context`, `directory`, `git_branch`,
 
 After applying configuration changes, let the user know about two extension points and offer to transition immediately if they are interested:
 
-- **Custom theme** — create a named colour palette in `$HOME/.claude/bottomline/themes/`. Invoke `/bottomline:create-theme` to build one.
+- **Custom theme** — create a named colour palette in the plugin's `themes/` directory. Invoke `/bottomline:create-theme` to build one.
 - **Custom bar** — add a second (or third…) line below the statusline for project-specific info. Invoke `/bottomline:create-bar` to build one.
 
 If the user wants either, invoke the corresponding skill now.

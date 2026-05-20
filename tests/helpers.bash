@@ -19,16 +19,12 @@ strip_ansi() {
 # Config-isolated script runner
 # ---------------------------------------------------------------------------
 
-# Sets up a fake HOME with a copy of settings.json and available themes.
+# Sets up a fake HOME for test isolation.
+# settings.json, lib/, and themes/ are found via BASH_SOURCE (_BL_DIR) in
+# bottomline.sh and do not need to be copied here.
 setup_fake_home() {
   FAKE_HOME=$(mktemp -d)
-  mkdir -p "$FAKE_HOME/.claude/bottomline/themes"
-  cp "$BOTTOMLINE_ROOT/settings.json" "$FAKE_HOME/.claude/bottomline/settings.json"
-  # lib/ is found via BASH_SOURCE in bottomline.sh (no need to copy).
-  # Themes are resolved from HOME, so we copy them here.
-  if [[ -d "$BOTTOMLINE_ROOT/themes" ]]; then
-    cp "$BOTTOMLINE_ROOT/themes/"*.json "$FAKE_HOME/.claude/bottomline/themes/" 2>/dev/null || true
-  fi
+  mkdir -p "$FAKE_HOME/.claude"
 }
 
 teardown_fake_home() {

@@ -8,3 +8,6 @@
 
 # bats temp files
 /tmp/
+
+# Local dev settings (contains absolute paths and machine-specific config)
+.claude/settings.local.json
