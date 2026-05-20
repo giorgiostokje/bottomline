@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "bottomline",
+  "description": "Powerline-style statusline for Claude Code with gradient backgrounds, themes, and language bars",
+  "owner": {
+    "name": "Giorgio Stokje"
+  },
+  "plugins": [
+    {
+      "name": "bottomline",
+      "description": "Powerline-style statusline for Claude Code with gradient backgrounds, themes, and language bars for PHP, Go, JS, Python, Rust, Ruby, Java, Swift, Elixir, and Git.",
+      "author": {
+        "name": "Giorgio Stokje"
+      },
+      "category": "productivity",
+      "source": ".",
+      "homepage": "https://github.com/giorgiostokje/bottomline"
+    }
+  ]
+}
