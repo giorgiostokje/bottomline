@@ -29,8 +29,12 @@ Store the output as `BL_DIR`. If the result is `NOT_FOUND`, use the base directo
 jq '.statusLine.command // "not configured"' "$HOME/.claude/settings.json"
 ```
 
-If the output already contains `bottomline.sh`, nothing to do — use the **debug**
-skill if something isn't working.
+- **Manual install** (command points directly to a path inside `/plugins/cache/`
+  or a user-chosen path outside `$HOME/.claude/bottomline.sh`): nothing to do —
+  use the **debug** skill if something isn't working.
+- **Marketplace install** (command is `$HOME/.claude/bottomline.sh` or `not
+  configured`): always continue to **Installing** and recreate the shim — this
+  is safe to re-run and ensures the shim is up to date.
 
 ## Prerequisites
 
@@ -131,9 +135,20 @@ runtime — so `settings.json` never needs updating after a plugin upgrade:
 ```bash
 cat > "$HOME/.claude/bottomline.sh" << 'LAUNCHER'
 #!/usr/bin/env bash
-_bl_dir=$(tr ':' '\n' <<< "$PATH" | grep -m1 '/bottomline/bottomline/.*/bin$' | sed 's|/bin$||')
-[[ -z "$_bl_dir" || ! -f "$_bl_dir/bottomline.sh" ]] && exit 0
-exec bash "$_bl_dir/bottomline.sh"
+_cache="${HOME}/.claude/plugins/cache/bottomline/bottomline"
+_bl_dir="" _best="0 0 0"
+for _d in "${_cache}"/*/; do
+  [[ -f "${_d}bottomline.sh" ]] || continue
+  _v="${_d%/}"; _v="${_v##*/}"
+  IFS=. read -r _ma _mi _pa <<< "${_v}"
+  IFS=' ' read -r _bma _bmi _bpa <<< "${_best}"
+  (( 10#${_ma:-0} > 10#${_bma} \
+  || (10#${_ma:-0} == 10#${_bma} && 10#${_mi:-0} > 10#${_bmi}) \
+  || (10#${_ma:-0} == 10#${_bma} && 10#${_mi:-0} == 10#${_bmi} && 10#${_pa:-0} > 10#${_bpa}) )) \
+  && { _bl_dir="${_d%/}"; _best="${_ma:-0} ${_mi:-0} ${_pa:-0}"; }
+done
+[[ -z "${_bl_dir}" ]] && exit 0
+exec bash "${_bl_dir}/bottomline.sh"
 LAUNCHER
 chmod +x "$HOME/.claude/bottomline.sh"
 ```
@@ -197,6 +212,16 @@ echo '{}' | bash "$BL_DIR/bottomline.sh"
 
 Expected: one line of ANSI-coloured powerline text. If you see nothing, run the
 **debug** skill.
+
+For Marketplace installs, also verify the stable launcher shim — this is the
+path Claude Code actually invokes:
+
+```bash
+echo '{}' | bash "$HOME/.claude/bottomline.sh"
+```
+
+Expected: the same ANSI output. If the shim produces no output, run the
+**debug** skill and follow the shim test (step 2).
 
 **4. Offer configuration**
 
