@@ -264,7 +264,7 @@ path.
 bash --version | head -1
 ```
 
-Bottomline requires Bash ≥4. If the version shown is below 4, **ask the user** whether Claude should
+Bottomline requires Bash ≥3.2. If the version shown is below 3.2, **ask the user** whether Claude should
 install a newer Bash or they prefer to do it themselves, then use the
 appropriate command:
 
@@ -276,7 +276,7 @@ appropriate command:
 | `yum` | `sudo yum install -y bash` |
 | `pacman` | `sudo pacman -S --noconfirm bash` |
 | `zypper` | `sudo zypper install -y bash` |
-| `choco` | `choco install git` (Git for Windows includes Bash ≥4) |
+| `choco` | `choco install git` (Git for Windows includes Bash) |
 | `scoop` | `scoop install git` |
 | `winget` | `winget install Git.Git` |
 | none | Direct to <https://git-scm.com/downloads> (Windows) or <https://www.gnu.org/software/bash/> (other) and wait. |
@@ -284,3 +284,4 @@ appropriate command:
 After installing, the user may need to ensure the new Bash appears on `PATH`
 before the system default. `bottomline.sh` uses `#!/usr/bin/env bash`, which
 resolves to the first `bash` on `PATH`.
+

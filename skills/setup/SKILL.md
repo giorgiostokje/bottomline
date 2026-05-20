@@ -59,13 +59,13 @@ fi
 echo "OS: $os  package manager: ${pm:-none detected}"
 ```
 
-**Bash ≥4**
+**Bash ≥3.2**
 
 ```bash
 bash --version | head -1
 ```
 
-If the version is below 4, ask the user whether Claude should install it or
+If the version is below 3.2, ask the user whether Claude should install it or
 they prefer to do it themselves, then use the appropriate command:
 
 | Detected | Command |
@@ -124,7 +124,35 @@ configured in step 2 below.
 
 **1. Wire `statusLine` in `$HOME/.claude/settings.json`**
 
-Update `statusLine.command` to point directly to `bottomline.sh`:
+**Marketplace installs** (where `BL_DIR` contains `/plugins/cache/`) use a stable launcher
+at `$HOME/.claude/bottomline.sh` that resolves the current plugin version via `$PATH` at
+runtime — so `settings.json` never needs updating after a plugin upgrade:
+
+```bash
+cat > "$HOME/.claude/bottomline.sh" << 'LAUNCHER'
+#!/usr/bin/env bash
+_bl_dir=$(tr ':' '\n' <<< "$PATH" | grep -m1 '/bottomline/bottomline/.*/bin$' | sed 's|/bin$||')
+[[ -z "$_bl_dir" || ! -f "$_bl_dir/bottomline.sh" ]] && exit 0
+exec bash "$_bl_dir/bottomline.sh"
+LAUNCHER
+chmod +x "$HOME/.claude/bottomline.sh"
+```
+
+Then wire `settings.json` to the stable launcher:
+
+```bash
+tmp=$(mktemp) \
+  && jq --arg cmd "$HOME/.claude/bottomline.sh" '
+       if .statusLine == null
+       then .statusLine = {"type": "command", "command": $cmd, "refreshInterval": 60}
+       else .statusLine.command = $cmd | .statusLine.type = "command"
+       end
+     ' "$HOME/.claude/settings.json" > "$tmp" \
+  && mv "$tmp" "$HOME/.claude/settings.json"
+```
+
+**Manual installs** (where `BL_DIR` is a user-chosen path outside `/plugins/cache/`) skip the
+launcher — wire `settings.json` directly to `$BL_DIR/bottomline.sh` instead:
 
 ```bash
 tmp=$(mktemp) \
@@ -137,8 +165,7 @@ tmp=$(mktemp) \
   && mv "$tmp" "$HOME/.claude/settings.json"
 ```
 
-This is safe to re-run — it is a no-op when the command already points to
-`bottomline.sh`. It preserves any existing `refreshInterval`.
+Both paths are safe to re-run and preserve any existing `refreshInterval`.
 
 **2. Create `$HOME/.claude/bottomline.json`** (user config file)
 
@@ -184,10 +211,12 @@ colours, theme, icon type, etc.).
 
 ## Uninstalling
 
-Revert `statusLine.command` to the original `statusline.sh` shim if it exists;
-otherwise remove the `statusLine` block entirely:
+Remove the stable launcher if present, then revert `statusLine.command` to the
+original `statusline.sh` shim if it exists; otherwise remove the `statusLine` block:
 
 ```bash
+rm -f "$HOME/.claude/bottomline.sh"
+
 if [[ -f "$HOME/.claude/statusline.sh" ]]; then
   tmp=$(mktemp) \
     && jq --arg cmd "$HOME/.claude/statusline.sh" '.statusLine.command = $cmd' \
