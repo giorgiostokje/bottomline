@@ -21,7 +21,7 @@ Before doing anything else, detect where Bottomline is installed:
   && echo "$CLAUDE_PLUGIN_ROOT" || echo "NOT_FOUND"
 ```
 
-Store the output as `BL_DIR`. If the result is `NOT_FOUND`, ask the user where they installed Bottomline and use their answer as `BL_DIR`. Every path in this skill that refers to the plugin installation uses `$BL_DIR`.
+Store the output as `BL_DIR`. If the result is `NOT_FOUND`, use the base directory shown in this skill's invocation header as `BL_DIR`. Every path in this skill that refers to the plugin installation uses `$BL_DIR`.
 
 ## Check current state
 
