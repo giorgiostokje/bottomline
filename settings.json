@@ -1,0 +1,50 @@
+{
+  "appearance": {
+    "colors": {
+      "text": "#e2d5c3",
+      "accent": "#da7756",
+      "warning": "#f4a261",
+      "danger": "#e05a4e",
+      "background": ["#2e1f14", "#160f0a"]
+    },
+    "icons": {
+      "type": "nerd"
+    }
+  },
+  "segments": {
+    "separator": "e0b4",
+    "enabled": [
+      "model",
+      "effort",
+      "context",
+      "directory",
+      "git_branch",
+      "tokens_in",
+      "tokens_out",
+      "usage_5h",
+      "usage_7d",
+      "cost"
+    ]
+  },
+  "auto_bars": {
+    "enabled": false,
+    "scripts": [
+      { "script": "go", "signals": ["go.mod"] },
+      { "script": "rust", "signals": ["Cargo.toml"] },
+      {
+        "script": "python",
+        "signals": ["pyproject.toml", "requirements.txt", "Pipfile", "setup.py"]
+      },
+      { "script": "ruby", "signals": ["Gemfile"] },
+      {
+        "script": "java",
+        "signals": ["pom.xml", "build.gradle", "build.gradle.kts"]
+      },
+      { "script": "swift", "signals": ["Package.swift"] },
+      { "script": "elixir", "signals": ["mix.exs"] },
+      { "script": "php", "signals": ["composer.json"] },
+      { "script": "javascript", "signals": ["package.json"] },
+      { "script": "git", "signals": [".git"] }
+    ]
+  }
+}

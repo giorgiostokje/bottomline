@@ -1,0 +1,6 @@
+{
+  "name": "bottomline",
+  "description": "Powerline-style statusline for Claude Code with git, project, and usage bars.",
+  "version": "1.0.0",
+  "license": "MIT"
+}
