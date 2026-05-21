@@ -29,23 +29,28 @@
   "auto_bars": {
     "enabled": false,
     "scripts": [
-      { "script": "go", "signals": ["go.mod"] },
       { "script": "rust", "signals": ["Cargo.toml"] },
+      { "script": "go", "signals": ["go.mod"] },
+      { "script": "swift", "signals": ["Package.swift"] },
+      { "script": "elixir", "signals": ["mix.exs"] },
+      {
+        "script": "dotnet",
+        "signals": ["global.json", "Directory.Build.props", "Directory.Build.targets"]
+      },
+      {
+        "script": "java",
+        "signals": ["pom.xml", "build.gradle", "build.gradle.kts"]
+      },
       {
         "script": "python",
         "signals": ["pyproject.toml", "requirements.txt", "Pipfile", "setup.py"]
       },
       { "script": "ruby", "signals": ["Gemfile"] },
-      {
-        "script": "java",
-        "signals": ["pom.xml", "build.gradle", "build.gradle.kts"]
-      },
-      { "script": "swift", "signals": ["Package.swift"] },
-      { "script": "elixir", "signals": ["mix.exs"] },
-      { "script": "php", "signals": ["composer.json"] },
       { "script": "javascript", "signals": ["package.json"] },
-      { "script": "git", "signals": [".git"] },
-      { "script": "salesforce", "signals": ["sfdx-project.json", ".forceignore"] }
+      { "script": "dart", "signals": ["pubspec.yaml"] },
+      { "script": "php", "signals": ["composer.json"] },
+      { "script": "salesforce", "signals": ["sfdx-project.json", ".forceignore"] },
+      { "script": "git", "signals": [".git"] }
     ]
   }
 }

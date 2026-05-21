@@ -72,6 +72,8 @@ Add an entry to `auto_bars.scripts`. List every signal file that indicates this 
 
 Signal files are checked relative to the project root. The bar is prepended automatically when **any** listed signal file is found there.
 
+**Placement in the list:** entries are ordered by system integration depth — languages first (deepest to shallowest: `rust`, `go`, `swift`, `elixir`, `dotnet`, `java`, `python`, `ruby`, `javascript`, `dart`, `php`, `salesforce`), then `git` last (VCS tool, not a language). Insert the new entry at the position that best reflects where the language sits on that spectrum.
+
 `auto_bars.enabled` defaults to `false` in `settings.json`. Users opt in. Do not change the default.
 
 ---

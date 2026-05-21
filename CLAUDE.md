@@ -107,6 +107,16 @@ Never write raw byte literals into config JSON, and never write hex codepoint st
 
 The end-user skills say "never edit `settings.json`" — that's correct for users. For plugin development, `settings.json` **is** the file for new segment defaults, `auto_bars` registrations, and shipped threshold values. User and project config files are for overrides only.
 
+### `auto_bars.scripts` ordering
+
+Entries in `auto_bars.scripts` are ordered by **system integration depth**, languages first (deepest to shallowest), `git` last (VCS tool, not a language):
+
+```
+rust → go → swift → elixir → dotnet → java → python → ruby → javascript → dart → php → salesforce → git
+```
+
+When adding a new bar, insert it at the position that best reflects where the language sits on that spectrum. `git` must always remain last.
+
 ### `dmerge/2` is duplicated
 
 The `dmerge/2` jq function is copy-pasted verbatim into both `bottomline.sh` (config loading) and `skills/debug/SKILL.md` (the merged-config inspection snippet). If the algorithm changes, update both.
