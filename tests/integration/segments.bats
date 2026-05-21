@@ -80,10 +80,16 @@ _only() {
   [[ "$BL_OUTPUT" == *"1.0k"* && "$BL_OUTPUT" == *"+500"* ]]
 }
 
-@test "tokens_out: cache_create tokens appear as +N suffix" {
+@test "tokens_in: cache_create tokens included in main count" {
+  make_transcript 1000 0 0 500
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in)"
+  [[ "$BL_OUTPUT" == *"1.5k"* ]]
+}
+
+@test "tokens_out: shows only output tokens, no cache suffix" {
   make_transcript 0 200 0 300
   bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_out)"
-  [[ "$BL_OUTPUT" == *"200"* && "$BL_OUTPUT" == *"+300"* ]]
+  [[ "$BL_OUTPUT" == *"200"* && "$BL_OUTPUT" != *"+300"* ]]
 }
 
 # ---------------------------------------------------------------------------

@@ -474,17 +474,16 @@ build_branch() {
 }
 
 build_tokens_in() {
-  (( sum_in + sum_cache_read <= 0 )) && return
-  local tok="${FG_ACCENT}${IC_TOKENS_IN} ${FG_TEXT}$(fmt_n "$sum_in")"
+  local base=$(( sum_in + sum_cache_create ))
+  (( base + sum_cache_read <= 0 )) && return
+  local tok="${FG_ACCENT}${IC_TOKENS_IN} ${FG_TEXT}$(fmt_n "$base")"
   (( sum_cache_read > 0 )) && tok+="${FG_ACCENT}+$(fmt_n "$sum_cache_read")"
   add_seg "$tok"
 }
 
 build_tokens_out() {
-  (( sum_out + sum_cache_create <= 0 )) && return
-  local tok="${FG_ACCENT}${IC_TOKENS_OUT} ${FG_TEXT}$(fmt_n "$sum_out")"
-  (( sum_cache_create > 0 )) && tok+="${FG_ACCENT}+$(fmt_n "$sum_cache_create")"
-  add_seg "$tok"
+  (( sum_out <= 0 )) && return
+  add_seg "${FG_ACCENT}${IC_TOKENS_OUT} ${FG_TEXT}$(fmt_n "$sum_out")"
 }
 
 build_usage_5h() {
