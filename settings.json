@@ -31,6 +31,7 @@
     "scripts": [
       { "script": "rust", "signals": ["Cargo.toml"] },
       { "script": "go", "signals": ["go.mod"] },
+      { "script": "shell", "signals": [".shellcheckrc"] },
       { "script": "swift", "signals": ["Package.swift"] },
       { "script": "elixir", "signals": ["mix.exs"] },
       {

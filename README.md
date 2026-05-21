@@ -13,7 +13,7 @@ Gradient status line for Claude Code. Renders a bar of ANSI segments below every
 - **Themes** — activate a named colour palette with one setting
 - **Bars** — one or more extra lines below the main status line, rendered by shell scripts or defined inline in JSON
 - **Auto-bars** — bars that appear automatically when a project's signal file (e.g. `composer.json`) is detected
-- **12 built-in bars** — 11 language bars (PHP, JavaScript, Go, Python, Rust, Ruby, Java, Swift, Elixir, Salesforce, Git) plus opt-in `random-facts`
+- **13 built-in bars** — 12 language bars (PHP, JavaScript, Go, Shell, Python, Rust, Ruby, Java, Swift, Elixir, Salesforce, Git) plus opt-in `random-facts`
 - **Nerd Font, emoji, or text-only icons**
 - **Skills** — `/bottomline:setup`, `/bottomline:configure`, `/bottomline:debug`, `/bottomline:create-bar`, `/bottomline:create-theme`
 
@@ -474,7 +474,7 @@ When `inherit_colors` is `true`, all auto-detected bars behave as if `colors: "i
 
 #### Registered signal files
 
-The `auto_bars.scripts` array maps bar names to the signal files that trigger them. The full list is defined in the plugin's `settings.json`. The ten language bars are auto-detectable; `random-facts` has no signal file and must be added explicitly.
+The `auto_bars.scripts` array maps bar names to the signal files that trigger them. The full list is defined in the plugin's `settings.json`. The eleven language bars are auto-detectable; `random-facts` has no signal file and must be added explicitly.
 
 ---
 
@@ -520,6 +520,20 @@ Built-in palette: yellow tones (`#f7df1e` accent on near-black background).
 Segments: Go version from `go.mod`, workspace flag when `go.work` is present.
 
 Built-in palette: cyan tones (`#29bcd8` accent on dark navy background).
+
+#### `shell` — Shell / Bash ecosystem
+
+**Signal:** `.shellcheckrc`
+
+Segments: target shell and running Bash version. Target shell defaults to `bash`; reads the `shell=` directive from `.shellcheckrc` when present (e.g. `sh`, `dash`). ShellCheck version shown as a second segment when `shellcheck` is on `PATH`.
+
+The bar activates when any `.sh` file exists at the project root — users without a `.shellcheckrc` can add the bar explicitly:
+
+```json
+{ "bars": [{ "script": "shell" }] }
+```
+
+Built-in palette: green tones (`#4eb144` accent on dark forest-green background).
 
 #### `python` — Python ecosystem
 

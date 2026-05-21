@@ -112,7 +112,7 @@ The end-user skills say "never edit `settings.json`" — that's correct for user
 Entries in `auto_bars.scripts` are ordered by **system integration depth**, languages first (deepest to shallowest), `git` last (VCS tool, not a language):
 
 ```
-rust → go → swift → elixir → dotnet → java → python → ruby → javascript → dart → php → salesforce → git
+rust → go → shell → swift → elixir → dotnet → java → python → ruby → javascript → dart → php → salesforce → git
 ```
 
 When adding a new bar, insert it at the position that best reflects where the language sits on that spectrum. `git` must always remain last.
