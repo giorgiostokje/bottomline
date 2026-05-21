@@ -106,7 +106,7 @@ Keys are segment names: `model`, `effort`, `context`, `directory`, `git_branch`,
 | Key | Description |
 |---|---|
 | `appearance.theme` | Name of a file in `themes/` (e.g. `"catppuccin-mocha"`). Overrides all colour settings in the merged config. Does not affect icon type. |
-| `bars` | Explicit bar list. Each entry is a script bar `{ "script": "name", "colors": {...} }` or an inline segment bar `{ "segments": [...], "colors": {...} }`. Appended after auto-detected bars. `colors` may be an object with any of `text`, `accent`, `warning`, `danger`, `background` (hex or named colour), or the string `"inherit"` to explicitly use the merged config colours and suppress the bar's built-in language palette. |
+| `bars` | Explicit bar list. Each entry is a script bar `{ "script": "name", "colors": {...}, "refresh_minutes": N }` or an inline segment bar `{ "segments": [...], "colors": {...} }`. Appended after auto-detected bars. `colors` may be an object with any of `text`, `accent`, `warning`, `danger`, `background` (hex or named colour), or the string `"inherit"` to explicitly use the merged config colours and suppress the bar's built-in language palette. `refresh_minutes` controls how long the bar caches external data (e.g. API responses) between fetches; supported by bars that make network calls (e.g. `random-facts`). |
 | `auto_bars.enabled` | Boolean. Defaults to `false` — auto-bar detection is off unless explicitly enabled. Set `true` to turn on detection for this config level. |
 | `auto_bars.disabled` | Array of bar script names to exclude from auto-detection. Values are unioned across all config levels so a project can add exclusions without re-listing the user's. |
 | `auto_bars.inherit_colors` | Boolean. When `true`, all auto-detected bars behave as if `colors: "inherit"` was set — they use the merged config colours instead of their built-in language palette. |
@@ -247,8 +247,38 @@ tmp=$(mktemp) \
   && mv "$tmp" "$HOME/.claude/bottomline.json"
 ```
 
-Replace `BARNAME` with the bar name (e.g. `random-facts`). Run once per bar.
-To customise a bar's colours, add a `"colors"` key: `{"script": "random-facts", "colors": {"accent": "#7c3aed"}}`, or `"colors": "inherit"` to use the main status line palette.
+Replace `BARNAME` with the bar name. Run once per bar.
+To customise a bar's colours, add a `"colors"` key: `{"script": "mybar", "colors": {"accent": "#7c3aed"}}`, or `"colors": "inherit"` to use the main status line palette.
+
+**`random-facts` — refresh interval**
+
+`random-facts` fetches from an external API and caches the result. Before adding
+or updating it, ask the user how often they want a new fact:
+
+> "How often should the fact refresh? Default is every 60 minutes."
+
+Then add (or update) the bar with the chosen interval:
+
+*Adding for the first time:*
+```bash
+tmp=$(mktemp) \
+  && jq --argjson rm MINUTES '.bars += [{"script": "random-facts", "refresh_minutes": $rm}]' \
+       "$HOME/.claude/bottomline.json" > "$tmp" \
+  && mv "$tmp" "$HOME/.claude/bottomline.json"
+```
+
+*Updating an existing entry:*
+```bash
+tmp=$(mktemp) \
+  && jq --argjson rm MINUTES \
+       '.bars |= map(if .script == "random-facts" then .refresh_minutes = $rm else . end)' \
+       "$HOME/.claude/bottomline.json" > "$tmp" \
+  && mv "$tmp" "$HOME/.claude/bottomline.json"
+```
+
+Replace `MINUTES` with the integer the user chose (e.g. `60`). Use the "adding"
+command when the bar is absent from the array, the "updating" command when it
+is already present.
 
 ## Going Further
 

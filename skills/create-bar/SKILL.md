@@ -78,6 +78,42 @@ These are exported by `bottomline.sh` before your script runs:
 | `BOTTOMLINE_RESET` | Reset escape (also in `$R`) |
 | `BOTTOMLINE_ICON_TYPE` | `nerd`, `emoji`, or `none` |
 | `BOTTOMLINE_IC_DANGER` | Pre-resolved icon for the `danger` named icon |
+| `BOTTOMLINE_BAR_REFRESH_MINUTES` | Set when the bar entry declares `"refresh_minutes": N` in config. Unset when not configured — apply a sensible default in the script. |
+
+## Caching Network Calls
+
+If your bar fetches external data (an API, a remote service), cache the result
+so it only runs once per interval rather than on every status line refresh.
+
+Use `BOTTOMLINE_BAR_REFRESH_MINUTES` (with a script-level default) to compute a
+bucket integer — the cache filename changes automatically when the bucket rolls over:
+
+```bash
+_refresh_mins="${BOTTOMLINE_BAR_REFRESH_MINUTES:-60}"
+_bucket=$(( $(date +%s) / (_refresh_mins * 60) ))
+_cache_file="/tmp/bl_mybar_${_bucket}.txt"
+
+value=''
+[[ -f "$_cache_file" ]] && value=$(cat "$_cache_file")
+
+if [[ -z "$value" ]]; then
+  value=$(curl -sf --max-time 3 'https://example.com/api' 2>/dev/null)
+  if [[ -n "$value" ]]; then
+    printf '%s' "$value" > "$_cache_file"
+    find /tmp -maxdepth 1 -name 'bl_mybar_*.txt' \
+      ! -name "bl_mybar_${_bucket}.txt" -delete 2>/dev/null
+  fi
+fi
+```
+
+Users control the interval via `refresh_minutes` in their `bottomline.json`:
+
+```json
+{ "bars": [{ "script": "mybar", "refresh_minutes": 30 }] }
+```
+
+The `find` cleanup removes stale buckets from `/tmp` on each successful fetch;
+`/tmp` is also cleared on reboot, so no manual maintenance is needed.
 
 ## Placement
 

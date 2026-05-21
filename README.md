@@ -584,10 +584,10 @@ Built-in palette: Salesforce Lightning brand — cloud blue `#1B96FF` accent on 
 No auto-detection signal — add explicitly via `bars`:
 
 ```json
-{ "bars": [{ "script": "random-facts" }] }
+{ "bars": [{ "script": "random-facts", "refresh_minutes": 60 }] }
 ```
 
-Fetches a random fact from the [Useless Facts API](https://uselessfacts.jsph.pl). Falls back to a built-in set of 10 offline facts when the network is unavailable. Does not use a built-in palette — colours are always taken from the bar's `colors` config or the merged config defaults.
+Fetches a random fact from the [Useless Facts API](https://uselessfacts.jsph.pl). The result is cached so the API is only called once per interval — the fact changes after `refresh_minutes` minutes (default: 60). Falls back to a built-in set of 10 offline facts when the network is unavailable. Does not use a built-in palette — colours are always taken from the bar's `colors` config or the merged config defaults.
 
 ---
 
@@ -616,6 +616,7 @@ All keys, their types, and which config files they belong in.
 | `bars[].script` | `string` | Bar script name or path |
 | `bars[].segments` | `array` | Inline segment bar segments |
 | `bars[].colors` | object \| `"inherit"` | Bar colour overrides — object with any of `text`, `accent`, `warning`, `danger`, `background`; or `"inherit"` to use merged config colours and suppress the bar's built-in palette |
+| `bars[].refresh_minutes` | `integer` | How long (in minutes) the bar caches external data between fetches. Supported by bars that make network calls (e.g. `random-facts` defaults to 60). |
 | `auto_bars.enabled` | `boolean` | Enable auto-bar detection for this config level (default: `false`) |
 | `auto_bars.disabled` | `string[]` | Bar names to exclude from auto-detection (unioned across config levels) |
 | `auto_bars.inherit_colors` | `boolean` | When `true`, all auto-detected bars behave as `colors: "inherit"` |
