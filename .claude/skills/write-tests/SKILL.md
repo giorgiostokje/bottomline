@@ -143,6 +143,31 @@ Use `$BAR_OUTPUT` (stripped) or `$BAR_OUTPUT_RAW` (ANSI).
 
 Note the `| tr -d ' \n|'` — `bar_run` uses `BOTTOMLINE_SEP='|'` so separators appear as literal pipes.
 
+**Bars that cache network responses** — `bar_run` does not set `BOTTOMLINE_BAR_REFRESH_MINUTES`, so bars default to their script-level fallback (e.g. 60 minutes for `random-facts`). The cache file is keyed on a time bucket, so tests that run the bar twice within the same bucket will return the cached value. To control this in tests, override the env var with a minimal interval and use a predictable project dir as the bucket seed, or just let the bar hit its offline fallback path:
+
+```bash
+@test "random-facts: renders offline fact when network unavailable" {
+  # Force a fresh bucket (interval=1s) and use a tmp dir so no stale cache exists
+  BAR_OUTPUT_RAW=$(
+    BOTTOMLINE_PROJECT_DIR="$FAKE_PROJ" \
+    BOTTOMLINE_LIB="$BOTTOMLINE_ROOT/lib" \
+    BOTTOMLINE_ICON_TYPE=none \
+    BOTTOMLINE_GRADIENT='"#1a1a1a"' \
+    BOTTOMLINE_BAR_COLORS= \
+    BOTTOMLINE_BG_R=26 BOTTOMLINE_BG_G=26 BOTTOMLINE_BG_B=26 \
+    BOTTOMLINE_SEP='|' BOTTOMLINE_BOLD='' BOTTOMLINE_RESET='' \
+    BOTTOMLINE_TEXT_HEX='#e2d5c3' BOTTOMLINE_ACCENT_HEX='#da7756' \
+    BOTTOMLINE_WARN_HEX='#f4a261' BOTTOMLINE_DANGER_HEX='#e05a4e' \
+    BOTTOMLINE_BAR_REFRESH_MINUTES=1 \
+    bash "$BOTTOMLINE_ROOT/bars/random-facts.sh"
+  )
+  BAR_OUTPUT=$(printf '%s' "$BAR_OUTPUT_RAW" | strip_ansi)
+  [[ "$BAR_OUTPUT" == *"(offline)"* || -n "$BAR_OUTPUT" ]]
+}
+```
+
+For bars that do not make network calls (all language/ecosystem bars), `BOTTOMLINE_BAR_REFRESH_MINUTES` is irrelevant — use plain `bar_run`.
+
 ---
 
 ## Critical gotcha: `${var:-{}}` corrupts JSON

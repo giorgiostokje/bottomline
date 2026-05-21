@@ -5,7 +5,7 @@ description: Step-by-step checklist for adding a new built-in segment to the mai
 
 # Add a Built-in Segment
 
-Adding a segment touches **five files**. Complete every step; skipping any leaves the segment broken or inconsistent.
+Adding a segment requires **nine steps across five files** — steps 1–5 all modify `bottomline.sh`; steps 6–9 each touch a different file. Complete every step; skipping any leaves the segment broken or inconsistent.
 
 ---
 
