@@ -9,9 +9,25 @@ case "$BOTTOMLINE_ICON_TYPE" in
   *)     IC_FACT='' ;;
 esac
 
-fact=$(curl -sf --max-time 3 \
-  'https://uselessfacts.jsph.pl/api/v2/facts/random?language=en' \
-  2>/dev/null | jq -r '.text // empty' 2>/dev/null)
+_refresh_mins="${BOTTOMLINE_BAR_REFRESH_MINUTES:-60}"
+_bucket=$(( $(date +%s) / (_refresh_mins * 60) ))
+_cache_file="/tmp/bl_random-fact_${_bucket}.txt"
+
+fact=''
+if [[ -f "$_cache_file" ]]; then
+  fact=$(cat "$_cache_file")
+fi
+
+if [[ -z "$fact" ]]; then
+  fact=$(curl -sf --max-time 3 \
+    'https://uselessfacts.jsph.pl/api/v2/facts/random?language=en' \
+    2>/dev/null | jq -r '.text // empty' 2>/dev/null)
+  if [[ -n "$fact" ]]; then
+    printf '%s' "$fact" > "$_cache_file"
+    find /tmp -maxdepth 1 -name 'bl_random-fact_*.txt' \
+      ! -name "bl_random-fact_${_bucket}.txt" -delete 2>/dev/null
+  fi
+fi
 
 offline_suffix=''
 if [[ -z "$fact" ]]; then

@@ -688,6 +688,12 @@ if (( bar_count > 0 )); then
         elif [[ "$_colors_type" == "string" ]]; then
           export BOTTOMLINE_BAR_COLORS=1
         fi
+        _rm=$(printf '%s' "$bar" | jq -r '.refresh_minutes // empty' 2>/dev/null)
+        if [[ "$_rm" =~ ^[0-9]+$ && "$_rm" -gt 0 ]]; then
+          export BOTTOMLINE_BAR_REFRESH_MINUTES="$_rm"
+        else
+          unset BOTTOMLINE_BAR_REFRESH_MINUTES
+        fi
         bash "$script_path"
       )
       continue
