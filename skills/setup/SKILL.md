@@ -190,8 +190,11 @@ Both paths are safe to re-run and preserve any existing `refreshInterval`.
   && echo "created" || echo "already exists"
 ```
 
-This is where user-level config overrides live (colours, segments, theme, etc.).
-The file is created as an empty JSON object if it does not already exist.
+This file starts **completely empty** (`{}`). There are no pre-applied user
+defaults — all defaults live only in the plugin's `settings.json`, which ships
+with the plugin and must never be edited directly. Every key you add to
+`$HOME/.claude/bottomline.json` overrides only that specific key; everything
+else falls through from `settings.json`.
 
 If the user does not have a Nerd Font, set the icon type now:
 
@@ -203,6 +206,9 @@ tmp=$(mktemp) \
 
 Ask the user which they prefer — `"emoji"` or `"none"` — and use that value.
 Skip this step if they have a Nerd Font installed.
+
+> **To change this later:** edit `$HOME/.claude/bottomline.json` and set
+> `appearance.icons.type` to `"nerd"`, `"emoji"`, or `"none"`.
 
 **3. Verify:**
 
@@ -223,14 +229,15 @@ echo '{}' | bash "$HOME/.claude/bottomline.sh"
 Expected: the same ANSI output. If the shim produces no output, run the
 **debug** skill and follow the shim test (step 2).
 
-**4. Offer configuration**
+**4. Offer further configuration**
 
-Ask the user whether they would like to configure Bottomline now (segments,
-colours, theme, icon type, etc.).
+Let the user know they can customise colours, themes, active segments,
+separators, threshold alerts, and bars at any time:
 
-- **Yes** → invoke the **configure** skill (`/bottomline:configure`) immediately.
-- **No** → inform them they can run `/bottomline:configure` at any time, or edit
-  the config files directly:
+- Run `/bottomline:configure` for a guided configuration session — this covers
+  threshold alerts (context window and rate-limit usage), auto-bar detection,
+  and explicitly adding bars that don't auto-detect.
+- Edit the config files directly:
   - User-level: `$HOME/.claude/bottomline.json`
   - Project-level: `<project>/.claude/bottomline.json`
 

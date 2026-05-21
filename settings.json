@@ -44,7 +44,8 @@
       { "script": "elixir", "signals": ["mix.exs"] },
       { "script": "php", "signals": ["composer.json"] },
       { "script": "javascript", "signals": ["package.json"] },
-      { "script": "git", "signals": [".git"] }
+      { "script": "git", "signals": [".git"] },
+      { "script": "salesforce", "signals": ["sfdx-project.json", ".forceignore"] }
     ]
   }
 }

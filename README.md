@@ -13,7 +13,7 @@ Powerline-style statusline for Claude Code. Renders a gradient bar of ANSI segme
 - **Themes** — activate a named colour palette with one setting
 - **Bars** — one or more extra lines below the main statusline, rendered by shell scripts or defined inline in JSON
 - **Auto-bars** — bars that appear automatically when a project's signal file (e.g. `composer.json`) is detected
-- **11 built-in bars** — 10 language bars (PHP, JavaScript, Go, Python, Rust, Ruby, Java, Swift, Elixir, Git) plus opt-in `random-facts`
+- **12 built-in bars** — 11 language bars (PHP, JavaScript, Go, Python, Rust, Ruby, Java, Swift, Elixir, Salesforce, Git) plus opt-in `random-facts`
 - **Nerd Font, emoji, or text-only icons**
 - **Skills** — `/bottomline:setup`, `/bottomline:configure`, `/bottomline:debug`, `/bottomline:create-bar`, `/bottomline:create-theme`
 
@@ -23,7 +23,7 @@ Powerline-style statusline for Claude Code. Renders a gradient bar of ANSI segme
 
 | Requirement | Notes |
 |---|---|
-| **Bash ≥ 4** | macOS ships Bash 3 — install `bash` via Homebrew (`brew install bash`) |
+| **Bash ≥ 3.2** | macOS ships Bash 3.2, which meets this requirement |
 | **jq** | `brew install jq` / `apt install jq` / [jqlang.github.io/jq](https://jqlang.github.io/jq/download/) |
 | **Nerd Font** (optional) | Required for `"icons": { "type": "nerd" }` (the default). Download from [nerdfonts.com](https://www.nerdfonts.com/font-downloads), install, and **set it as your terminal's font**. Switch to `"emoji"` or `"none"` if you don't want one. |
 
@@ -569,6 +569,16 @@ Segments: Elixir version (from `mix.exs`, `.tool-versions`, or `.elixir-version`
 
 Built-in palette: purple tones (`#a078d8` accent on near-black background).
 
+#### `salesforce` — Salesforce ecosystem
+
+**Signal:** `sfdx-project.json`, `.forceignore`
+
+Segments: SF CLI version, default target org (alias or username) with sandbox indicator when `sfdcLoginUrl` points to `test.salesforce.com`, authenticated username when it differs from the displayed alias, source API version from `sfdx-project.json`, and namespace when one is defined.
+
+Target org is resolved in priority order: project `.sf/config.json` → project `.sfdx/sfdx-config.json` → global `~/.sf/config.json`. Username is resolved from `~/.sf/alias.json` or legacy `~/.sfdx/<alias>.json`.
+
+Built-in palette: Salesforce Lightning brand — cloud blue `#1B96FF` accent on dark navy gradient (`#032D60` → `#0B4B8B`).
+
 #### `random-facts`
 
 No auto-detection signal — add explicitly via `bars`:
@@ -672,7 +682,7 @@ See `/bottomline:create-bar` for the full guide, available environment variables
 The test suite uses [bats-core](https://github.com/bats-core/bats-core). Install it with `brew install bats-core` (or see `tests/README.md` for other methods), then run from the plugin root:
 
 ```bash
-# All tests (101 total)
+# All tests
 bats --recursive tests/
 
 # Just unit tests
@@ -707,6 +717,7 @@ tests/
         ├── java.bats               # Java bar
         ├── swift.bats              # Swift bar
         ├── elixir.bats             # Elixir bar
+        ├── salesforce.bats         # Salesforce bar
         └── random-facts.bats       # Random facts bar (offline fallback)
 ```
 

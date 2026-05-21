@@ -111,6 +111,144 @@ Keys are segment names: `model`, `effort`, `context`, `directory`, `git_branch`,
 | `auto_bars.disabled` | Array of bar script names to exclude from auto-detection. Values are unioned across all config levels so a project can add exclusions without re-listing the user's. |
 | `auto_bars.inherit_colors` | Boolean. When `true`, all auto-detected bars behave as if `colors: "inherit"` was set — they use the merged config colours instead of their built-in language palette. |
 
+## Threshold Alerts
+
+### Context window thresholds
+
+The `context` segment shows a fill gauge and a `used/total` token count. By
+default no thresholds are set — the count always uses the text colour.
+
+Ask the user whether they would like colour alerts as the conversation
+approaches the model's context limit:
+
+- **Recommended defaults** (from the Bottomline quick-start guide):
+  - **200,000 tokens** → warning colour with a ⚠ icon
+  - **300,000 tokens** → danger colour with a 🚫 icon
+
+If the user agrees to the recommended defaults:
+
+```bash
+tmp=$(mktemp) \
+  && jq '.segments.context = {
+    "300000": { "color": "danger",  "icon": { "nerd": "f05e", "emoji": "1f6d1" } },
+    "200000": { "color": "warning", "icon": { "nerd": "f071", "emoji": "26a0" } }
+  }' "$HOME/.claude/bottomline.json" > "$tmp" \
+  && mv "$tmp" "$HOME/.claude/bottomline.json"
+```
+
+If the user wants custom thresholds, apply them with the same structure.
+Always order keys from highest to lowest — this mirrors the evaluation order
+and keeps the file readable.
+
+Keys are token counts (quoted integers); values are
+`{ "color": "warning"|"danger"|"accent"|"text", "icon": { "nerd": "hex", "emoji": "hex" } }`.
+
+### Rate-limit usage thresholds
+
+The `usage_5h` and `usage_7d` segments show rolling rate-limit consumption as a
+percentage. By default no thresholds are set.
+
+Ask the user whether they would like colour alerts as usage climbs:
+
+- **Recommended defaults** (from the Bottomline quick-start guide):
+  - **75%** → warning colour (orange)
+  - **90%** → danger colour (red)
+
+If the user agrees to the recommended defaults:
+
+```bash
+tmp=$(mktemp) \
+  && jq '.segments.usage = {
+    "90": { "color": "danger"  },
+    "75": { "color": "warning" }
+  }' "$HOME/.claude/bottomline.json" > "$tmp" \
+  && mv "$tmp" "$HOME/.claude/bottomline.json"
+```
+
+If the user wants different percentages, apply them with the same structure.
+Always order keys from highest to lowest. Keys are percentage integers (quoted);
+values are `{ "color": "warning"|"danger"|"accent"|"text" }`.
+
+## Bars
+
+### Auto-bars
+
+Auto-bars are extra lines rendered below the main statusline when a
+language-specific signal file (e.g. `go.mod`, `package.json`,
+`sfdx-project.json`) is detected in the project root. They are **disabled by
+default**.
+
+Ask the user whether they would like to enable auto-bars:
+
+- **Yes** → also ask whether they want to suppress the `git` bar. The main
+  statusline already shows the current branch via the `git_branch` segment, so
+  most users prefer to exclude the git bar from auto-detection:
+
+  With `git` excluded (recommended):
+
+  ```bash
+  tmp=$(mktemp) \
+    && jq '.auto_bars.enabled = true | .auto_bars.disabled = ["git"]' \
+         "$HOME/.claude/bottomline.json" > "$tmp" \
+    && mv "$tmp" "$HOME/.claude/bottomline.json"
+  ```
+
+  Without any exclusions:
+
+  ```bash
+  tmp=$(mktemp) \
+    && jq '.auto_bars.enabled = true' "$HOME/.claude/bottomline.json" > "$tmp" \
+    && mv "$tmp" "$HOME/.claude/bottomline.json"
+  ```
+
+- **No** → skip; auto-bars remain off. Continue to **Explicit bars** below if
+  the user wants to add a specific bar.
+
+### Explicit bars
+
+The `bars` array lets you add specific bars that will render in every project,
+regardless of whether their signal file is present.
+
+When `auto_bars.enabled` is `true`, the bars worth adding explicitly are those
+that **will not** be auto-detected:
+
+1. **`random-facts`** — has no signal file and is never auto-detected.
+2. Any bar listed in `auto_bars.disabled` — the user has excluded it from
+   auto-detection, so it will only render if explicitly added here.
+
+**Step 1 — check what is already configured:**
+
+```bash
+jq '{bars: (.bars // []), auto_bars_disabled: (.auto_bars.disabled // [])}' \
+  "$HOME/.claude/bottomline.json"
+```
+
+**Step 2 — determine candidates:**
+
+Start from the full built-in bar list:
+`git`, `go`, `rust`, `python`, `ruby`, `java`, `swift`, `elixir`, `php`,
+`javascript`, `salesforce`, `random-facts`
+
+Remove bars already present in the `bars` array (already configured).
+
+Then keep only bars that cannot auto-detect — i.e. bars in `auto_bars.disabled`
+plus `random-facts` (which has no signal file). Present this filtered list to
+the user and ask which they would like to add.
+
+**Step 3 — add each selected bar:**
+
+For each bar the user selects, run:
+
+```bash
+tmp=$(mktemp) \
+  && jq --arg name "BARNAME" '.bars += [{"script": $name}]' \
+       "$HOME/.claude/bottomline.json" > "$tmp" \
+  && mv "$tmp" "$HOME/.claude/bottomline.json"
+```
+
+Replace `BARNAME` with the bar name (e.g. `random-facts`). Run once per bar.
+To customise a bar's colours, add a `"colors"` key: `{"script": "random-facts", "colors": {"accent": "#7c3aed"}}`, or `"colors": "inherit"` to use the main statusline palette.
+
 ## Going Further
 
 After applying configuration changes, let the user know about two extension points and offer to transition immediately if they are interested:
