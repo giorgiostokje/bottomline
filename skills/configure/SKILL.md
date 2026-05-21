@@ -1,6 +1,6 @@
 ---
 name: bottomline:configure
-description: Configures the Bottomline statusline — segments, colours, icons, themes, separators, and thresholds — at user or project level. Use whenever the user wants to change how their statusline looks or behaves, apply a colour palette (including from a brand name, mood, or visual description), choose which segments to show, set a theme, or tweak any Bottomline setting. Always use this skill rather than editing config files directly.
+description: Configures the Bottomline status line — segments, colours, icons, themes, separators, and thresholds — at user or project level. Use whenever the user wants to change how their status line looks or behaves, apply a colour palette (including from a brand name, mood, or visual description), choose which segments to show, set a theme, or tweak any Bottomline setting. Always use this skill rather than editing config files directly.
 ---
 
 # Bottomline: Configure
@@ -95,7 +95,7 @@ Keys are segment names: `model`, `effort`, `context`, `directory`, `git_branch`,
 |---|---|
 | `enabled` | Ordered array of segment names to render. Available: `model`, `effort`, `context`, `directory`, `git_branch`, `tokens_in`, `tokens_out`, `usage_5h`, `usage_7d`, `cost` |
 | `disabled` | Array of segment names to suppress (union across all config levels) |
-| `separator` | Hex codepoint (e.g. `"e0b4"`) or literal glyph for the powerline separator |
+| `separator` | Hex codepoint (e.g. `"e0b4"`) or literal glyph for the segment separator |
 | `effort` | Per-level colour/icon: `{ "xhigh": { "color": "warning", "icon": { "nerd": "f071", "emoji": "26a0" } } }` |
 | `context` | Token-count thresholds → colour/icon: `{ "200000": { "color": "warning" } }` |
 | `git_branch` | Per-branch-name colour/icon: `{ "main": { "color": "danger" } }` |
@@ -173,7 +173,7 @@ values are `{ "color": "warning"|"danger"|"accent"|"text" }`.
 
 ### Auto-bars
 
-Auto-bars are extra lines rendered below the main statusline when a
+Auto-bars are extra lines rendered below the main status line when a
 language-specific signal file (e.g. `go.mod`, `package.json`,
 `sfdx-project.json`) is detected in the project root. They are **disabled by
 default**.
@@ -181,7 +181,7 @@ default**.
 Ask the user whether they would like to enable auto-bars:
 
 - **Yes** → also ask whether they want to suppress the `git` bar. The main
-  statusline already shows the current branch via the `git_branch` segment, so
+  status line already shows the current branch via the `git_branch` segment, so
   most users prefer to exclude the git bar from auto-detection:
 
   With `git` excluded (recommended):
@@ -248,14 +248,14 @@ tmp=$(mktemp) \
 ```
 
 Replace `BARNAME` with the bar name (e.g. `random-facts`). Run once per bar.
-To customise a bar's colours, add a `"colors"` key: `{"script": "random-facts", "colors": {"accent": "#7c3aed"}}`, or `"colors": "inherit"` to use the main statusline palette.
+To customise a bar's colours, add a `"colors"` key: `{"script": "random-facts", "colors": {"accent": "#7c3aed"}}`, or `"colors": "inherit"` to use the main status line palette.
 
 ## Going Further
 
 After applying configuration changes, let the user know about two extension points and offer to transition immediately if they are interested:
 
 - **Custom theme** — create a named colour palette in the plugin's `themes/` directory. Invoke `/bottomline:create-theme` to build one.
-- **Custom bar** — add a second (or third…) line below the statusline for project-specific info. Invoke `/bottomline:create-bar` to build one.
+- **Custom bar** — add a second (or third…) line below the status line for project-specific info. Invoke `/bottomline:create-bar` to build one.
 
 If the user wants either, invoke the corresponding skill now.
 

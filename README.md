@@ -2,16 +2,16 @@
 
 [![Tests](https://github.com/giorgiostokje/bottomline/actions/workflows/tests.yml/badge.svg)](https://github.com/giorgiostokje/bottomline/actions/workflows/tests.yml)
 
-Powerline-style statusline for Claude Code. Renders a gradient bar of ANSI segments below every response, plus optional extra bars with language ecosystem info, git details, or anything you write yourself.
+Gradient status line for Claude Code. Renders a bar of ANSI segments below every response, plus optional extra bars with language ecosystem info, git details, or anything you write yourself.
 
 ---
 
 ## Features
 
-- **Main statusline** — model, effort, context usage, directory, git branch, token counts, rate limits, cost
+- **Main status line** — model, effort, context usage, directory, git branch, token counts, rate limits, cost
 - **Gradient backgrounds** — linear RGB interpolation across any number of keyframes
 - **Themes** — activate a named colour palette with one setting
-- **Bars** — one or more extra lines below the main statusline, rendered by shell scripts or defined inline in JSON
+- **Bars** — one or more extra lines below the main status line, rendered by shell scripts or defined inline in JSON
 - **Auto-bars** — bars that appear automatically when a project's signal file (e.g. `composer.json`) is detected
 - **12 built-in bars** — 11 language bars (PHP, JavaScript, Go, Python, Rust, Ruby, Java, Swift, Elixir, Salesforce, Git) plus opt-in `random-facts`
 - **Nerd Font, emoji, or text-only icons**
@@ -37,10 +37,10 @@ Add this repo as a marketplace source, then install the plugin:
 
 ```
 /plugin marketplace add giorgiostokje/bottomline
-/plugin install bottomline@giorgiostokje/bottomline
+/plugin install bottomline@bottomline
 ```
 
-Once installed, run the setup skill to wire the statusline:
+Once installed, run the setup skill to wire the status line:
 
 ```
 /bottomline:setup
@@ -82,7 +82,7 @@ This is where your personal colour, icon, and segment preferences live. Start wi
 echo '{}' | bash ~/.claude/bottomline/bottomline.sh
 ```
 
-You should see one line of ANSI powerline text. If you see nothing, run `/bottomline:debug`.
+You should see one line of ANSI status line output. If you see nothing, run `/bottomline:debug`.
 
 ### Uninstalling
 
@@ -286,8 +286,8 @@ Available segment names:
 | `context` | Context window fill gauge + `used/total` in thousands |
 | `directory` | Current project directory name (clickable link in supporting terminals) |
 | `git_branch` | Current git branch (clickable link to remote on GitHub/GitLab/Bitbucket) |
-| `tokens_in` | Input tokens for the session, with cache-read hits shown as a `+` suffix |
-| `tokens_out` | Output tokens for the session, with cache-write costs shown as a `+` suffix |
+| `tokens_in` | Freshly processed input tokens (uncached + cache-write) for the session, with cache-read hits shown as a `+` suffix |
+| `tokens_out` | Output tokens for the session |
 | `usage_5h` | 5-hour rate limit percentage + time until reset |
 | `usage_7d` | 7-day rate limit percentage + time until reset |
 | `cost` | Estimated session cost (Sonnet/Opus/Haiku pricing) |
@@ -302,7 +302,7 @@ Available segment names:
 
 #### Separator
 
-Override the powerline separator glyph with a 4–5 hex codepoint string or a literal character:
+Override the separator glyph with a 4–5 hex codepoint string or a literal character:
 
 ```json
 { "segments": { "separator": "e0b0" } }
@@ -366,7 +366,7 @@ Override the powerline separator glyph with a 4–5 hex codepoint string or a li
 
 ### Bars
 
-A bar is an additional line rendered below the main statusline. Bars are defined in the `bars` array. Each entry is either a **script bar** (runs a shell script) or an **inline segment bar** (defined entirely in JSON).
+A bar is an additional line rendered below the main status line. Bars are defined in the `bars` array. Each entry is either a **script bar** (runs a shell script) or an **inline segment bar** (defined entirely in JSON).
 
 #### Script bars
 
@@ -607,7 +607,7 @@ All keys, their types, and which config files they belong in.
 | `appearance.icons.overrides` | `{ "name": "codepoint" }` | Per-segment icon overrides |
 | `segments.enabled` | `string[]` | Ordered list of segments to render |
 | `segments.disabled` | `string[]` | Segments to suppress (unioned across config levels) |
-| `segments.separator` | `string` | Powerline separator — 4–5 hex codepoint or literal glyph |
+| `segments.separator` | `string` | Segment separator — 4–5 hex codepoint or literal glyph |
 | `segments.effort` | `{ "level": { "color", "icon" } }` | Per-effort-level colour and icon |
 | `segments.context` | `{ "threshold": { "color", "icon" } }` | Token-count thresholds → colour/icon |
 | `segments.git_branch` | `{ "branch": { "color", "icon" } }` | Per-branch-name colour and icon |
@@ -632,7 +632,7 @@ All keys, their types, and which config files they belong in.
 
 ## Writing a custom bar
 
-Bar scripts are standalone Bash files that write ANSI powerline segments to stdout using the shared `add_seg` / `flush` helpers.
+Bar scripts are standalone Bash files that write ANSI segments to stdout using the shared `add_seg` / `flush` helpers.
 
 **Template:**
 
@@ -688,7 +688,7 @@ bats --recursive tests/
 # Just unit tests
 bats tests/unit/
 
-# Just integration tests (main statusline)
+# Just integration tests (main status line)
 bats tests/integration/config.bats tests/integration/segments.bats
 
 # Just bar tests
@@ -704,7 +704,7 @@ tests/
 │   ├── fmt.bats                    # fmt_n, fmt_k, fmt_remaining
 │   └── decode_icon.bats            # decode_icon hex→Unicode
 └── integration/
-    ├── segments.bats               # Main statusline segment rendering
+    ├── segments.bats               # Main status line segment rendering
     ├── config.bats                 # Three-layer config merge, themes, thresholds
     └── bars/
         ├── git.bats                # Git enrichment bar

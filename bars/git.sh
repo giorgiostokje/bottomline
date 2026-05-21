@@ -18,7 +18,7 @@ fi
 
 case "$BOTTOMLINE_ICON_TYPE" in
   nerd)
-    IC_BRANCH=$'\xee\x82\xa0'    # U+E0A0  nf-powerline-branch
+    IC_BRANCH=$'\xee\x82\xa0'    # U+E0A0  nf-branch
     IC_WORKTREE=$'\xee\x9c\xa7'  # U+E727  nf-dev-git_branch
     IC_CHANGES=$'\xef\x81\x84'   # U+F044  nf-fa-pencil
     IC_STASH=$'\xef\x86\x87'     # U+F187  nf-fa-archive

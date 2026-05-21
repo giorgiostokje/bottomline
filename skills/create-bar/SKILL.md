@@ -1,6 +1,6 @@
 ---
 name: bottomline:create-bar
-description: Creates a new Bottomline bar script — an additional line rendered below the main statusline that displays custom project-specific information. Use when the user wants to add a second (or third) status line, surface project data like language version or build status, or build a reusable built-in bar for the Bottomline plugin.
+description: Creates a new Bottomline bar script — an additional line rendered below the main status line that displays custom project-specific information. Use when the user wants to add a second (or third) status line, surface project data like language version or build status, or build a reusable built-in bar for the Bottomline plugin.
 ---
 
 # Bottomline: Create a Bar
@@ -10,8 +10,8 @@ new built-in bar for the plugin.
 
 ## What is a Bar?
 
-A bar is a second (or third, fourth…) line rendered below the main statusline.
-Each bar is a standalone Bash script that writes ANSI-coloured powerline
+A bar is a second (or third, fourth…) line rendered below the main status line.
+Each bar is a standalone Bash script that writes ANSI-coloured
 segments to stdout via the shared `add_seg`/`flush` helpers.
 
 ## Bar Script Template
@@ -57,7 +57,7 @@ After `source "$BOTTOMLINE_LIB/helpers.sh"` these are ready to use:
 | `FG_CRIT` | ANSI escape for the danger colour |
 | `R` | ANSI reset |
 | `B` | ANSI bold |
-| `SEP` | Powerline separator glyph |
+| `SEP` | Separator glyph |
 
 ## Available Env Vars (from bottomline.sh)
 

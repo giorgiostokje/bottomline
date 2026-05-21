@@ -17,19 +17,19 @@ bats tests/integration/
 # Single test file
 bats tests/unit/fmt.bats
 
-# Smoke-test the statusline (should print one ANSI-coloured powerline line)
+# Smoke-test the status line (should print one ANSI-coloured status line)
 echo '{}' | bash bottomline.sh
 ```
 
 ## Architecture
 
-Bottomline is a Claude Code statusline plugin. `bottomline.sh` is invoked by Claude Code on each refresh; it reads the Claude Code JSON payload from stdin, loads config, renders ANSI output to stdout, and exits. No daemon, no state.
+Bottomline is a Claude Code status line plugin. `bottomline.sh` is invoked by Claude Code on each refresh; it reads the Claude Code JSON payload from stdin, loads config, renders ANSI output to stdout, and exits. No daemon, no state.
 
 ### Rendering pipeline
 
 `bottomline.sh` does two things in sequence:
 
-1. **Main statusline** — calls `seg()` to accumulate segment strings, then `flush()` to emit them with gradient background colours. Each call to `flush` expands the background config (a hex string or keyframe array) to exactly N stops via piecewise linear RGB interpolation in awk, so gradient endpoints always align with the first and last segment regardless of how many segments are present.
+1. **Main status line** — calls `seg()` to accumulate segment strings, then `flush()` to emit them with gradient background colours. Each call to `flush` expands the background config (a hex string or keyframe array) to exactly N stops via piecewise linear RGB interpolation in awk, so gradient endpoints always align with the first and last segment regardless of how many segments are present.
 
 2. **Bars** — after the main line, `bottomline.sh` iterates `CFG_BARS`. Each entry is rendered one of two ways:
    - **Script bar** (`"script"` key) — invoked in a subshell with `BOTTOMLINE_*` env vars. The script sources `lib/helpers.sh` and calls `seg()`/`flush()` itself.
@@ -78,7 +78,7 @@ End-user skills live in `skills/` and are exposed as `/bottomline:<name>` in Cla
 |---|---|
 | `setup` | Wire `statusLine` in settings.json, create user config, verify |
 | `configure` | Guide segment, colour, theme, and icon configuration |
-| `debug` | Diagnose a non-rendering statusline |
+| `debug` | Diagnose a non-rendering status line |
 | `create-bar` | Scaffold a new bar script |
 | `create-theme` | Scaffold a new theme JSON file |
 

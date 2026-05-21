@@ -1,11 +1,11 @@
 ---
 name: bottomline:debug
-description: Diagnoses and fixes Bottomline statusline problems — blank output, missing bars, wrong colours, icon boxes, config merge failures, and invalid config values. Use whenever the Bottomline statusline isn't working as expected, a setting doesn't seem to take effect, or the output looks wrong. Always use this skill before manually editing scripts or config files to troubleshoot.
+description: Diagnoses and fixes Bottomline status line problems — blank output, missing bars, wrong colours, icon boxes, config merge failures, and invalid config values. Use whenever the Bottomline status line isn't working as expected, a setting doesn't seem to take effect, or the output looks wrong. Always use this skill before manually editing scripts or config files to troubleshoot.
 ---
 
 # Bottomline: Debug
 
-Use this skill when the statusline produces no output, icons render as boxes,
+Use this skill when the status line produces no output, icons render as boxes,
 a bar is missing, colours are wrong, or the statusLine command isn't firing.
 
 ## Detect plugin path
@@ -50,7 +50,7 @@ Test it:
 echo '{}' | bash "$HOME/.claude/bottomline.sh"
 ```
 
-- **Output appears:** the shim works. If the statusline still doesn't render in
+- **Output appears:** the shim works. If the status line still doesn't render in
   Claude Code, try restarting Claude Code; otherwise check hook wiring (step 3).
 - **No output:** continue below to diagnose the silent failure.
 
@@ -131,7 +131,7 @@ to do it themselves, then use the appropriate command:
 | none | Direct to <https://jqlang.github.io/jq/download/> and wait. |
 
 All config loading silently produces no output when jq is absent — this is the
-most common cause of a blank statusline.
+most common cause of a blank status line.
 
 ## 5. Icon boxes
 

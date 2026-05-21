@@ -7,10 +7,11 @@
 *.swp
 
 # bats temp files
-/tmp/
+tmp/
 
-# Local dev settings (contains absolute paths and machine-specific config)
+# Local dev settings
 .claude/settings.local.json
 
-# Internal design docs — not part of the plugin distribution
-docs/
+# Internal design docs
+.superpowers
+docs/superpowers/

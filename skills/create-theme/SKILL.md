@@ -1,6 +1,6 @@
 ---
 name: bottomline:create-theme
-description: Creates a new named colour theme for the Bottomline statusline. Use when the user wants to save a colour palette as a reusable theme file, design a theme inspired by a brand or aesthetic, or make a colour scheme that can be activated across projects with a single setting.
+description: Creates a new named colour theme for the Bottomline status line. Use when the user wants to save a colour palette as a reusable theme file, design a theme inspired by a brand or aesthetic, or make a colour scheme that can be activated across projects with a single setting.
 ---
 
 # Bottomline: Create a Theme

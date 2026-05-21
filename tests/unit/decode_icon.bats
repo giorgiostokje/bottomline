@@ -20,7 +20,7 @@ source "$BOTTOMLINE_ROOT/lib/functions.sh"
   [ "$output" = "🛑" ]
 }
 
-@test "decode_icon: e0b4 decodes to powerline right-rounded-separator" {
+@test "decode_icon: e0b4 decodes to right-rounded separator glyph" {
   expected=$(printf '\xee\x82\xb4')   # U+E0B4
   run decode_icon "e0b4"
   [ "$output" = "$expected" ]

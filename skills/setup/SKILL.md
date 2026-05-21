@@ -1,6 +1,6 @@
 ---
 name: bottomline:setup
-description: Installs, verifies, and uninstalls the Bottomline powerline statusline plugin for Claude Code. Use when a user wants to install Bottomline for the first time, something isn't showing up after installation, or they want to uninstall it. Also use when the user mentions setting up the statusline, running the initial install, or removing Bottomline.
+description: Installs, verifies, and uninstalls the Bottomline status line plugin for Claude Code. Use when a user wants to install Bottomline for the first time, something isn't showing up after installation, or they want to uninstall it. Also use when the user mentions setting up the status line, running the initial install, or removing Bottomline.
 ---
 
 # Bottomline: Setup
@@ -216,7 +216,7 @@ Skip this step if they have a Nerd Font installed.
 echo '{}' | bash "$BL_DIR/bottomline.sh"
 ```
 
-Expected: one line of ANSI-coloured powerline text. If you see nothing, run the
+Expected: one line of ANSI-coloured status line output. If you see nothing, run the
 **debug** skill.
 
 For Marketplace installs, also verify the stable launcher shim — this is the
