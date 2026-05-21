@@ -12,6 +12,7 @@ has_pyproject=false has_requirements=false has_pipfile=false has_setup=false
 [[ -f "$PROJ/setup.py" ]]         && has_setup=true
 $has_pyproject || $has_requirements || $has_pipfile || $has_setup || exit 0
 
+# shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then

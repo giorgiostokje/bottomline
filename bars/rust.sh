@@ -5,6 +5,7 @@
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" || ! -f "$PROJ/Cargo.toml" ]] && exit 0
 
+# shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
@@ -39,7 +40,7 @@ grep -q '^\[workspace\]' "$PROJ/Cargo.toml" && is_workspace=true
 # ── Rust runtime ──────────────────────────────────────────────────────────────
 rust_seg="${FG_ACCENT}${IC_RUST} ${FG_TEXT}Rust"
 [[ -n "$edition" ]] && rust_seg+=" ${FG_ACCENT}${edition}"
-$is_workspace && rust_seg+=" ${FG_TEXT}(workspace)"
+$is_workspace && rust_seg+=" ${FG_ACCENT}${IC_WORKSPACE}${FG_TEXT} workspace"
 add_seg "$rust_seg"
 
 (( ${#_sc[@]} == 0 )) && exit 0

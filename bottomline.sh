@@ -27,6 +27,7 @@ EM_WARN='⚠'   EM_DANGER='🛑'
 
 # ── Pure utilities ────────────────────────────────────────────────────────────
 _BL_DIR="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+# shellcheck source=lib/functions.sh
 source "$_BL_DIR/lib/functions.sh"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -39,7 +40,7 @@ hex_to_rgb() {
   printf '%d %d %d' "$((16#${h:0:2}))" "$((16#${h:2:2}))" "$((16#${h:4:2}))"
 }
 
-make_fg() { local r g b; read -r r g b <<< "$1"; fg3 $r $g $b; }
+make_fg() { local r g b; read -r r g b <<< "$1"; fg3 "$r" "$g" "$b"; }
 
 secs_until_reset() {
   local val="$1"; [[ -z "$val" ]] && return
@@ -216,7 +217,7 @@ declare -a C_R C_G C_B
 for _i in $(seq 0 7); do
   _hex=$(printf '%s' "$CFG_BG_EXP" | jq -r ".[$_i]" 2>/dev/null)
   [[ -z "$_hex" ]] && _hex='#0F0F0F'
-  read -r C_R[$_i] C_G[$_i] C_B[$_i] <<< "$(hex_to_rgb "$_hex")"
+  read -r "C_R[$_i]" "C_G[$_i]" "C_B[$_i]" <<< "$(hex_to_rgb "$_hex")"
 done
 unset _i _hex
 
@@ -258,7 +259,7 @@ IC_MODEL=$(get_icon model)         IC_EFFORT=$(get_icon effort)       IC_CONTEXT
 IC_DIRECTORY=$(get_icon directory) IC_GIT_BRANCH=$(get_icon git_branch)
 IC_TOKENS_IN=$(get_icon tokens_in) IC_TOKENS_OUT=$(get_icon tokens_out)
 IC_USAGE_5H=$(get_icon usage_5h)   IC_USAGE_7D=$(get_icon usage_7d)
-IC_COST=$(get_icon cost)           IC_WARN=$(get_icon warn)           IC_DANGER=$(get_icon danger)
+IC_COST=$(get_icon cost)           IC_DANGER=$(get_icon danger)
 
 # Resolve segments.separator — reuses decode_icon for hex codepoint support.
 [[ -n "$CFG_SEP_RAW" ]] && SEP=$(decode_icon "$CFG_SEP_RAW")
@@ -349,11 +350,11 @@ flush() {
   done
   for ((i=0; i<n; i++)); do
     r=${fr[$i]} g=${fg[$i]} b=${fb[$i]}
-    printf '%s' "$(bg3 $r $g $b) ${B}${_sc[$i]}$(bg3 $r $g $b) "
+    printf '%s' "$(bg3 "$r" "$g" "$b") ${B}${_sc[$i]}$(bg3 "$r" "$g" "$b") "
     if (( i + 1 < n )); then
-      printf '%s' "$(fg3 $r $g $b)$(bg3 ${fr[$((i+1))]} ${fg[$((i+1))]} ${fb[$((i+1))]})${SEP}"
+      printf '%s' "$(fg3 "$r" "$g" "$b")$(bg3 "${fr[$((i+1))]}" "${fg[$((i+1))]}" "${fb[$((i+1))]}")${SEP}"
     else
-      printf '%s' "${R}$(fg3 $r $g $b)${SEP}${R}"
+      printf '%s' "${R}$(fg3 "$r" "$g" "$b")${SEP}${R}"
     fi
   done
 }
@@ -476,7 +477,7 @@ build_branch() {
 build_tokens_in() {
   local base=$(( sum_in + sum_cache_create ))
   (( base + sum_cache_read <= 0 )) && return
-  local tok="${FG_ACCENT}${IC_TOKENS_IN} ${FG_TEXT}$(fmt_n "$base")"
+  local tok; tok="${FG_ACCENT}${IC_TOKENS_IN} ${FG_TEXT}$(fmt_n "$base")"
   (( sum_cache_read > 0 )) && tok+="${FG_ACCENT}+$(fmt_n "$sum_cache_read")"
   add_seg "$tok"
 }
@@ -664,13 +665,21 @@ if (( bar_count > 0 )); then
         if [[ "$_colors_type" == "object" ]]; then
           export BOTTOMLINE_BAR_COLORS=1
           _v=$(printf '%s' "$bar" | jq -r '.colors.text       // empty')
-          [[ -n "$_v" ]] && export BOTTOMLINE_TEXT_HEX="$(resolve_color_hex "$_v")"
+          if [[ -n "$_v" ]]; then
+            BOTTOMLINE_TEXT_HEX=$(resolve_color_hex "$_v"); export BOTTOMLINE_TEXT_HEX
+          fi
           _v=$(printf '%s' "$bar" | jq -r '.colors.accent     // empty')
-          [[ -n "$_v" ]] && export BOTTOMLINE_ACCENT_HEX="$(resolve_color_hex "$_v")"
+          if [[ -n "$_v" ]]; then
+            BOTTOMLINE_ACCENT_HEX=$(resolve_color_hex "$_v"); export BOTTOMLINE_ACCENT_HEX
+          fi
           _v=$(printf '%s' "$bar" | jq -r '.colors.warning    // empty')
-          [[ -n "$_v" ]] && export BOTTOMLINE_WARN_HEX="$(resolve_color_hex "$_v")"
+          if [[ -n "$_v" ]]; then
+            BOTTOMLINE_WARN_HEX=$(resolve_color_hex "$_v"); export BOTTOMLINE_WARN_HEX
+          fi
           _v=$(printf '%s' "$bar" | jq -r '.colors.danger     // empty')
-          [[ -n "$_v" ]] && export BOTTOMLINE_DANGER_HEX="$(resolve_color_hex "$_v")"
+          if [[ -n "$_v" ]]; then
+            BOTTOMLINE_DANGER_HEX=$(resolve_color_hex "$_v"); export BOTTOMLINE_DANGER_HEX
+          fi
           _bg_raw=$(printf '%s' "$bar" | jq -c '.colors.background // empty')
           if [[ -n "$_bg_raw" ]]; then
             if [[ "$(printf '%s' "$_bg_raw" | jq -r 'type' 2>/dev/null)" == "array" ]]; then

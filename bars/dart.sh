@@ -5,6 +5,7 @@
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" || ! -f "$PROJ/pubspec.yaml" ]] && exit 0
 
+# shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 # ── Palette (Dart brand blue) ─────────────────────────────────────────────────

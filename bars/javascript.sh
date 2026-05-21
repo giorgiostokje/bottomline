@@ -5,6 +5,7 @@
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" || ! -f "$PROJ/package.json" ]] && exit 0
 
+# shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then

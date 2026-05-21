@@ -2,6 +2,7 @@
 # Bottomline bar: random fact bar
 # Colors are fully dictated by the bar's config — no hardcoded fallbacks.
 
+# shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 case "$BOTTOMLINE_ICON_TYPE" in
   nerd)  IC_FACT=$'\xef\x83\xab' ;;

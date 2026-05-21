@@ -1,0 +1,5 @@
+shell=bash
+# SC1003: false positive on OSC terminal escape sequences (\e\\ used in printf format strings)
+disable=SC1003
+# Allow source directives to be resolved relative to the project root
+source-path=.

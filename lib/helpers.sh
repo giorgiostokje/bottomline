@@ -6,7 +6,7 @@
 # ── ANSI primitives ───────────────────────────────────────────────────────────
 bg3()     { printf '\e[48;2;%d;%d;%dm' "$1" "$2" "$3"; }
 fg3()     { printf '\e[38;2;%d;%d;%dm' "$1" "$2" "$3"; }
-make_fg() { local r g b; read -r r g b <<< "$1"; fg3 $r $g $b; }
+make_fg() { local r g b; read -r r g b <<< "$1"; fg3 "$r" "$g" "$b"; }
 
 hex_to_rgb() {
   local h="${1#'#'}"
@@ -89,11 +89,11 @@ flush() {
   done
   for ((i=0; i<n; i++)); do
     local r=${fr[$i]} g=${fg[$i]} b=${fb[$i]}
-    printf '%s' "$(bg3 $r $g $b) ${B}${_sc[$i]}$(bg3 $r $g $b) "
+    printf '%s' "$(bg3 "$r" "$g" "$b") ${B}${_sc[$i]}$(bg3 "$r" "$g" "$b") "
     if (( i + 1 < n )); then
-      printf '%s' "$(fg3 $r $g $b)$(bg3 ${fr[$((i+1))]} ${fg[$((i+1))]} ${fb[$((i+1))]})${SEP}"
+      printf '%s' "$(fg3 "$r" "$g" "$b")$(bg3 "${fr[$((i+1))]}" "${fg[$((i+1))]}" "${fb[$((i+1))]}")${SEP}"
     else
-      printf '%s' "${R}$(fg3 $r $g $b)${SEP}${R}"
+      printf '%s' "${R}$(fg3 "$r" "$g" "$b")${SEP}${R}"
     fi
   done
 }
@@ -102,7 +102,11 @@ flush() {
 R="$BOTTOMLINE_RESET"
 B="$BOTTOMLINE_BOLD"
 SEP="$BOTTOMLINE_SEP"
+# shellcheck disable=SC2034  # used by scripts that source this file
 FG_TEXT=$(make_fg   "$(hex_to_rgb "$BOTTOMLINE_TEXT_HEX")")
+# shellcheck disable=SC2034
 FG_ACCENT=$(make_fg "$(hex_to_rgb "$BOTTOMLINE_ACCENT_HEX")")
+# shellcheck disable=SC2034
 FG_WARN=$(make_fg   "$(hex_to_rgb "${BOTTOMLINE_WARN_HEX:-#f4a261}")")
+# shellcheck disable=SC2034
 FG_CRIT=$(make_fg   "$(hex_to_rgb "${BOTTOMLINE_DANGER_HEX:-#e05a4e}")")

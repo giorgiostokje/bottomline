@@ -14,6 +14,7 @@ shopt -u nullglob
   && ! -f "$PROJ/Directory.Build.props" \
   && ! -f "$PROJ/Directory.Build.targets" ]] && exit 0
 
+# shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 # ── Palette (.NET brand purple) ───────────────────────────────────────────────

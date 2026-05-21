@@ -5,6 +5,7 @@
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" || ! -f "$PROJ/go.mod" ]] && exit 0
 
+# shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
@@ -39,7 +40,7 @@ is_workspace=false
 # ── Go runtime ────────────────────────────────────────────────────────────────
 go_seg="${FG_ACCENT}${IC_GO} ${FG_TEXT}Go"
 [[ -n "$go_version" ]] && go_seg+=" ${FG_ACCENT}v${go_version}"
-$is_workspace && go_seg+=" ${FG_TEXT}(workspace)"
+$is_workspace && go_seg+=" ${FG_ACCENT}${IC_WORKSPACE}${FG_TEXT} workspace"
 add_seg "$go_seg"
 
 (( ${#_sc[@]} == 0 )) && exit 0

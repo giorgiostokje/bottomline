@@ -7,6 +7,18 @@ on:
     branches: [main]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get update -q && sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck
+        run: shellcheck bottomline.sh lib/functions.sh lib/helpers.sh bars/*.sh
+
   test:
     runs-on: ubuntu-latest
 

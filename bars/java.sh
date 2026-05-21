@@ -11,6 +11,7 @@ has_maven=false has_gradle=false
 [[ -f "$PROJ/build.gradle.kts" ]]    && has_gradle=true
 $has_maven || $has_gradle || exit 0
 
+# shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
@@ -23,15 +24,13 @@ fi
 
 case "$BOTTOMLINE_ICON_TYPE" in
   nerd)
-    IC_JAVA=$'\xee\x9c\xb8'      # U+E738  nf-dev-java
-    IC_MAVEN=$'\xee\x9c\xb8'     # U+E738  nf-dev-java  (no dedicated Maven glyph)
+    IC_MAVEN=$'\xee\x9c\xb8'     # U+E738  nf-dev-java
     IC_GRADLE=$'\xef\x80\x93'    # U+F013  nf-fa-cog
     IC_SPRING=$'\xef\x81\xac'    # U+F06C  nf-fa-leaf  (Spring's leaf logo)
     IC_QUARKUS=$'\xef\x84\xb5'   # U+F135  nf-fa-rocket
     IC_MICRONAUT=$'\xef\x83\xa7' # U+F0E7  nf-fa-bolt
     ;;
   emoji)
-    IC_JAVA='☕'
     IC_MAVEN='📦'
     IC_GRADLE='🐘'
     IC_SPRING='🌱'
@@ -39,7 +38,7 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_MICRONAUT='⚡'
     ;;
   *)
-    IC_JAVA='' IC_MAVEN='' IC_GRADLE='' IC_SPRING='' IC_QUARKUS='' IC_MICRONAUT=''
+    IC_MAVEN='' IC_GRADLE='' IC_SPRING='' IC_QUARKUS='' IC_MICRONAUT=''
     ;;
 esac
 
