@@ -104,9 +104,10 @@ flush() {
 # Usage: bl_cache_path <bar_name> <ttl_mins> <proj_dir>
 bl_cache_path() {
   local name="$1" ttl="${2:-5}" proj="$3"
-  local bucket=$(( $(date +%s) / (ttl * 60) ))
+  local bucket
+  bucket=$(( $(date +%s) / (ttl * 60) ))
   local hash
-  hash=$(printf '%s' "$proj" | md5 | cut -c1-8)
+  hash=$(printf '%s' "$proj" | (md5sum 2>/dev/null || md5) | cut -c1-8)
   printf '/tmp/bl_%s_%s_%s.txt' "$name" "$hash" "$bucket"
 }
 

@@ -48,7 +48,7 @@ setup() {
 }
 
 @test "bl_cache_write: removes stale files for same bar and project" {
-  local hash; hash=$(printf '%s' "/some/project" | md5 | cut -c1-8)
+  local hash; hash=$(printf '%s' "/some/project" | (md5sum 2>/dev/null || md5) | cut -c1-8)
   local stale="/tmp/bl_go_${hash}_1.txt"
   printf 'stale' > "$stale"
   local cache_file; cache_file=$(bl_cache_path "go" 5 "/some/project")
