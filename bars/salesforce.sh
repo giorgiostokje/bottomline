@@ -74,6 +74,9 @@ if [[ -n "$target_org" ]]; then
   elif [[ -f "$HOME/.sf/alias.json" ]]; then
     username=$(jq -r --arg a "$target_org" '.orgs[$a] // empty' \
       "$HOME/.sf/alias.json" 2>/dev/null)
+  elif [[ -f "$HOME/.sfdx/alias.json" ]]; then
+    username=$(jq -r --arg a "$target_org" '.orgs[$a] // empty' \
+      "$HOME/.sfdx/alias.json" 2>/dev/null)
   fi
   # Legacy: ~/.sfdx/<alias>.json
   if [[ -z "$username" && -f "$HOME/.sfdx/${target_org}.json" ]]; then

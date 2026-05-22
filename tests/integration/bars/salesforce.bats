@@ -111,6 +111,34 @@ EOF
   [[ "$BAR_OUTPUT" != *"ns:"* ]]
 }
 
+@test "salesforce: resolves alias to username via legacy ~/.sfdx/alias.json" {
+  _minimal_sfdx_json
+  local fake_home
+  fake_home=$(mktemp -d)
+  mkdir -p "$fake_home/.sf" "$fake_home/.sfdx"
+  printf '{"target-org":"staging"}\n'                          > "$fake_home/.sf/config.json"
+  printf '{"orgs":{"staging":"user@example.com.staging"}}\n'  > "$fake_home/.sfdx/alias.json"
+  BAR_OUTPUT_RAW=$(
+    HOME="$fake_home" \
+    BOTTOMLINE_PROJECT_DIR="$FAKE_PROJ" \
+    BOTTOMLINE_LIB="$BOTTOMLINE_ROOT/lib" \
+    BOTTOMLINE_ICON_TYPE=none \
+    BOTTOMLINE_GRADIENT='"#1a1a1a"' \
+    BOTTOMLINE_BAR_COLORS= \
+    BOTTOMLINE_BG_R=26 BOTTOMLINE_BG_G=26 BOTTOMLINE_BG_B=26 \
+    BOTTOMLINE_SEP='|' \
+    BOTTOMLINE_BOLD='' BOTTOMLINE_RESET='' \
+    BOTTOMLINE_TEXT_HEX='#e2d5c3' \
+    BOTTOMLINE_ACCENT_HEX='#da7756' \
+    BOTTOMLINE_WARN_HEX='#f4a261' \
+    BOTTOMLINE_DANGER_HEX='#e05a4e' \
+    bash "$BOTTOMLINE_ROOT/bars/salesforce.sh"
+  )
+  BAR_OUTPUT=$(printf '%s' "$BAR_OUTPUT_RAW" | strip_ansi)
+  rm -rf "$fake_home"
+  [[ "$BAR_OUTPUT" == *"user@example.com.staging"* ]]
+}
+
 @test "salesforce: shows username directly when target-org is an email" {
   _minimal_sfdx_json
   mkdir -p "$FAKE_PROJ/.sf"
