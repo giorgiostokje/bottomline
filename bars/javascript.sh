@@ -186,16 +186,16 @@ $has_electron && js_seg "$IC_ELECTRON" "Electron" "electron"
 $has_ts && js_seg "$IC_TS" "TypeScript" "typescript"
 
 # Slot 5: Testing
-$has_jest       && seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Jest"
-$has_vitest     && seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Vitest"
-$has_playwright && seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Playwright"
-$has_cypress    && seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Cypress"
+$has_jest       && js_seg "$IC_TEST" "Jest" "jest"
+$has_vitest     && js_seg "$IC_TEST" "Vitest" "vitest"
+$has_playwright && js_seg "$IC_TEST" "Playwright" "@playwright/test"
+$has_cypress    && js_seg "$IC_TEST" "Cypress" "cypress"
 
 # Slot 6: Tooling
-$has_tailwind && seg "${FG_ACCENT}${IC_CSS} ${FG_TEXT}Tailwind"
-$has_eslint   && seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}ESLint"
-$has_prettier && seg "${FG_ACCENT}${IC_FMT} ${FG_TEXT}Prettier"
-$has_biome    && seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}Biome"
+$has_eslint   && js_seg "$IC_LINT" "ESLint"       "eslint"
+$has_prettier && js_seg "$IC_FMT"  "Prettier"     "prettier"
+$has_biome    && js_seg "$IC_LINT" "Biome"        "@biomejs/biome"
+$has_tailwind && js_seg "$IC_CSS"  "Tailwind CSS" "tailwindcss"
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"
