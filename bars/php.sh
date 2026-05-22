@@ -214,12 +214,6 @@ elif [[ -n "$phpunit_version" ]]; then
   add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}PHPUnit ${FG_ACCENT}v${phpunit_version}"
 fi
 
-# ── Herd local URL ────────────────────────────────────────────────────────────
-if [[ -n "$herd_url" ]]; then
-  herd_label="${FG_ACCENT}${IC_HERD} ${FG_TEXT}$(link "$herd_url" "${herd_site}.test")"
-  add_seg "$herd_label"
-fi
-
 # ── Static analysis (slot 6) ──────────────────────────────────────────────
 if [[ -n "$phpstan_version" ]]; then
   if [[ "$phpstan_version" == 'present' ]]; then
@@ -230,10 +224,16 @@ if [[ -n "$phpstan_version" ]]; then
 fi
 if [[ -n "$csfixer_version" ]]; then
   if [[ "$csfixer_version" == 'present' ]]; then
-    add_seg "${FG_ACCENT}${IC_CSFIXER} ${FG_TEXT}CS-Fixer"
+    add_seg "${FG_ACCENT}${IC_CSFIXER} ${FG_TEXT}PHP CS Fixer"
   else
-    add_seg "${FG_ACCENT}${IC_CSFIXER} ${FG_TEXT}CS-Fixer ${FG_ACCENT}v${csfixer_version}"
+    add_seg "${FG_ACCENT}${IC_CSFIXER} ${FG_TEXT}PHP CS Fixer ${FG_ACCENT}v${csfixer_version}"
   fi
+fi
+
+# ── Herd local URL ────────────────────────────────────────────────────────────
+if [[ -n "$herd_url" ]]; then
+  herd_label="${FG_ACCENT}${IC_HERD} ${FG_TEXT}$(link "$herd_url" "${herd_site}.test")"
+  add_seg "$herd_label"
 fi
 
 (( ${#_sc[@]} == 0 )) && exit 0
