@@ -98,3 +98,61 @@ teardown() { teardown_fake_proj; }
   bar_run javascript "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"Biome"* ]]
 }
+
+@test "javascript: renders Node version from .node-version file" {
+  printf '18.20.0\n' > "$FAKE_PROJ/.node-version"
+  printf '{"name":"x"}\n' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"18"* ]]
+}
+
+@test "javascript: renders Node version from engines.node in package.json" {
+  printf '{"engines":{"node":">=20.0.0"}}\n' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"20"* ]]
+}
+
+@test "javascript: npm detected from package-lock.json" {
+  printf '{"name":"x"}\n' > "$FAKE_PROJ/package.json"
+  printf '{"lockfileVersion":3}\n' > "$FAKE_PROJ/package-lock.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"npm"* ]]
+}
+
+@test "javascript: bun detected from bun.lockb" {
+  printf '{"name":"x"}\n' > "$FAKE_PROJ/package.json"
+  printf '' > "$FAKE_PROJ/bun.lockb"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"bun"* ]]
+}
+
+@test "javascript: Jest detected from package.json deps" {
+  printf '%s\n' '{"devDependencies":{"jest":"^29.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Jest"* ]]
+}
+
+@test "javascript: Cypress detected from package.json deps" {
+  printf '%s\n' '{"devDependencies":{"cypress":"^13.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Cypress"* ]]
+}
+
+@test "javascript: ESLint detected from config file (.eslintrc.json)" {
+  printf '{"name":"x"}\n' > "$FAKE_PROJ/package.json"
+  printf '{}' > "$FAKE_PROJ/.eslintrc.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"ESLint"* ]]
+}
+
+@test "javascript: Prettier detected from package.json dep" {
+  printf '%s\n' '{"devDependencies":{"prettier":"^3.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Prettier"* ]]
+}
+
+@test "javascript: Biome detected from package.json dep" {
+  printf '%s\n' '{"devDependencies":{"@biomejs/biome":"^1.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Biome"* ]]
+}
