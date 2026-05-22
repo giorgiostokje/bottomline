@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bottomline — Bar &amp; Segment Reference</title>
+  <meta name="description" content="Complete reference for Bottomline Claude Code status line plugin: main-line segments, bar anatomy, slot ordering, and every built-in ecosystem bar.">
+
+  <!-- Base monospace font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Nerd Fonts Symbols overlay — supplies private-use-area glyphs (U+E000–F8FF) */
+    @font-face {
+      font-family: 'Symbols Nerd Font';
+      src: url('https://cdn.jsdelivr.net/gh/ryanoasis/nerd-fonts@v3.2.1/patched-fonts/NerdFontsSymbolsOnly/SymbolsNerdFont-Regular.ttf') format('truetype');
+      unicode-range: U+E000-F8FF, U+100000-10FFFF;
+      font-display: swap;
+    }
+
+    :root {
+      --bg:      #0f0f0f;
+      --surface: #171717;
+      --border:  #2a2a2a;
+      --fg:      #d4d0c8;
+      --dim:     #7a7672;
+      --accent:  #da7756;
+      --code-bg: #1a1a1a;
+      --r: 6px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 14px; }
+
+    body {
+      font-family: 'JetBrains Mono', 'Symbols Nerd Font', monospace;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.65;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 20px 100px;
+    }
+
+    /* ── Typography ─────────────────────────────────────────────────────────── */
+    h1 { font-size: 1.8rem; color: var(--accent); margin: 48px 0 6px; }
+    h1 .sub { font-size: 0.9rem; color: var(--dim); font-weight: 400; display: block; margin-top: 4px; }
+    h2 { font-size: 1.15rem; color: var(--accent); margin: 2.8em 0 0.7em;
+         border-bottom: 1px solid var(--border); padding-bottom: 0.35em; }
+    h3 { font-size: 1rem; color: #e0d0b8; margin: 2em 0 0.5em; }
+    h4 { font-size: 0.8rem; color: var(--dim); text-transform: uppercase;
+         letter-spacing: .07em; margin: 1.4em 0 0.4em; }
+    p  { margin-bottom: .9em; }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    code {
+      background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: 3px; padding: .1em .35em; font-size: .88em;
+    }
+    pre {
+      background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: var(--r); padding: .9em 1.1em; overflow-x: auto;
+      font-size: .85em; line-height: 1.5; margin-bottom: 1.2em;
+    }
+    pre code { background: none; border: none; padding: 0; }
+
+    ul { margin: 0 0 .9em 1.4em; }
+    li { margin-bottom: .25em; }
+
+    /* ── Tables ─────────────────────────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; font-size: .88em; margin-bottom: 1.4em; }
+    th {
+      text-align: left; padding: 5px 10px;
+      background: var(--surface); border-bottom: 2px solid var(--border);
+      color: var(--dim); font-size: .78em; text-transform: uppercase; letter-spacing: .06em;
+    }
+    td { padding: 5px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+
+    /* ── Callout ─────────────────────────────────────────────────────────────── */
+    .callout {
+      border-left: 3px solid var(--accent);
+      background: rgba(218,119,86,.07);
+      padding: 9px 14px; border-radius: 0 var(--r) var(--r) 0;
+      margin-bottom: 1.1em; font-size: .9em;
+    }
+
+    /* ── Sticky nav ─────────────────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(15,15,15,.96); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 0; display: flex; flex-wrap: wrap; gap: 12px;
+      font-size: .8rem;
+    }
+    nav a { color: var(--dim); }
+    nav a:hover { color: var(--accent); }
+
+    /* ── Terminal chrome ─────────────────────────────────────────────────────── */
+    .term {
+      background: #111; border: 1px solid var(--border);
+      border-radius: var(--r); overflow: hidden; margin-bottom: 1.4em;
+    }
+    .term-bar {
+      background: #1c1c1c; padding: 7px 12px;
+      display: flex; align-items: center; gap: 7px;
+      border-bottom: 1px solid var(--border); font-size: .78em; color: var(--dim);
+    }
+    .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #febc2e; }
+    .dot-g { background: #28c840; }
+    .term-bar span:last-child { margin-left: auto; }
+    .term-body { padding: 12px 14px 14px; }
+
+    /* ── Status line simulation ──────────────────────────────────────────────── */
+    .statusline {
+      display: flex; align-items: stretch;
+      height: 22px; overflow: visible;
+      font-family: 'JetBrains Mono', 'Symbols Nerd Font', monospace;
+      font-weight: 700; font-size: 12.5px; line-height: 22px;
+    }
+    .seg { display: flex; align-items: stretch; }
+    .seg-inner {
+      display: flex; align-items: center;
+      padding: 0 9px; white-space: nowrap;
+    }
+    .seg-sep {
+      /* color and background set by JS */
+      display: flex; align-items: center;
+      font-family: 'Symbols Nerd Font', monospace;
+      font-size: 22px; line-height: 22px;
+      width: 13px; overflow: visible;
+      font-weight: 400;
+    }
+    .statusline + .statusline { margin-top: 6px; }
+
+    /* ── Bar card ────────────────────────────────────────────────────────────── */
+    .bar-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 18px 22px; margin-bottom: 2.2em;
+    }
+    .bar-card h3 { margin-top: 0; }
+
+    .palette {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      margin-bottom: 1.1em; font-size: .83em;
+    }
+    .swatch-row { display: flex; align-items: center; gap: 5px; }
+    .swatch {
+      width: 13px; height: 13px; border-radius: 2px;
+      border: 1px solid rgba(255,255,255,.15); display: inline-block;
+    }
+
+    .slot-badge {
+      display: inline-block; font-size: .73em; font-weight: 700;
+      padding: 1px 6px; border-radius: 3px; margin-right: 4px;
+      background: var(--code-bg); border: 1px solid var(--border);
+      color: var(--dim);
+    }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 2.5em 0; }
+    section { scroll-margin-top: 52px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="#philosophy">Philosophy</a>
+  <a href="#pipeline">Pipeline</a>
+  <a href="#main-segments">Main segments</a>
+  <a href="#bar-anatomy">Bar anatomy</a>
+  <a href="#slot-order">Slot order</a>
+  <a href="#detection">Detection</a>
+  <a href="#env-vars">Env vars</a>
+  <a href="#bars">Bars</a>
+  <a href="#bar-go">Go</a>
+  <a href="#bar-rust">Rust</a>
+  <a href="#bar-python">Python</a>
+  <a href="#bar-javascript">JS</a>
+  <a href="#bar-ruby">Ruby</a>
+  <a href="#bar-php">PHP</a>
+  <a href="#bar-swift">Swift</a>
+  <a href="#bar-java">Java</a>
+  <a href="#bar-dotnet">.NET</a>
+  <a href="#bar-elixir">Elixir</a>
+  <a href="#bar-dart">Dart</a>
+  <a href="#bar-shell">Shell</a>
+  <a href="#bar-git">Git</a>
+  <a href="#bar-salesforce">Salesforce</a>
+  <a href="#bar-random-facts">random-facts</a>
+</nav>
+
+<h1>Bottomline Bar &amp; Segment Reference
+  <span class="sub">Machine-readable documentation for the Bottomline Claude Code status-line plugin</span>
+</h1>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<section id="philosophy">
+<h2>Design Philosophy</h2>
+
+<p>Bottomline is a Claude Code status-line plugin. Every time Claude refreshes, <code>bottomline.sh</code> receives a JSON payload on stdin describing the session, renders ANSI output to stdout, and exits. There is no daemon and no persistent state.</p>
+
+<p>The design follows three principles:</p>
+<ul>
+  <li><strong>Passive and fast.</strong> The script reads signals that already exist on disk—lockfiles, manifests, config files, binaries on PATH. It never modifies anything, never installs tools, and does not block the terminal.</li>
+  <li><strong>Canonical ordering.</strong> Every language bar follows the same six-slot order: Runtime → Package manager → Framework → Add-ons → Testing → Tooling. This makes bars predictable—an LLM or human can find information in the same slot regardless of which language bar is displayed.</li>
+  <li><strong>Layered config.</strong> Defaults live in <code>settings.json</code>. A user file at <code>~/.claude/bottomline.json</code> overrides per key. A project file at <code>&lt;project&gt;/.claude/bottomline.json</code> overrides again. Objects deep-merge; arrays and scalars use the highest-priority non-null value.</li>
+</ul>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<section id="pipeline">
+<h2>Rendering Pipeline</h2>
+
+<p><code>bottomline.sh</code> executes in two phases per refresh:</p>
+
+<ol style="margin:0 0 .9em 1.4em">
+  <li style="margin-bottom:.4em"><strong>Main status line.</strong> Calls <code>seg()</code> once per built-in segment, then <code>flush()</code> to render them with a gradient background. The gradient is expanded to exactly N stops via piecewise linear RGB interpolation in awk, so gradient endpoints always land on the first and last segment.</li>
+  <li style="margin-bottom:.4em"><strong>Bars.</strong> Iterates <code>CFG_BARS</code> (a JSON array). Each entry is a <em>script bar</em> (runs a <code>bars/*.sh</code> file in a subshell) or an <em>inline segment bar</em> (rendered from JSON without a subshell). Auto-detection via <code>auto_bars.scripts</code> in settings.json can prepend bars when signal files are found in the project root.</li>
+</ol>
+
+<h4>Gradient interpolation</h4>
+<p>Given a gradient config of K hex keyframes and N segments, each segment <em>i</em> gets color at position <code>t = i / (N−1)</code> along the keyframe sequence. A solid background is <code>["#hex"]</code> (K=1). The two-stop form <code>["#dark","#lighter"]</code> is the most common.</p>
+
+<h4>flush() output per segment</h4>
+<pre><code>bg(i)  SPACE  BOLD  content  bg(i)  SPACE
+fg(i)  bg(i+1)  SEP                    ← between segments
+RESET  fg(i)   SEP  RESET              ← after last segment</code></pre>
+<p>The separator character is U+E0B4 (&#xE0B4;, rounded powerline right chevron) by default, configurable via <code>segments.separator</code>.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<section id="main-segments">
+<h2>Main Status Line Segments</h2>
+
+<p>The main line renders the segments listed in <code>segments.enabled</code> (in order). Default order and colors: background <code>["#2e1f14","#160f0a"]</code>, text <code>#e2d5c3</code>, accent <code>#da7756</code>.</p>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>Claude Code</span>
+    <span>main status line — all 10 segments</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#2e1f14","#160f0a"]'
+         data-text="#e2d5c3" data-accent="#da7756">
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#da7756">&#xF2DB;</span>
+          <span style="color:#da7756">&nbsp;</span>
+          <span style="color:#e2d5c3">claude-sonnet-4-6</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#da7756">&#xF0E7;</span>
+          <span style="color:#da7756">&nbsp;</span>
+          <span style="color:#e2d5c3">auto</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#da7756">&#xF0AE;</span>
+          <span style="color:#da7756">&nbsp;</span>
+          <span style="color:#da7756">▰▰▰▰</span><span style="color:#e2d5c3">▱▱▱▱▱▱</span>
+          <span style="color:#da7756">&nbsp;</span>
+          <span style="color:#e2d5c3">45k/200k</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#da7756">&#xF07C;</span>
+          <span style="color:#da7756">&nbsp;</span>
+          <span style="color:#e2d5c3">my-project</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#da7756">&#xE0A0;</span>
+          <span style="color:#da7756">&nbsp;</span>
+          <span style="color:#e2d5c3">main</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#da7756">&#xF062;</span>
+          <span style="color:#da7756">&nbsp;</span>
+          <span style="color:#e2d5c3">8.2k</span>
+          <span style="color:#da7756">+120k</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#da7756">&#xF063;</span>
+          <span style="color:#da7756">&nbsp;</span>
+          <span style="color:#e2d5c3">3.1k</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#da7756">&#xF017;</span>
+          <span style="color:#da7756">&nbsp;</span>
+          <span style="color:#e2d5c3">23%</span>
+          <span style="color:#da7756">&nbsp;2h14m</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#da7756">&#xF073;</span>
+          <span style="color:#da7756">&nbsp;</span>
+          <span style="color:#e2d5c3">41%</span>
+          <span style="color:#da7756">&nbsp;/7d</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#da7756">&#xF0D6;</span>
+          <span style="color:#da7756">&nbsp;</span>
+          <span style="color:#e2d5c3">$2.34</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Segment key</th>
+      <th>Icon (NF / emoji)</th>
+      <th>Data source</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>model</code></td>
+      <td>&#xF2DB; / 🖥</td>
+      <td>JSON <code>.model.display_name</code></td>
+      <td>Hidden when no model in payload.</td>
+    </tr>
+    <tr>
+      <td><code>effort</code></td>
+      <td>&#xF0E7; / ⚡</td>
+      <td>JSON <code>.effort.level</code></td>
+      <td>Color and icon per level from <code>segments.effort</code> config.</td>
+    </tr>
+    <tr>
+      <td><code>context</code></td>
+      <td>&#xF0AE; / ◈</td>
+      <td>Last assistant usage in transcript</td>
+      <td>Gauge bar (10 blocks) + token count. Threshold color from <code>segments.context</code>.</td>
+    </tr>
+    <tr>
+      <td><code>directory</code></td>
+      <td>&#xF07C; / 📁</td>
+      <td><code>.workspace.current_dir</code> / <code>.cwd</code></td>
+      <td>Shows basename; rendered as an OSC-8 hyperlink (<code>file://…</code>).</td>
+    </tr>
+    <tr>
+      <td><code>git_branch</code></td>
+      <td>&#xE0A0; / ⎇</td>
+      <td><code>git symbolic-ref HEAD</code></td>
+      <td>OSC-8 link to branch URL on GitHub/GitLab/Bitbucket when remote detected. Color/icon overridable per branch name via <code>segments.git_branch</code>.</td>
+    </tr>
+    <tr>
+      <td><code>tokens_in</code></td>
+      <td>&#xF062; / ↑</td>
+      <td>Sum of all assistant turns in transcript</td>
+      <td>Format: <code>base_in+cache_create</code> then <code>+cache_read</code> suffix in accent.</td>
+    </tr>
+    <tr>
+      <td><code>tokens_out</code></td>
+      <td>&#xF063; / ↓</td>
+      <td>Sum of all assistant turns in transcript</td>
+      <td>Hidden when zero.</td>
+    </tr>
+    <tr>
+      <td><code>usage_5h</code></td>
+      <td>&#xF017; / ⏱</td>
+      <td>JSON <code>.rate_limits.five_hour</code></td>
+      <td>Shows percentage + time until reset. Threshold color from <code>segments.usage</code>.</td>
+    </tr>
+    <tr>
+      <td><code>usage_7d</code></td>
+      <td>&#xF073; / 📅</td>
+      <td>JSON <code>.rate_limits.seven_day</code></td>
+      <td>Same as usage_5h but for 7-day window.</td>
+    </tr>
+    <tr>
+      <td><code>cost</code></td>
+      <td>&#xF0D6; / 💰</td>
+      <td>Transcript token sums × per-model pricing</td>
+      <td>Prices: Opus $15/$75, Sonnet $3/$15, Haiku $0.80/$4 per MTok in/out. Cache rates applied. Hidden when zero tokens.</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<section id="bar-anatomy">
+<h2>Bar Anatomy</h2>
+
+<p>A bar is an additional line rendered below the main status line. It appears when signal files are found in the project root (auto-detection) or when explicitly listed in <code>bars</code> config.</p>
+
+<h3>Script bar structure</h3>
+<p>Every built-in bar in <code>bars/</code> follows this pattern:</p>
+
+<pre><code>#!/usr/bin/env bash
+# 1. Guard — exit early if signal file absent
+PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
+[[ -z "$PROJ" || ! -f "$PROJ/go.mod" ]] &amp;&amp; exit 0
+
+# 2. Source shared helpers (seg, flush, ANSI primitives)
+source "$BOTTOMLINE_LIB/helpers.sh"
+
+# 3. Palette — bar-specific colors, bypassed if BOTTOMLINE_BAR_COLORS is set
+if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
+  FG_TEXT=$(make_fg "$(hex_to_rgb "#c8e8f4")")
+  FG_ACCENT=$(make_fg "$(hex_to_rgb "#29bcd8")")
+  _bar_gradient='["#031824","#054860"]'
+else
+  _bar_gradient="$BOTTOMLINE_GRADIENT"   # inherit from main config
+fi
+
+# 4. Icons — three branches: nerd / emoji / none
+case "$BOTTOMLINE_ICON_TYPE" in
+  nerd)  IC_LANG=$'\xee\x9c\xa4' ;;   # raw UTF-8 Nerd Font bytes
+  emoji) IC_LANG='🐹' ;;
+  *)     IC_LANG='' ;;
+esac
+
+# 5. Detection — read manifests, grep deps, check binaries
+go_version=$(awk '/^go /{print $2; exit}' "$PROJ/go.mod")
+
+# 6. Segments — add_seg() accumulates; canonical slot order
+add_seg "${FG_ACCENT}${IC_LANG} ${FG_TEXT}Go ${FG_ACCENT}v${go_version}"
+
+# 7. Flush — renders with gradient; exits silently if nothing added
+(( ${#_sc[@]} == 0 )) &amp;&amp; exit 0
+flush "$_bar_gradient"</code></pre>
+
+<h3>Inline segment bar</h3>
+<p>Alternatively, a bar can be defined purely in JSON (no script file). The main script renders it using its own <code>seg()</code>/<code>flush()</code> engine:</p>
+<pre><code>{
+  "bars": [{
+    "segments": [{
+      "icon": "model",
+      "content": "My custom label",
+      "colors": { "accent": "#00ff88" }
+    }],
+    "colors": { "background": "#1a1a2e" }
+  }]
+}</code></pre>
+
+<h3>Color override modes</h3>
+<table>
+  <thead><tr><th>Bar config <code>colors</code> value</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td>absent / <code>null</code></td><td>Bar uses its own built-in palette.</td></tr>
+    <tr><td><code>"inherit"</code></td><td>Bar uses the main-line colors (BOTTOMLINE_BAR_COLORS=1, no built-in palette).</td></tr>
+    <tr><td><code>{ "text": "…", "accent": "…", … }</code></td><td>Specific overrides applied; unspecified keys fall back to built-in.</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<section id="slot-order">
+<h2>Canonical Segment Slot Order</h2>
+
+<p>Every language ecosystem bar follows this six-slot order. Slots with nothing to show are silently skipped; the <em>order</em> must never deviate.</p>
+
+<table>
+  <thead>
+    <tr><th>Slot</th><th>Category</th><th>Examples</th><th>Required?</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1</strong></td>
+      <td>Runtime</td>
+      <td>Language name + version. May include package manager inline (Python) or workspace flag (Go/Rust).</td>
+      <td>Always present (bar guard ensures signal file exists).</td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td>Package manager</td>
+      <td>Maven, Gradle, Poetry, PDM, Hatch, pnpm, yarn, bun, npm, Cargo (implicit in Rust — usually omitted).</td>
+      <td>When independently detectable.</td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td>Framework</td>
+      <td>Rails, Django, FastAPI, Flask, Laravel, Symfony, Spring Boot, Quarkus, Vapor, Phoenix, Gin, echo, Blazor, ASP.NET Core.</td>
+      <td>When detected.</td>
+    </tr>
+    <tr>
+      <td><strong>4</strong></td>
+      <td>Add-ons</td>
+      <td>Livewire, Octane, Reverb, Flux, Inertia, LiveView, Ecto, Oban, Filament.</td>
+      <td>When detected.</td>
+    </tr>
+    <tr>
+      <td><strong>5</strong></td>
+      <td>Testing</td>
+      <td>RSpec, Minitest, pytest, Jest, Vitest, Playwright, Cypress, JUnit 5/4, TestNG, Pest, PHPUnit, ExUnit, nextest, bats, XCTest, Quick, flutter_test.</td>
+      <td><strong>Required</strong> when relevant tool detected. Layering rules apply (higher framework suppresses lower).</td>
+    </tr>
+    <tr>
+      <td><strong>6</strong></td>
+      <td>Tooling</td>
+      <td>TypeScript, ESLint, Prettier, Biome, RuboCop, mypy, ruff, Clippy, golangci-lint, PMD, Checkstyle, SpotBugs, Lombok, SwiftLint, SwiftFormat, PHPStan, PHP CS Fixer, Credo, Dialyxir, StyleCop, EF Core.</td>
+      <td><strong>Required</strong> when static-analysis or linter detected. Sub-order within slot 6: static analysis → service packages → ORM/database → styling → other.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Testing framework layering rules</h3>
+<p>When a higher-level framework wraps a lower one, only the higher-level framework is shown:</p>
+<table>
+  <thead><tr><th>Language</th><th>Base</th><th>Wrapper</th><th>Rule</th></tr></thead>
+  <tbody>
+    <tr><td>PHP</td><td>PHPUnit</td><td>Pest</td><td>Pest detected → show Pest only.</td></tr>
+    <tr><td>Dart</td><td><code>test</code></td><td><code>flutter_test</code></td><td>Flutter app → show <code>flutter_test</code> only.</td></tr>
+    <tr><td>Swift</td><td>XCTest</td><td>Quick / Swift Testing</td><td>Quick present → show Quick, suppress XCTest.</td></tr>
+    <tr><td>Go</td><td>testify</td><td>Ginkgo</td><td>Ginkgo present → show Ginkgo, suppress testify.</td></tr>
+    <tr><td>Java</td><td>JUnit 4</td><td>JUnit 5</td><td>Both present → show JUnit 5 only.</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<section id="detection">
+<h2>Detection Signal Priority</h2>
+
+<p>Detection runs in this priority order. The first positive signal wins:</p>
+<ol style="margin:0 0 .9em 1.4em">
+  <li><strong>Lockfile / manifest dependency</strong> — e.g. <code>Cargo.lock</code>, <code>poetry.lock</code>, <code>composer.lock</code>, <code>package.json</code> dep key.</li>
+  <li><strong>Config file presence</strong> — e.g. <code>.golangci.yml</code>, <code>pytest.ini</code>, <code>.rubocop.yml</code>, <code>phpstan.neon</code>.</li>
+  <li><strong>Binary on PATH</strong> — e.g. <code>command -v golangci-lint</code>, <code>command -v shellcheck</code>.</li>
+</ol>
+
+<p>All three signals are valid. Many tools are detectable via more than one.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<section id="env-vars">
+<h2>Environment Variables Available to Bar Scripts</h2>
+
+<p>These are exported by <code>bottomline.sh</code> before invoking each bar script. <code>lib/helpers.sh</code> reads them to set <code>FG_TEXT</code>, <code>FG_ACCENT</code>, <code>FG_WARN</code>, <code>FG_CRIT</code>, <code>SEP</code>, <code>B</code>, <code>R</code>.</p>
+
+<table>
+  <thead><tr><th>Variable</th><th>Content</th></tr></thead>
+  <tbody>
+    <tr><td><code>BOTTOMLINE_TEXT_HEX</code></td><td>Text color as <code>#rrggbb</code></td></tr>
+    <tr><td><code>BOTTOMLINE_ACCENT_HEX</code></td><td>Accent color as <code>#rrggbb</code></td></tr>
+    <tr><td><code>BOTTOMLINE_WARN_HEX</code></td><td>Warning color as <code>#rrggbb</code></td></tr>
+    <tr><td><code>BOTTOMLINE_DANGER_HEX</code></td><td>Danger color as <code>#rrggbb</code></td></tr>
+    <tr><td><code>BOTTOMLINE_BG_R/G/B</code></td><td>First background gradient color as decimal R, G, B integers</td></tr>
+    <tr><td><code>BOTTOMLINE_SEP</code></td><td>Separator character (default: &#xE0B4;)</td></tr>
+    <tr><td><code>BOTTOMLINE_BOLD</code></td><td>ANSI bold escape</td></tr>
+    <tr><td><code>BOTTOMLINE_RESET</code></td><td>ANSI reset escape</td></tr>
+    <tr><td><code>BOTTOMLINE_ICON_TYPE</code></td><td><code>nerd</code>, <code>emoji</code>, or <code>none</code></td></tr>
+    <tr><td><code>BOTTOMLINE_IC_DANGER</code></td><td>Danger icon for the current icon type</td></tr>
+    <tr><td><code>BOTTOMLINE_PROJECT_DIR</code></td><td>Absolute path to the current project directory</td></tr>
+    <tr><td><code>BOTTOMLINE_GRADIENT</code></td><td>Background gradient JSON (hex string or array)</td></tr>
+    <tr><td><code>BOTTOMLINE_LIB</code></td><td>Path to the plugin's <code>lib/</code> directory</td></tr>
+    <tr><td><code>BOTTOMLINE_BAR_COLORS</code></td><td>Set to <code>1</code> when bar color overrides are active — bars must skip their built-in palette</td></tr>
+    <tr><td><code>BOTTOMLINE_BAR_REFRESH_MINUTES</code></td><td>Optional refresh interval from bar config (unset if not specified)</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<section id="bars">
+<h2>Built-in Bars</h2>
+
+<p>Bars are stored in <code>bars/</code>. Auto-detection order in <code>settings.json</code> follows system integration depth: <code>rust → go → shell → swift → elixir → dotnet → java → python → ruby → javascript → dart → php → salesforce → git</code>. Git is always last.</p>
+
+<!-- ───────────────────────────────────────────────────────── GO -->
+<div class="bar-card" id="bar-go">
+<h3>Go <code>bars/go.sh</code></h3>
+<p>Renders for any project with a <code>go.mod</code> at the root. Reads <code>go.mod</code> directly; never invokes <code>go</code> binary.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#c8e8f4"></span><span>text #c8e8f4</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#29bcd8"></span><span>accent #29bcd8</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#031824"></span><span>bg start #031824</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#054860"></span><span>bg end #054860</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>Go vX.Y [workspace]</td><td><code>go.mod</code> first <code>go</code> directive; <code>go.work</code> for workspace flag.</td></tr>
+    <tr><td>3 Framework</td><td>Gin / echo / Fiber / chi</td><td>Grep <code>go.mod</code> for import path.</td></tr>
+    <tr><td>5 Testing</td><td>Ginkgo / testify</td><td>Grep <code>go.mod</code>. Ginkgo suppresses testify.</td></tr>
+    <tr><td>6 Tooling</td><td>golangci-lint</td><td>Binary on PATH or <code>.golangci.{yml,yaml,toml}</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>GORM</td><td>Grep <code>go.mod</code> for <code>gorm.io/gorm</code>.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-api</span><span>go.mod detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#031824","#054860"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#29bcd8">&#xE724;</span>
+          <span style="color:#c8e8f4">&nbsp;Go&nbsp;</span>
+          <span style="color:#29bcd8">v1.23</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#29bcd8">&#xF0EC;</span>
+          <span style="color:#c8e8f4">&nbsp;Gin</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#29bcd8">&#xF040;</span>
+          <span style="color:#c8e8f4">&nbsp;Ginkgo</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#29bcd8">&#xF00C;</span>
+          <span style="color:#c8e8f4">&nbsp;golangci-lint</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#29bcd8">&#xF1C0;</span>
+          <span style="color:#c8e8f4">&nbsp;GORM</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── RUST -->
+<div class="bar-card" id="bar-rust">
+<h3>Rust <code>bars/rust.sh</code></h3>
+<p>Renders for any project with a <code>Cargo.toml</code> at the root.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#f0ddd8"></span><span>text #f0ddd8</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#d05a38"></span><span>accent #d05a38</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#1a0a04"></span><span>bg start #1a0a04</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#301508"></span><span>bg end #301508</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>Rust YYYY [workspace]</td><td><code>Cargo.toml</code> <code>edition</code> key; <code>[workspace]</code> section for workspace flag.</td></tr>
+    <tr><td>3 Framework</td><td>Actix Web / axum / Rocket / warp</td><td>Grep <code>Cargo.toml</code> for dep key.</td></tr>
+    <tr><td>5 Testing</td><td>nextest</td><td><code>Cargo.lock</code> dep, <code>.config/nextest.toml</code>, or <code>cargo-nextest</code> binary.</td></tr>
+    <tr><td>6 Tooling</td><td>Clippy</td><td><code>rust-toolchain.toml</code> component list or <code>cargo-clippy</code> binary.</td></tr>
+    <tr><td>6 Tooling</td><td>Tokio</td><td>Grep <code>Cargo.toml</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>sqlx / diesel</td><td>Grep <code>Cargo.toml</code> (first match wins).</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-service</span><span>Cargo.toml detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#1a0a04","#301508"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#d05a38">&#xE68B;</span>
+          <span style="color:#f0ddd8">&nbsp;Rust&nbsp;</span>
+          <span style="color:#d05a38">2021</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#d05a38">&#xF0EC;</span>
+          <span style="color:#f0ddd8">&nbsp;axum</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#d05a38">&#xF040;</span>
+          <span style="color:#f0ddd8">&nbsp;nextest</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#d05a38">&#xF00C;</span>
+          <span style="color:#f0ddd8">&nbsp;Clippy</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#d05a38">&#xF0E4;</span>
+          <span style="color:#f0ddd8">&nbsp;Tokio</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#d05a38">&#xF1C0;</span>
+          <span style="color:#f0ddd8">&nbsp;sqlx</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── PYTHON -->
+<div class="bar-card" id="bar-python">
+<h3>Python <code>bars/python.sh</code></h3>
+<p>Renders for projects with <code>pyproject.toml</code>, <code>requirements.txt</code>, <code>Pipfile</code>, or <code>setup.py</code>.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#c8dff0"></span><span>text #c8dff0</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#ffd740"></span><span>accent #ffd740</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#0c1e30"></span><span>bg start #0c1e30</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#183352"></span><span>bg end #183352</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>Python vX.Y [Poetry/PDM/Hatch/Pipenv]</td><td>Version: <code>.python-version</code> → <code>pyproject.toml requires-python</code> → <code>.tool-versions</code>. Tool: <code>[tool.poetry]</code> / <code>[tool.pdm]</code> / <code>[tool.hatch]</code> in pyproject.toml, or Pipfile.</td></tr>
+    <tr><td>3 Framework</td><td>Django vX / FastAPI vX / Flask vX</td><td>Grep all dep sources (pyproject.toml + requirements.txt + Pipfile). Only one framework shown. Version from poetry.lock, Pipfile.lock, or requirements.txt.</td></tr>
+    <tr><td>5 Testing</td><td>pytest</td><td>Dep in lockfile/pyproject, <code>pytest.ini</code>, or <code>pytest</code> binary.</td></tr>
+    <tr><td>6 Tooling</td><td>ruff</td><td>Dep in lockfile/pyproject, <code>ruff.toml</code>, or <code>.ruff.toml</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>mypy</td><td>Dep in lockfile/pyproject, <code>mypy.ini</code>, or <code>.mypy.ini</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>Celery</td><td>Dep in lockfile/pyproject.</td></tr>
+    <tr><td>6 Tooling</td><td>SQLAlchemy</td><td>Dep in lockfile/pyproject. Suppressed when Django is present.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-app</span><span>pyproject.toml detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#0c1e30","#183352"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ffd740">&#xE606;</span>
+          <span style="color:#c8dff0">&nbsp;Python&nbsp;</span>
+          <span style="color:#ffd740">v3.12&nbsp;</span>
+          <span style="color:#ffd740">[</span><span style="color:#c8dff0">&#xF0D0;Poetry</span><span style="color:#ffd740">]</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ffd740">&#xF06C;</span>
+          <span style="color:#c8dff0">&nbsp;Django&nbsp;</span>
+          <span style="color:#ffd740">v5.0</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ffd740">&#xF040;</span>
+          <span style="color:#c8dff0">&nbsp;pytest</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ffd740">&#xF00C;</span>
+          <span style="color:#c8dff0">&nbsp;ruff</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ffd740">&#xF02E;</span>
+          <span style="color:#c8dff0">&nbsp;mypy</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── JAVASCRIPT -->
+<div class="bar-card" id="bar-javascript">
+<h3>JavaScript / Node.js <code>bars/javascript.sh</code></h3>
+<p>Renders for any project with a <code>package.json</code>. Parses all <code>dependencies</code> + <code>devDependencies</code> in a single <code>jq</code> pass.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#f5f0c8"></span><span>text #f5f0c8</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#f7df1e"></span><span>accent #f7df1e</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#1c1a00"></span><span>bg start #1c1a00</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#2d2b00"></span><span>bg end #2d2b00</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>Node vX.Y</td><td><code>.nvmrc</code> → <code>.node-version</code> → <code>engines.node</code> in package.json.</td></tr>
+    <tr><td>2 Pkg mgr</td><td>pnpm / yarn / bun / npm</td><td>Lockfile presence: <code>pnpm-lock.yaml</code> / <code>yarn.lock</code> / <code>bun.lock{b}</code> / <code>package-lock.json</code>.</td></tr>
+    <tr><td>3 Framework</td><td>Next.js / React / Remix / Expo / React Native / Nuxt / Vue / SvelteKit / Svelte / Angular / Astro / Electron / Vite</td><td>Package.json dep key. Vite suppressed when implied by Nuxt, SvelteKit, or Astro. Versions read from <code>node_modules/{pkg}/package.json</code>.</td></tr>
+    <tr><td>6 Language</td><td>TypeScript</td><td><code>typescript</code> dep key.</td></tr>
+    <tr><td>5 Testing</td><td>Jest / Vitest / Playwright / Cypress</td><td>Package.json dep keys.</td></tr>
+    <tr><td>6 Tooling</td><td>ESLint / Prettier / Biome / Tailwind CSS</td><td>Dep key or config file (<code>.eslintrc*</code>, <code>eslint.config.*</code>, <code>.prettierrc*</code>, <code>biome.json</code>).</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-app</span><span>package.json detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#1c1a00","#2d2b00"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f7df1e">&#xE718;</span>
+          <span style="color:#f5f0c8">&nbsp;Node&nbsp;</span>
+          <span style="color:#f7df1e">v20.11</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f7df1e">&#xF4AE;</span>
+          <span style="color:#f5f0c8">&nbsp;pnpm</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f7df1e">&#xE7CA;</span>
+          <span style="color:#f5f0c8">&nbsp;Next.js&nbsp;</span>
+          <span style="color:#f7df1e">v14.2</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f7df1e">&#xE628;</span>
+          <span style="color:#f5f0c8">&nbsp;TypeScript&nbsp;</span>
+          <span style="color:#f7df1e">v5.4</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f7df1e">&#xF040;</span>
+          <span style="color:#f5f0c8">&nbsp;Vitest</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f7df1e">&#xF00C;</span>
+          <span style="color:#f5f0c8">&nbsp;ESLint</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f7df1e">&#xE6A9;</span>
+          <span style="color:#f5f0c8">&nbsp;Tailwind CSS</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── RUBY -->
+<div class="bar-card" id="bar-ruby">
+<h3>Ruby <code>bars/ruby.sh</code></h3>
+<p>Renders for projects with a <code>Gemfile</code>. Reads <code>Gemfile.lock</code> for locked versions.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#f5d0d0"></span><span>text #f5d0d0</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#e05060"></span><span>accent #e05060</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#1e0505"></span><span>bg start #1e0505</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#350c0c"></span><span>bg end #350c0c</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>Ruby vX.Y</td><td><code>.ruby-version</code> or <code>ruby -e 'print RUBY_VERSION'</code>.</td></tr>
+    <tr><td>3 Framework</td><td>Rails vX / Sinatra vX / Hanami vX</td><td>Grep Gemfile for <code>gem 'rails'</code> etc. Versions from Gemfile.lock.</td></tr>
+    <tr><td>5 Testing</td><td>RSpec / Minitest</td><td>Grep Gemfile.lock for <code>rspec</code> / <code>minitest</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>RuboCop vX</td><td>Grep Gemfile.lock for locked version, or <code>.rubocop.yml</code> presence.</td></tr>
+    <tr><td>6 Tooling</td><td>Sidekiq</td><td>Grep Gemfile.lock.</td></tr>
+    <tr><td>6 Tooling</td><td>Devise</td><td>Grep Gemfile.lock.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-rails-app</span><span>Gemfile detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#1e0505","#350c0c"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#e05060">&#xE791;</span>
+          <span style="color:#f5d0d0">&nbsp;Ruby&nbsp;</span>
+          <span style="color:#e05060">v3.3</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#e05060">&#xE73B;</span>
+          <span style="color:#f5d0d0">&nbsp;Rails&nbsp;</span>
+          <span style="color:#e05060">v7.2</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#e05060">&#xF040;</span>
+          <span style="color:#f5d0d0">&nbsp;RSpec</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#e05060">&#xF00C;</span>
+          <span style="color:#f5d0d0">&nbsp;RuboCop&nbsp;</span>
+          <span style="color:#e05060">v1.65</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#e05060">&#xF0E2;</span>
+          <span style="color:#f5d0d0">&nbsp;Sidekiq</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#e05060">&#xF0A3;</span>
+          <span style="color:#f5d0d0">&nbsp;Devise</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── PHP -->
+<div class="bar-card" id="bar-php">
+<h3>PHP <code>bars/php.sh</code></h3>
+<p>Renders for projects with a <code>composer.json</code>. All package versions are read from <code>composer.lock</code> in a single <code>jq</code> pass. Has the richest slot-4 add-on coverage (Laravel ecosystem).</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#ddd6f3"></span><span>text #ddd6f3</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#9898e0"></span><span>accent #9898e0</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#0d0b1e"></span><span>bg start #0d0b1e</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#1c1850"></span><span>bg end #1c1850</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>PHP X.Y</td><td><code>php -r 'echo PHP_MAJOR_VERSION…'</code> binary call.</td></tr>
+    <tr><td>3 Framework</td><td>Laravel vX / Lumen vX / Symfony vX / CakePHP vX / Slim vX</td><td>composer.lock package names.</td></tr>
+    <tr><td>4 Add-ons</td><td>Octane / Boost / Reverb / Livewire / Flux [Pro] / Inertia [Vue/React/Svelte] / Filament</td><td>composer.lock. Flux Pro shows a trophy icon. Inertia detects frontend adapter from package.json. Boost shows a warning when <code>boost.json</code> exists but <code>claude_code</code> agent is absent.</td></tr>
+    <tr><td>5 Testing</td><td>Pest vX / PHPUnit vX</td><td>composer.lock. Pest suppresses PHPUnit.</td></tr>
+    <tr><td>6 Tooling</td><td>PHPStan vX</td><td>composer.lock or <code>phpstan.{neon,dist.neon}</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>PHP CS Fixer vX</td><td>composer.lock or <code>.php-cs-fixer.{php,dist.php}</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>Herd URL (site.test)</td><td><code>herd</code> binary on PATH → derives URL from project dirname.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-laravel-app</span><span>composer.json detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#0d0b1e","#1c1850"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#9898e0">&#xE765;</span>
+          <span style="color:#ddd6f3">&nbsp;PHP&nbsp;</span>
+          <span style="color:#9898e0">8.3</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#9898e0">&#xE73F;</span>
+          <span style="color:#ddd6f3">&nbsp;Laravel&nbsp;</span>
+          <span style="color:#9898e0">v11.0</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#9898e0">&#xF043;</span>
+          <span style="color:#ddd6f3">&nbsp;Livewire&nbsp;</span>
+          <span style="color:#9898e0">v3.4</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#9898e0">&#xF040;</span>
+          <span style="color:#ddd6f3">&nbsp;Pest&nbsp;</span>
+          <span style="color:#9898e0">v2.9</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#9898e0">&#xF00C;</span>
+          <span style="color:#ddd6f3">&nbsp;PHPStan&nbsp;</span>
+          <span style="color:#9898e0">v1.11</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#9898e0">&#xF031;</span>
+          <span style="color:#ddd6f3">&nbsp;PHP CS Fixer&nbsp;</span>
+          <span style="color:#9898e0">v3.52</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#9898e0">&#xF0AC;</span>
+          <span style="color:#ddd6f3">&nbsp;my-laravel-app.test</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── SWIFT -->
+<div class="bar-card" id="bar-swift">
+<h3>Swift <code>bars/swift.sh</code></h3>
+<p>Renders for projects with a <code>Package.swift</code>. Reads <code>Package.resolved</code> for dependency versions.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#f5ddd8"></span><span>text #f5ddd8</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#f05138"></span><span>accent #f05138</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#1c0a06"></span><span>bg start #1c0a06</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#331008"></span><span>bg end #331008</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>Swift tools vX.Y</td><td>First line of Package.swift: <code>// swift-tools-version: X.Y</code>.</td></tr>
+    <tr><td>3 Framework</td><td>Vapor vX</td><td><code>Package.resolved</code> pin identity <code>vapor</code>, or grep <code>Package.swift</code>.</td></tr>
+    <tr><td>3 Framework</td><td>Hummingbird</td><td><code>Package.resolved</code> pin identity <code>hummingbird</code>.</td></tr>
+    <tr><td>5 Testing</td><td>Quick / Swift Testing / XCTest</td><td>Package.resolved for Quick and Swift Testing. XCTest: <code>.testTarget</code> in Package.swift. Layering: Quick suppresses XCTest; Swift Testing also suppresses XCTest.</td></tr>
+    <tr><td>6 Tooling</td><td>SwiftLint</td><td><code>.swiftlint.{yml,yaml}</code> or <code>swiftlint</code> binary.</td></tr>
+    <tr><td>6 Tooling</td><td>SwiftFormat</td><td><code>.swiftformat</code> or <code>swiftformat</code> binary.</td></tr>
+    <tr><td>6 Tooling</td><td>Alamofire</td><td>Package.resolved pin.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-swift-app</span><span>Package.swift detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#1c0a06","#331008"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05138">&#xE755;</span>
+          <span style="color:#f5ddd8">&nbsp;Swift&nbsp;</span>
+          <span style="color:#f05138">tools v5.9</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05138">&#xF0D0;</span>
+          <span style="color:#f5ddd8">&nbsp;Vapor&nbsp;</span>
+          <span style="color:#f05138">v4.9</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05138">&#xF040;</span>
+          <span style="color:#f5ddd8">&nbsp;XCTest</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05138">&#xF00C;</span>
+          <span style="color:#f5ddd8">&nbsp;SwiftLint</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05138">&#xF031;</span>
+          <span style="color:#f5ddd8">&nbsp;SwiftFormat</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── JAVA -->
+<div class="bar-card" id="bar-java">
+<h3>Java <code>bars/java.sh</code></h3>
+<p>Renders for projects with <code>pom.xml</code>, <code>build.gradle</code>, or <code>build.gradle.kts</code>.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#f5e4c0"></span><span>text #f5e4c0</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#ed8b00"></span><span>accent #ed8b00</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#1c1000"></span><span>bg start #1c1000</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#2e1e00"></span><span>bg end #2e1e00</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1/2 Build tool</td><td>Maven (Java X) / Gradle (Java X)</td><td>pom.xml or build.gradle presence. Java version from <code>&lt;java.version&gt;</code> / <code>maven.compiler.source</code> (Maven) or build script grep (Gradle).</td></tr>
+    <tr><td>3 Framework</td><td>Spring Boot vX / Quarkus vX / Micronaut vX</td><td>Grep pom.xml/build.gradle for framework keywords + version extraction.</td></tr>
+    <tr><td>5 Testing</td><td>JUnit 5 / JUnit 4 / TestNG</td><td>Grep build files. JUnit 5 suppresses JUnit 4.</td></tr>
+    <tr><td>6 Tooling</td><td>Checkstyle</td><td>Grep build files for <code>checkstyle</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>SpotBugs</td><td>Grep build files for <code>spotbugs</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>PMD</td><td>Grep build files for <code>maven-pmd-plugin</code> or <code>net.sourceforge.pmd</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>Lombok</td><td>Grep build files for <code>projectlombok</code>.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-service</span><span>pom.xml detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#1c1000","#2e1e00"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ed8b00">&#xE738;</span>
+          <span style="color:#f5e4c0">&nbsp;Maven&nbsp;</span>
+          <span style="color:#ed8b00">(Java 21)</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ed8b00">&#xF06C;</span>
+          <span style="color:#f5e4c0">&nbsp;Spring Boot&nbsp;</span>
+          <span style="color:#ed8b00">v3.2</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ed8b00">&#xF040;</span>
+          <span style="color:#f5e4c0">&nbsp;JUnit 5</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ed8b00">&#xF00C;</span>
+          <span style="color:#f5e4c0">&nbsp;Checkstyle</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ed8b00">&#xF085;</span>
+          <span style="color:#f5e4c0">&nbsp;Lombok</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── DOTNET -->
+<div class="bar-card" id="bar-dotnet">
+<h3>.NET <code>bars/dotnet.sh</code></h3>
+<p>Renders for projects with <code>*.csproj</code>, <code>*.sln</code>, <code>global.json</code>, <code>Directory.Build.props</code>, or <code>Directory.Build.targets</code>.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#e8d9f5"></span><span>text #e8d9f5</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#512BD4"></span><span>accent #512BD4</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#1a0640"></span><span>bg start #1a0640</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#2d0e6e"></span><span>bg end #2d0e6e</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>.NET vX.Y</td><td><code>global.json</code> sdk.version, then <code>dotnet --version</code> binary.</td></tr>
+    <tr><td>2 Target FW</td><td>net8.0 (etc.)</td><td><code>&lt;TargetFramework&gt;</code> from first <code>.csproj</code>.</td></tr>
+    <tr><td>3 Framework</td><td>Blazor / ASP.NET Core / MAUI</td><td>Grep <code>.csproj</code> for <code>Microsoft.AspNetCore.Components</code> / <code>Microsoft.AspNetCore</code> / <code>Microsoft.Maui</code>.</td></tr>
+    <tr><td>5 Testing</td><td>xUnit / NUnit / MSTest</td><td>Grep <code>.csproj</code> for <code>"xunit"</code> / <code>"NUnit"</code> / <code>"MSTest</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>StyleCop</td><td>Grep <code>.csproj</code> for <code>StyleCop.Analyzers</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>SonarAnalyzer</td><td>Grep <code>.csproj</code> for <code>SonarAnalyzer.CSharp</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>EF Core</td><td>Grep <code>.csproj</code> for <code>Microsoft.EntityFrameworkCore</code>.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>MyApp.csproj</span><span>.csproj detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#1a0640","#2d0e6e"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#512BD4">&#xE77F;</span>
+          <span style="color:#e8d9f5">&nbsp;.NET&nbsp;</span>
+          <span style="color:#512BD4">v8.0</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#e8d9f5">net8.0</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#512BD4">&#xF0EC;</span>
+          <span style="color:#e8d9f5">&nbsp;ASP.NET Core</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#512BD4">&#xF040;</span>
+          <span style="color:#e8d9f5">&nbsp;xUnit</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#512BD4">&#xF00C;</span>
+          <span style="color:#e8d9f5">&nbsp;StyleCop</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#512BD4">&#xF1C0;</span>
+          <span style="color:#e8d9f5">&nbsp;EF Core</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── ELIXIR -->
+<div class="bar-card" id="bar-elixir">
+<h3>Elixir <code>bars/elixir.sh</code></h3>
+<p>Renders for projects with a <code>mix.exs</code>. Reads <code>mix.lock</code> for dependency versions.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#e8d8f8"></span><span>text #e8d8f8</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#a078d8"></span><span>accent #a078d8</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#180c2e"></span><span>bg start #180c2e</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#2a1850"></span><span>bg end #2a1850</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>Elixir vX.Y</td><td><code>elixir:</code> key in mix.exs, then <code>.tool-versions</code> (asdf/mise), then <code>.elixir-version</code>.</td></tr>
+    <tr><td>3 Framework</td><td>Phoenix vX</td><td>Grep mix.lock for <code>"phoenix"</code> key + version extraction.</td></tr>
+    <tr><td>4 Add-ons</td><td>LiveView vX</td><td>Grep mix.lock for <code>"phoenix_live_view"</code>.</td></tr>
+    <tr><td>4 Add-ons</td><td>Ecto vX</td><td>Grep mix.lock for <code>"ecto_sql"</code>.</td></tr>
+    <tr><td>4 Add-ons</td><td>Oban vX</td><td>Grep mix.lock for <code>"oban"</code>.</td></tr>
+    <tr><td>5 Testing</td><td>ExUnit</td><td>Presence of <code>test/</code> directory.</td></tr>
+    <tr><td>6 Tooling</td><td>Credo vX</td><td>mix.lock <code>"credo"</code> key.</td></tr>
+    <tr><td>6 Tooling</td><td>Dialyxir vX</td><td>mix.lock <code>"dialyxir"</code> key.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my_phoenix_app</span><span>mix.exs detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#180c2e","#2a1850"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#a078d8">&#xF06D;</span>
+          <span style="color:#e8d8f8">&nbsp;Elixir&nbsp;</span>
+          <span style="color:#a078d8">v1.16</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#a078d8">&#xF185;</span>
+          <span style="color:#e8d8f8">&nbsp;Phoenix&nbsp;</span>
+          <span style="color:#a078d8">v1.7</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#a078d8">&#xF121;</span>
+          <span style="color:#e8d8f8">&nbsp;LiveView&nbsp;</span>
+          <span style="color:#a078d8">v0.20</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#a078d8">&#xF1C0;</span>
+          <span style="color:#e8d8f8">&nbsp;Ecto&nbsp;</span>
+          <span style="color:#a078d8">v3.11</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#a078d8">&#xF040;</span>
+          <span style="color:#e8d8f8">&nbsp;ExUnit</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#a078d8">&#xF00C;</span>
+          <span style="color:#e8d8f8">&nbsp;Credo&nbsp;</span>
+          <span style="color:#a078d8">v1.7</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#a078d8">&#xF02E;</span>
+          <span style="color:#e8d8f8">&nbsp;Dialyxir&nbsp;</span>
+          <span style="color:#a078d8">v1.4</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── DART -->
+<div class="bar-card" id="bar-dart">
+<h3>Dart / Flutter <code>bars/dart.sh</code></h3>
+<p>Renders for projects with a <code>pubspec.yaml</code>. Parses pubspec directly—no Dart or Flutter binary invocations.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#c5e8ff"></span><span>text #c5e8ff</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#0175C2"></span><span>accent #0175C2</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#042B59"></span><span>bg start #042B59</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#011F3F"></span><span>bg end #011F3F</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>Dart vX.Y &lt;pkg-name&gt;</td><td>SDK version from <code>environment.sdk</code>; package name from <code>name:</code> in pubspec.yaml.</td></tr>
+    <tr><td>3 Framework</td><td>Flutter</td><td><code>sdk: flutter</code> in pubspec.yaml environment or dependency.</td></tr>
+    <tr><td>5 Testing</td><td>flutter_test / test</td><td>Presence as dep in pubspec.yaml. <code>flutter_test</code> suppresses <code>test</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>very_good_analysis / flutter_lints / lints</td><td>Dep key in pubspec.yaml (priority order).</td></tr>
+    <tr><td>6 Tooling</td><td>Riverpod / BLoC / Provider</td><td>Dep keys in pubspec.yaml (first match: riverpod → bloc → provider).</td></tr>
+    <tr><td>6 Tooling</td><td>Dio</td><td>Dep key <code>dio</code> in pubspec.yaml.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my_app</span><span>pubspec.yaml detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#042B59","#011F3F"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#0175C2">&#xF219;</span>
+          <span style="color:#c5e8ff">&nbsp;Dart&nbsp;</span>
+          <span style="color:#0175C2">v3.3&nbsp;</span>
+          <span style="color:#c5e8ff">my_app</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#0175C2">&#xF10B;</span>
+          <span style="color:#c5e8ff">&nbsp;Flutter</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#0175C2">&#xF040;</span>
+          <span style="color:#c5e8ff">&nbsp;flutter_test</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#0175C2">&#xF00C;</span>
+          <span style="color:#c5e8ff">&nbsp;flutter_lints</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#0175C2">&#xF129;</span>
+          <span style="color:#c5e8ff">&nbsp;Riverpod</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── SHELL -->
+<div class="bar-card" id="bar-shell">
+<h3>Shell / Bash <code>bars/shell.sh</code></h3>
+<p>Renders when <code>*.sh</code> files exist at the project root. Also triggered via auto-detection by <code>.shellcheckrc</code>.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#c8e8b0"></span><span>text #c8e8b0</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#4eb144"></span><span>accent #4eb144</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#0b1a06"></span><span>bg start #0b1a06</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#18330e"></span><span>bg end #18330e</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>bash vX.Y (or target shell)</td><td>Target shell from <code>.shellcheckrc</code> <code>shell=</code> key (default: bash). Bash version from <code>$BASH_VERSION</code>.</td></tr>
+    <tr><td>5 Testing</td><td>bats vX</td><td><code>bats</code> binary version, or any <code>*.bats</code> file found within 3 directory levels.</td></tr>
+    <tr><td>6 Tooling</td><td>ShellCheck vX</td><td><code>shellcheck</code> binary.</td></tr>
+    <tr><td>6 Tooling</td><td>make</td><td><code>Makefile</code> presence at project root.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-scripts</span><span>*.sh files detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#0b1a06","#18330e"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#4eb144">&#xF120;</span>
+          <span style="color:#c8e8b0">&nbsp;bash&nbsp;</span>
+          <span style="color:#4eb144">v5.2</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#4eb144">&#xF040;</span>
+          <span style="color:#c8e8b0">&nbsp;bats&nbsp;</span>
+          <span style="color:#4eb144">v1.10</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#4eb144">&#xF00C;</span>
+          <span style="color:#c8e8b0">&nbsp;ShellCheck&nbsp;</span>
+          <span style="color:#4eb144">v0.10.0</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#4eb144">&#xF085;</span>
+          <span style="color:#c8e8b0">&nbsp;make</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── GIT -->
+<div class="bar-card" id="bar-git">
+<h3>Git <code>bars/git.sh</code></h3>
+<p>Renders for any project inside a git working tree. Always last in auto-detection order. Not a language bar — does not follow the 6-slot ordering. Shows real-time repo state.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#f0ddd8"></span><span>text #f0ddd8</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#f05033"></span><span>accent #f05033</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#1a0c08"></span><span>bg start #1a0c08</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#2e1610"></span><span>bg end #2e1610</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Segment</th><th>Content</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Branch</td><td>Current branch name</td><td>Warning color in detached HEAD state. Falls back to tag or short SHA.</td></tr>
+    <tr><td>Worktree</td><td>Linked worktree name</td><td>Shown only when <code>.git</code> is a file (not a directory), indicating a linked worktree.</td></tr>
+    <tr><td>Changes</td><td>clean ✓ <em>or</em> +N -N</td><td>Always present. Counts changed files and line delta (tracked + untracked). Accent when clean, warning when dirty.</td></tr>
+    <tr><td>Stash</td><td>N stash/stashes</td><td>Hidden when stash is empty.</td></tr>
+    <tr><td>Ahead/behind</td><td>↑N ↓N</td><td>Hidden when no upstream or fully in sync. Behind count in warning color.</td></tr>
+    <tr><td>Last commit</td><td>Author · age</td><td>Author first name only; age abbreviated (3m, 2h, 1d, etc.).</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-project</span><span>.git detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#1a0c08","#2e1610"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">&#xE0A0;</span>
+          <span style="color:#f0ddd8">&nbsp;main</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">&#xF044;</span>
+          <span style="color:#f0ddd8">&nbsp;+42&nbsp;</span>
+          <span style="color:#f05033">-8</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">&#xF187;</span>
+          <span style="color:#f05033">&nbsp;1&nbsp;</span>
+          <span style="color:#f0ddd8">stash</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">↑</span><span style="color:#f0ddd8">2</span>
+          <span style="color:#f4a261">&nbsp;↓</span><span style="color:#f0ddd8">1</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">&#xF1DA;</span>
+          <span style="color:#f0ddd8">&nbsp;Giorgio&nbsp;</span>
+          <span style="color:#f05033">·</span>
+          <span style="color:#f0ddd8">&nbsp;3m</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="term" style="margin-top:8px">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-project</span><span>clean working tree</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#1a0c08","#2e1610"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">&#xE0A0;</span>
+          <span style="color:#f0ddd8">&nbsp;feature/new-ui</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">&#xF00C;</span>
+          <span style="color:#f0ddd8">&nbsp;clean</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">&#xF1DA;</span>
+          <span style="color:#f0ddd8">&nbsp;Giorgio&nbsp;</span>
+          <span style="color:#f05033">·</span>
+          <span style="color:#f0ddd8">&nbsp;1h</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── SALESFORCE -->
+<div class="bar-card" id="bar-salesforce">
+<h3>Salesforce <code>bars/salesforce.sh</code></h3>
+<p>Renders for projects with <code>sfdx-project.json</code> or <code>.forceignore</code>. No testing framework detection (Apex testing runs server-side; no client-side framework to detect).</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#c7e0f4"></span><span>text #c7e0f4</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#1B96FF"></span><span>accent #1B96FF</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#032D60"></span><span>bg start #032D60</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#0B4B8B"></span><span>bg end #0B4B8B</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Segment</th><th>Content</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>Salesforce vX.Y</td><td>SF CLI version from <code>sf --version</code>.</td></tr>
+    <tr><td>2 Target org</td><td>Org alias [sandbox]</td><td><code>.sf/config.json</code> → <code>.sfdx/sfdx-config.json</code> → <code>~/.sf/config.json</code>. Sandbox flag when <code>sfdcLoginUrl</code> contains <code>test.salesforce.com</code>.</td></tr>
+    <tr><td>3 Username</td><td>user@org.salesforce.com</td><td>Alias resolved via <code>~/.sf/alias.json</code> or <code>~/.sfdx/{alias}.json</code>. Hidden when username equals alias.</td></tr>
+    <tr><td>4 API version</td><td>API vXX</td><td><code>sourceApiVersion</code> from <code>sfdx-project.json</code>.</td></tr>
+    <tr><td>5 Namespace</td><td>ns:&lt;ns&gt;</td><td><code>namespace</code> from <code>sfdx-project.json</code>. Hidden when not set.</td></tr>
+    <tr><td>6 Tooling</td><td>PMD</td><td><code>.pmdrc</code> or <code>pmd</code> binary.</td></tr>
+    <tr><td>6 Tooling</td><td>ESLint (LWC)</td><td><code>@salesforce/eslint-config-lwc</code> dep in package.json.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-sf-project</span><span>sfdx-project.json detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#032D60","#0B4B8B"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#1B96FF">&#xF0C2;</span>
+          <span style="color:#c7e0f4">&nbsp;Salesforce&nbsp;</span>
+          <span style="color:#1B96FF">v2.50</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#1B96FF">&#xF1AD;</span>
+          <span style="color:#c7e0f4">&nbsp;my-sandbox&nbsp;</span>
+          <span style="color:#f4a261">(sandbox)</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#1B96FF">&#xF007;</span>
+          <span style="color:#c7e0f4">&nbsp;dev@myorg.test</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#1B96FF">&#xF121;</span>
+          <span style="color:#c7e0f4">&nbsp;API&nbsp;</span>
+          <span style="color:#1B96FF">v59.0</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#1B96FF">&#xF00C;</span>
+          <span style="color:#c7e0f4">&nbsp;PMD</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#1B96FF">&#xF121;</span>
+          <span style="color:#c7e0f4">&nbsp;ESLint (LWC)</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── RANDOM FACTS -->
+<div class="bar-card" id="bar-random-facts">
+<h3>random-facts <code>bars/random-facts.sh</code></h3>
+<p>A utility bar showing a rotating random fact. Not a language bar — no signal file; must be explicitly configured. Colors are fully supplied by the bar config (no built-in palette). Demonstrates custom bars, refresh intervals, and caching.</p>
+
+<div class="callout">
+  This bar calls the <code>uselessfacts.jsph.pl</code> API and caches the result in <code>/tmp</code> for the configured <code>refresh_minutes</code> interval (default 60). When offline or the API times out, it selects from a built-in list of 10 facts.
+</div>
+
+<table>
+  <thead><tr><th>Config key</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td><code>refresh_minutes</code></td><td>Cache bucket duration. A new fact is fetched each time the bucket changes.</td></tr>
+    <tr><td><code>colors</code></td><td>Required — bar has no built-in palette. Accepts any color object or <code>"inherit"</code>.</td></tr>
+  </tbody>
+</table>
+
+<h4>Example configuration</h4>
+<pre><code>{
+  "bars": [{
+    "script": "random-facts",
+    "refresh_minutes": 30,
+    "colors": {
+      "text":    "#e2d5c3",
+      "accent":  "#da7756",
+      "background": ["#2e1f14", "#160f0a"]
+    }
+  }]
+}</code></pre>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>any project</span><span>explicitly configured</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#2e1f14","#160f0a"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#da7756">&#xF0EB;</span>
+          <span style="color:#e2d5c3">&nbsp;Sharks are older than trees.</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</section><!-- #bars -->
+
+<hr>
+<p style="color:var(--dim);font-size:.82em">
+  Generated from source: <code>bars/*.sh</code>, <code>bottomline.sh</code>, <code>settings.json</code>.<br>
+  Nerd Font glyphs require a Nerd Font to render — this page loads
+  <a href="https://www.nerdfonts.com">Symbols Nerd Font</a> via jsDelivr CDN.
+</p>
+
+<script>
+/* ── Gradient utilities ─────────────────────────────────────────────────── */
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  return [
+    parseInt(h.slice(0,2), 16),
+    parseInt(h.slice(2,4), 16),
+    parseInt(h.slice(4,6), 16)
+  ];
+}
+
+function interpolate(c1, c2, t) {
+  const r1 = hexToRgb(c1), r2 = hexToRgb(c2);
+  const r = Math.round(r1[0] + (r2[0] - r1[0]) * t);
+  const g = Math.round(r1[1] + (r2[1] - r1[1]) * t);
+  const b = Math.round(r1[2] + (r2[2] - r1[2]) * t);
+  return `rgb(${r},${g},${b})`;
+}
+
+function expandGradient(keyframes, n) {
+  if (n === 0) return [];
+  if (keyframes.length === 1 || n === 1) return Array(n).fill(keyframes[0]);
+  return Array.from({length: n}, (_, i) => {
+    const t   = i / (n - 1);
+    const pos = t * (keyframes.length - 1);
+    const seg = Math.min(Math.floor(pos), keyframes.length - 2);
+    const frac = pos - seg;
+    return interpolate(keyframes[seg], keyframes[seg + 1], frac);
+  });
+}
+
+/* ── Apply colors to every .statusline ─────────────────────────────────── */
+document.querySelectorAll('.statusline').forEach(bar => {
+  const gradient = JSON.parse(bar.dataset.gradient);
+  const segs = Array.from(bar.querySelectorAll(':scope > .seg'));
+  const n = segs.length;
+  const colors = expandGradient(gradient, n);
+
+  segs.forEach((seg, i) => {
+    const bg = colors[i];
+    seg.style.backgroundColor = bg;
+
+    const inner = seg.querySelector('.seg-inner');
+    if (inner) inner.style.backgroundColor = bg;
+
+    const sep = seg.querySelector('.seg-sep');
+    if (!sep) return;
+    sep.style.color = bg;
+    if (i + 1 < n) {
+      sep.style.backgroundColor = colors[i + 1];
+    } else {
+      sep.style.backgroundColor = 'transparent';
+    }
+  });
+});
+</script>
+</body>
+</html>
