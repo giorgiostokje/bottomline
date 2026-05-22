@@ -38,3 +38,63 @@ teardown() { teardown_fake_proj; }
   [[ "$BAR_OUTPUT" == *"Nuxt"* ]]
   [[ "$BAR_OUTPUT" != *" Vue"* ]]
 }
+
+@test "javascript: renders Node version from .nvmrc" {
+  printf '{"name":"x"}\n' > "$FAKE_PROJ/package.json"
+  printf '20.11.0\n' > "$FAKE_PROJ/.nvmrc"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"20"* ]]
+}
+
+@test "javascript: renders pnpm when pnpm-lock.yaml present" {
+  printf '{"name":"x"}\n' > "$FAKE_PROJ/package.json"
+  printf 'lockfileVersion: 9\n' > "$FAKE_PROJ/pnpm-lock.yaml"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"pnpm"* ]]
+}
+
+@test "javascript: renders yarn when yarn.lock present" {
+  printf '{"name":"x"}\n' > "$FAKE_PROJ/package.json"
+  printf '# yarn lockfile v1\n' > "$FAKE_PROJ/yarn.lock"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"yarn"* ]]
+}
+
+@test "javascript: renders Vitest when in package.json" {
+  printf '%s\n' '{"name":"x","devDependencies":{"vitest":"^1.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Vitest"* ]]
+}
+
+@test "javascript: renders Playwright alongside Vitest (different tiers)" {
+  printf '%s\n' '{"name":"x","devDependencies":{"vitest":"^1.0.0","@playwright/test":"^1.40.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Vitest"* ]]
+  [[ "$BAR_OUTPUT" == *"Playwright"* ]]
+}
+
+@test "javascript: renders Tailwind when in deps" {
+  printf '%s\n' '{"name":"x","devDependencies":{"tailwindcss":"^3.4.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Tailwind"* ]]
+}
+
+@test "javascript: renders ESLint when in deps" {
+  printf '%s\n' '{"name":"x","devDependencies":{"eslint":"^9.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"ESLint"* ]]
+}
+
+@test "javascript: renders Prettier when .prettierrc present" {
+  printf '{"name":"x"}\n' > "$FAKE_PROJ/package.json"
+  printf '{"singleQuote": true}\n' > "$FAKE_PROJ/.prettierrc"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Prettier"* ]]
+}
+
+@test "javascript: renders Biome when biome.json present" {
+  printf '{"name":"x"}\n' > "$FAKE_PROJ/package.json"
+  printf '{"$schema":"https://biomejs.dev/schemas/1.5.0/schema.json"}\n' > "$FAKE_PROJ/biome.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Biome"* ]]
+}

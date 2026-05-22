@@ -32,6 +32,12 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_REMIX=$'\xef\x84\xa1'      # U+F121  nf-fa-code
     IC_ELECTRON=$'\xee\x9d\x8a'   # U+E74A  nf-dev-electron
     IC_TS=$'\xee\x98\xa8'         # U+E628  nf-seti-typescript
+    IC_NODE=$'\xee\x9c\x98'       # U+E718  nf-seti-nodejs
+    IC_PKG=$'\xef\x92\xae'        # U+F4AE  nf-mdi-package
+    IC_TEST=$'\xef\x81\x80'       # U+F040  nf-fa-pencil
+    IC_CSS=$'\xee\x9b\xa9'        # U+E6A9  nf-seti-css
+    IC_LINT=$'\xef\x80\x8c'       # U+F00C  nf-fa-check
+    IC_FMT=$'\xef\x80\xb1'        # U+F031  nf-fa-font
     ;;
   emoji)
     IC_REACT='⚛'
@@ -48,14 +54,38 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_REMIX='♻'
     IC_ELECTRON='⚡'
     IC_TS='🔷'
+    IC_NODE='🟢' IC_PKG='📦' IC_TEST='🧪' IC_CSS='🎨' IC_LINT='✓' IC_FMT='🖋'
     ;;
   *)
     IC_REACT='' IC_NEXT='' IC_RN='' IC_EXPO='' IC_VUE='' IC_NUXT=''
     IC_SVELTE='' IC_SVELTEKIT='' IC_VITE='' IC_ANGULAR='' IC_ASTRO=''
     IC_REMIX='' IC_ELECTRON='' IC_TS=''
+    IC_NODE='' IC_PKG='' IC_TEST='' IC_CSS='' IC_LINT='' IC_FMT=''
     ;;
 esac
 
+
+# ── Node version (priority: .nvmrc → .node-version → engines.node) ────────────
+node_version=''
+if [[ -f "$PROJ/.nvmrc" ]]; then
+  node_version=$(awk '/^[0-9]|^v[0-9]/{gsub(/^v/,""); print; exit}' "$PROJ/.nvmrc" 2>/dev/null)
+elif [[ -f "$PROJ/.node-version" ]]; then
+  node_version=$(awk '/^[0-9]|^v[0-9]/{gsub(/^v/,""); print; exit}' "$PROJ/.node-version" 2>/dev/null)
+elif [[ -f "$PROJ/package.json" ]]; then
+  node_version=$(jq -r '.engines.node // empty' "$PROJ/package.json" 2>/dev/null | sed 's/[^0-9.]//g')
+fi
+
+# ── Package manager (lockfile-driven) ─────────────────────────────────────────
+pkg_mgr=''
+if [[ -f "$PROJ/pnpm-lock.yaml" ]]; then
+  pkg_mgr='pnpm'
+elif [[ -f "$PROJ/yarn.lock" ]]; then
+  pkg_mgr='yarn'
+elif [[ -f "$PROJ/bun.lockb" || -f "$PROJ/bun.lock" ]]; then
+  pkg_mgr='bun'
+elif [[ -f "$PROJ/package-lock.json" ]]; then
+  pkg_mgr='npm'
+fi
 
 # Returns the installed version from node_modules, or empty if not found.
 npm_version() {
@@ -71,6 +101,8 @@ has_svelte=false  has_sveltekit=false
 has_vite=false    has_angular=false
 has_ts=false      has_astro=false
 has_remix=false   has_electron=false
+has_jest=false has_vitest=false has_playwright=false has_cypress=false
+has_tailwind=false has_eslint=false has_prettier=false has_biome=false
 
 while IFS= read -r dep; do
   case "$dep" in
@@ -89,8 +121,21 @@ while IFS= read -r dep; do
     @remix-run/react) has_remix=true     ;;
     @remix-run/node)  has_remix=true     ;;
     electron)         has_electron=true  ;;
+    jest)             has_jest=true      ;;
+    vitest)           has_vitest=true    ;;
+    '@playwright/test') has_playwright=true ;;
+    cypress)          has_cypress=true   ;;
+    tailwindcss)      has_tailwind=true  ;;
+    eslint)           has_eslint=true    ;;
+    prettier)         has_prettier=true  ;;
+    '@biomejs/biome') has_biome=true     ;;
   esac
 done < <(jq -r '((.dependencies // {}) + (.devDependencies // {})) | keys[]' "$pkg" 2>/dev/null)
+
+# Config-file fallbacks
+if ! $has_eslint; then [[ -f "$PROJ/.eslintrc" || -f "$PROJ/.eslintrc.js" || -f "$PROJ/.eslintrc.cjs" || -f "$PROJ/.eslintrc.json" || -f "$PROJ/eslint.config.js" || -f "$PROJ/eslint.config.mjs" ]] && has_eslint=true; fi
+if ! $has_prettier; then [[ -f "$PROJ/.prettierrc" || -f "$PROJ/.prettierrc.json" || -f "$PROJ/.prettierrc.js" || -f "$PROJ/prettier.config.js" ]] && has_prettier=true; fi
+if ! $has_biome; then [[ -f "$PROJ/biome.json" ]] && has_biome=true; fi
 
 # Build a segment with icon, label, and optional version from node_modules.
 js_seg() {
@@ -102,6 +147,14 @@ js_seg() {
   fi
   seg "${FG_ACCENT}${icon} ${FG_TEXT}${label}${vsuf}"
 }
+
+# Slot 1: Runtime
+[[ -n "$node_version" ]] \
+  && seg "${FG_ACCENT}${IC_NODE} ${FG_TEXT}Node ${FG_ACCENT}v${node_version}"
+
+# Slot 2: Package manager
+[[ -n "$pkg_mgr" ]] \
+  && seg "${FG_ACCENT}${IC_PKG} ${FG_TEXT}${pkg_mgr}"
 
 # ── React ecosystem ───────────────────────────────────────────────────────────
 $has_next  && js_seg "$IC_NEXT"  "Next.js" "next"
@@ -131,6 +184,18 @@ $has_electron && js_seg "$IC_ELECTRON" "Electron" "electron"
 
 # ── Language ──────────────────────────────────────────────────────────────────
 $has_ts && js_seg "$IC_TS" "TypeScript" "typescript"
+
+# Slot 5: Testing
+$has_jest       && seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Jest"
+$has_vitest     && seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Vitest"
+$has_playwright && seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Playwright"
+$has_cypress    && seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Cypress"
+
+# Slot 6: Tooling
+$has_tailwind && seg "${FG_ACCENT}${IC_CSS} ${FG_TEXT}Tailwind"
+$has_eslint   && seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}ESLint"
+$has_prettier && seg "${FG_ACCENT}${IC_FMT} ${FG_TEXT}Prettier"
+$has_biome    && seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}Biome"
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"
