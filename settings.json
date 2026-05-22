@@ -28,6 +28,7 @@
   },
   "auto_bars": {
     "enabled": false,
+    "refresh_minutes": 5,
     "scripts": [
       { "script": "rust", "signals": ["Cargo.toml"] },
       { "script": "go", "signals": ["go.mod"] },
@@ -51,7 +52,7 @@
       { "script": "dart", "signals": ["pubspec.yaml"] },
       { "script": "php", "signals": ["composer.json"] },
       { "script": "salesforce", "signals": ["sfdx-project.json", ".forceignore"] },
-      { "script": "git", "signals": [".git"] }
+      { "script": "git", "signals": [".git"], "refresh_minutes": 0 }
     ]
   }
 }
