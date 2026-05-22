@@ -20,7 +20,7 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_SHELL=$'\xef\x84\xa0'    # U+F120  nf-fa-terminal
     IC_SC=$'\xef\x80\x8c'       # U+F00C  nf-fa-check
     IC_TEST=$'\xef\x81\x80'     # U+F040  nf-fa-pencil
-    IC_MAKE=$'\xef\x84\x85'     # U+F085  nf-fa-cogs
+    IC_MAKE=$'\xef\x82\x85'     # U+F085  nf-fa-cogs
     ;;
   emoji)
     IC_SHELL='🐚'
