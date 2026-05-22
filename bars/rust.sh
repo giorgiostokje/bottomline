@@ -3,7 +3,7 @@
 # Only renders when the project contains a Cargo.toml.
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
-[[ -z "$PROJ" || ! -f "$PROJ/Cargo.toml" ]] && exit 0
+[[ -z "$PROJ" ]] && exit 0
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
@@ -13,6 +13,8 @@ if [[ "$_bl_ttl" -gt 0 ]]; then
   _bl_cache=$(bl_cache_path "rust" "$_bl_ttl" "$PROJ")
   [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
 fi
+
+[[ ! -f "$PROJ/Cargo.toml" ]] && exit 0
 
 # Returns the exact version of a package from Cargo.lock.
 cargo_lock_version() {

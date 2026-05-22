@@ -5,12 +5,6 @@
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
 
-# Hard guard: exit silently when no shell scripts exist at the project root.
-_has_sh=false
-for _f in "$PROJ"/*.sh; do [[ -f "$_f" ]] && _has_sh=true && break; done
-$_has_sh || exit 0
-unset _f _has_sh
-
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
@@ -19,6 +13,12 @@ if [[ "$_bl_ttl" -gt 0 ]]; then
   _bl_cache=$(bl_cache_path "shell" "$_bl_ttl" "$PROJ")
   [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
 fi
+
+# Hard guard: exit silently when no shell scripts exist at the project root.
+_has_sh=false
+for _f in "$PROJ"/*.sh; do [[ -f "$_f" ]] && _has_sh=true && break; done
+$_has_sh || exit 0
+unset _f _has_sh
 
 # ── Icons ─────────────────────────────────────────────────────────────────────
 case "$BOTTOMLINE_ICON_TYPE" in
