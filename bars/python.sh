@@ -156,6 +156,18 @@ fi
 [[ -n "${django_version:-}" ]] && has_sqlalchemy=false
 unset _df _deps_file
 
+# ── Version detection for testing + tooling ───────────────────────────────────
+pytest_version=''
+celery_version=''
+sqlalchemy_version=''
+ruff_version=''
+mypy_version=''
+$has_pytest     && pytest_version=$(pkg_version "pytest")
+$has_celery     && celery_version=$(pkg_version "celery")
+$has_sqlalchemy && sqlalchemy_version=$(pkg_version "sqlalchemy")
+$has_ruff       && ruff_version=$(pkg_version "ruff")
+$has_mypy       && mypy_version=$(pkg_version "mypy")
+
 # ── Python runtime ────────────────────────────────────────────────────────────
 python_seg="${FG_ACCENT}${IC_PYTHON} ${FG_TEXT}Python"
 [[ -n "$py_version" ]] && python_seg+=" ${FG_ACCENT}v${py_version}"
@@ -178,13 +190,33 @@ elif $has_flask; then
 fi
 
 # Slot 5: Testing
-$has_pytest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}pytest"
+if $has_pytest; then
+  pt_seg="${FG_ACCENT}${IC_TEST} ${FG_TEXT}pytest"
+  [[ -n "$pytest_version" ]] && pt_seg+=" ${FG_ACCENT}v${pytest_version}"
+  add_seg "$pt_seg"
+fi
 
-# Slot 6: Tooling
-$has_celery     && add_seg "${FG_ACCENT}${IC_QUEUE} ${FG_TEXT}Celery"
-$has_sqlalchemy && add_seg "${FG_ACCENT}${IC_DB} ${FG_TEXT}SQLAlchemy"
-$has_ruff       && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}ruff"
-$has_mypy       && add_seg "${FG_ACCENT}${IC_TYPE} ${FG_TEXT}mypy"
+# Slot 6: Tooling (order: ruff → mypy → Celery → SQLAlchemy)
+if $has_ruff; then
+  r_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}ruff"
+  [[ -n "$ruff_version" ]] && r_seg+=" ${FG_ACCENT}v${ruff_version}"
+  add_seg "$r_seg"
+fi
+if $has_mypy; then
+  m_seg="${FG_ACCENT}${IC_TYPE} ${FG_TEXT}mypy"
+  [[ -n "$mypy_version" ]] && m_seg+=" ${FG_ACCENT}v${mypy_version}"
+  add_seg "$m_seg"
+fi
+if $has_celery; then
+  c_seg="${FG_ACCENT}${IC_QUEUE} ${FG_TEXT}Celery"
+  [[ -n "$celery_version" ]] && c_seg+=" ${FG_ACCENT}v${celery_version}"
+  add_seg "$c_seg"
+fi
+if $has_sqlalchemy; then
+  s_seg="${FG_ACCENT}${IC_DB} ${FG_TEXT}SQLAlchemy"
+  [[ -n "$sqlalchemy_version" ]] && s_seg+=" ${FG_ACCENT}v${sqlalchemy_version}"
+  add_seg "$s_seg"
+fi
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"

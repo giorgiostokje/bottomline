@@ -17,6 +17,14 @@ shopt -u nullglob
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
+# Extracts PackageReference version from .csproj by partial package name match.
+_csproj_pkg_version() {
+  local pkg="$1" csproj="$2"
+  grep -i "$pkg" "$csproj" 2>/dev/null \
+    | grep -oiE 'Version="[^"]*"' \
+    | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+(-[^"]+)?)?' | head -1
+}
+
 # ── Palette (.NET brand purple) ───────────────────────────────────────────────
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
   FG_TEXT=$(make_fg   "$(hex_to_rgb "#e8d9f5")")
@@ -83,6 +91,14 @@ if [[ -n "$csproj" ]]; then
   grep -q 'SonarAnalyzer.CSharp' "$csproj" 2>/dev/null          && has_sonar=true
 fi
 
+# Extract versions for EF Core, StyleCop, SonarAnalyzer
+ef_version='' stylecop_version='' sonar_version=''
+if [[ -n "$csproj" ]]; then
+  $has_ef       && ef_version=$(_csproj_pkg_version "EntityFrameworkCore" "$csproj")
+  $has_stylecop && stylecop_version=$(_csproj_pkg_version "StyleCop" "$csproj")
+  $has_sonar    && sonar_version=$(_csproj_pkg_version "SonarAnalyzer" "$csproj")
+fi
+
 # ── Segments ──────────────────────────────────────────────────────────────────
 dotnet_seg="${FG_ACCENT}${IC_DOTNET} ${FG_TEXT}.NET"
 [[ -n "$sdk_version" ]] && dotnet_seg+=" ${FG_ACCENT}v${sdk_version}"
@@ -100,9 +116,21 @@ $has_nunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}NUnit"
 $has_mstest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}MSTest"
 
 # Slot 6: Tooling
-$has_ef       && add_seg "${FG_ACCENT}${IC_DB} ${FG_TEXT}EF Core"
-$has_stylecop && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}StyleCop"
-$has_sonar    && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}SonarAnalyzer"
+if $has_stylecop; then
+  sc_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}StyleCop"
+  [[ -n "$stylecop_version" ]] && sc_seg+=" ${FG_ACCENT}v${stylecop_version}"
+  add_seg "$sc_seg"
+fi
+if $has_sonar; then
+  sn_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}SonarAnalyzer"
+  [[ -n "$sonar_version" ]] && sn_seg+=" ${FG_ACCENT}v${sonar_version}"
+  add_seg "$sn_seg"
+fi
+if $has_ef; then
+  ef_seg="${FG_ACCENT}${IC_DB} ${FG_TEXT}EF Core"
+  [[ -n "$ef_version" ]] && ef_seg+=" ${FG_ACCENT}v${ef_version}"
+  add_seg "$ef_seg"
+fi
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"

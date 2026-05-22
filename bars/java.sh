@@ -14,6 +14,28 @@ $has_maven || $has_gradle || exit 0
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
+# Extracts version from pom.xml for the named artifactId.
+_pom_dep_version() {
+  local artifact="$1" pom="$2"
+  awk -v a="$artifact" '
+    /<artifactId>/ {
+      v=$0; gsub(/.*<artifactId>|<\/artifactId>.*/,"",v)
+      gsub(/^[[:space:]]+|[[:space:]]+$/,"",v); found=(v==a)
+    }
+    found && /<version>/ {
+      v=$0; gsub(/.*<version>|<\/version>.*/,"",v)
+      gsub(/^[[:space:]]+|[[:space:]]+$/,"",v); print v; exit
+    }
+  ' "$pom" 2>/dev/null
+}
+
+# Extracts version from a Gradle build file for a substring pattern.
+_gradle_dep_version() {
+  local pattern="$1" gradle="$2"
+  grep -Ei "$pattern" "$gradle" 2>/dev/null \
+    | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1
+}
+
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
   FG_TEXT=$(make_fg "$(hex_to_rgb "#f5e4c0")")
   FG_ACCENT=$(make_fg "$(hex_to_rgb "#ed8b00")")
@@ -118,6 +140,23 @@ unset _bf _build_files
 # Layering: JUnit 5 suppresses JUnit 4
 $has_junit5 && has_junit4=false
 
+# Extract versions for Lombok, Checkstyle, SpotBugs, PMD
+lombok_version='' checkstyle_version='' spotbugs_version='' pmd_version=''
+if $has_maven && [[ -f "$PROJ/pom.xml" ]]; then
+  _pom="$PROJ/pom.xml"
+  $has_lombok     && lombok_version=$(_pom_dep_version "lombok" "$_pom")
+  $has_checkstyle && checkstyle_version=$(_pom_dep_version "maven-checkstyle-plugin" "$_pom")
+  $has_spotbugs   && spotbugs_version=$(_pom_dep_version "spotbugs-maven-plugin" "$_pom")
+  $has_pmd        && pmd_version=$(_pom_dep_version "maven-pmd-plugin" "$_pom")
+fi
+if $has_gradle; then
+  _gf="$PROJ/build.gradle"; [[ -f "$PROJ/build.gradle.kts" ]] && _gf="$PROJ/build.gradle.kts"
+  [[ -z "$lombok_version" ]]     && $has_lombok     && lombok_version=$(_gradle_dep_version "projectlombok:lombok:" "$_gf")
+  [[ -z "$checkstyle_version" ]] && $has_checkstyle && checkstyle_version=$(_gradle_dep_version "checkstyle" "$_gf")
+  [[ -z "$spotbugs_version" ]]   && $has_spotbugs   && spotbugs_version=$(_gradle_dep_version "spotbugs" "$_gf")
+  [[ -z "$pmd_version" ]]        && $has_pmd        && pmd_version=$(_gradle_dep_version "pmd" "$_gf")
+fi
+
 
 # ── Build tool ────────────────────────────────────────────────────────────────
 if $has_maven; then
@@ -151,10 +190,26 @@ $has_junit4 && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}JUnit 4"
 $has_testng && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}TestNG"
 
 # Slot 6: Tooling
-$has_lombok     && add_seg "${FG_ACCENT}${IC_GEAR} ${FG_TEXT}Lombok"
-$has_checkstyle && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}Checkstyle"
-$has_spotbugs   && add_seg "${FG_ACCENT}${IC_BUG} ${FG_TEXT}SpotBugs"
-$has_pmd        && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}PMD"
+if $has_checkstyle; then
+  cs_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}Checkstyle"
+  [[ -n "$checkstyle_version" ]] && cs_seg+=" ${FG_ACCENT}v${checkstyle_version}"
+  add_seg "$cs_seg"
+fi
+if $has_spotbugs; then
+  sb_seg="${FG_ACCENT}${IC_BUG} ${FG_TEXT}SpotBugs"
+  [[ -n "$spotbugs_version" ]] && sb_seg+=" ${FG_ACCENT}v${spotbugs_version}"
+  add_seg "$sb_seg"
+fi
+if $has_pmd; then
+  pmd_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}PMD"
+  [[ -n "$pmd_version" ]] && pmd_seg+=" ${FG_ACCENT}v${pmd_version}"
+  add_seg "$pmd_seg"
+fi
+if $has_lombok; then
+  lk_seg="${FG_ACCENT}${IC_GEAR} ${FG_TEXT}Lombok"
+  [[ -n "$lombok_version" ]] && lk_seg+=" ${FG_ACCENT}v${lombok_version}"
+  add_seg "$lk_seg"
+fi
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"

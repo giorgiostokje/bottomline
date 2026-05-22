@@ -46,31 +46,48 @@ is_workspace=false
 
 # ── Detect frameworks/libraries ───────────────────────────────────────────────
 framework=''
+framework_display=''
+framework_version=''
 for fw in gin echo fiber chi; do
   case "$fw" in
-    gin)   pat='github.com/gin-gonic/gin'   ;;
-    echo)  pat='github.com/labstack/echo'   ;;
-    fiber) pat='github.com/gofiber/fiber'   ;;
-    chi)   pat='github.com/go-chi/chi'      ;;
+    gin)   pat='github.com/gin-gonic/gin'   ; disp='Gin'   ;;
+    echo)  pat='github.com/labstack/echo'   ; disp='Echo'  ;;
+    fiber) pat='github.com/gofiber/fiber'   ; disp='Fiber' ;;
+    chi)   pat='github.com/go-chi/chi'      ; disp='chi'   ;;
   esac
   if grep -q "$pat" "$PROJ/go.mod" 2>/dev/null; then
-    framework="$fw"; break
+    framework="$fw"
+    framework_display="$disp"
+    framework_version=$(grep "$pat" "$PROJ/go.mod" 2>/dev/null \
+      | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
+    break
   fi
 done
 
 has_ginkgo=false
 has_testify=false
-grep -q 'github.com/onsi/ginkgo' "$PROJ/go.mod" 2>/dev/null && has_ginkgo=true
-grep -q 'github.com/stretchr/testify' "$PROJ/go.mod" 2>/dev/null && has_testify=true
+ginkgo_version=''
+testify_version=''
+grep -q 'github.com/onsi/ginkgo' "$PROJ/go.mod" 2>/dev/null && has_ginkgo=true \
+  && ginkgo_version=$(grep 'github.com/onsi/ginkgo' "$PROJ/go.mod" 2>/dev/null \
+     | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
+grep -q 'github.com/stretchr/testify' "$PROJ/go.mod" 2>/dev/null && has_testify=true \
+  && testify_version=$(grep 'github.com/stretchr/testify' "$PROJ/go.mod" 2>/dev/null \
+     | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
 # Layering: Ginkgo suppresses testify
 $has_ginkgo && has_testify=false
 
 has_gorm=false
-grep -q 'gorm.io/gorm' "$PROJ/go.mod" 2>/dev/null && has_gorm=true
+gorm_version=''
+grep -q 'gorm.io/gorm' "$PROJ/go.mod" 2>/dev/null && has_gorm=true \
+  && gorm_version=$(grep 'gorm.io/gorm' "$PROJ/go.mod" 2>/dev/null \
+     | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
 
 has_golangci=false
+golangci_version=''
 if command -v golangci-lint > /dev/null 2>&1; then
   has_golangci=true
+  golangci_version=$(golangci-lint --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 elif [[ -f "$PROJ/.golangci.yml" || -f "$PROJ/.golangci.yaml" || -f "$PROJ/.golangci.toml" ]]; then
   has_golangci=true
 fi
@@ -83,20 +100,37 @@ $is_workspace && go_seg+=" ${FG_ACCENT}${IC_WORKSPACE}${FG_TEXT} workspace"
 add_seg "$go_seg"
 
 # Slot 3: Framework
-[[ -n "$framework" ]] \
-  && add_seg "${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework}"
+if [[ -n "$framework" ]]; then
+  fw_seg="${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework_display}"
+  [[ -n "$framework_version" ]] && fw_seg+=" ${FG_ACCENT}v${framework_version}"
+  add_seg "$fw_seg"
+fi
 
 # Slot 5: Testing
-$has_ginkgo \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Ginkgo"
-$has_testify \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}testify"
+if $has_ginkgo; then
+  ginkgo_seg="${FG_ACCENT}${IC_TEST} ${FG_TEXT}Ginkgo"
+  [[ -n "$ginkgo_version" ]] && ginkgo_seg+=" ${FG_ACCENT}v${ginkgo_version}"
+  add_seg "$ginkgo_seg"
+fi
+if $has_testify; then
+  testify_seg="${FG_ACCENT}${IC_TEST} ${FG_TEXT}testify"
+  [[ -n "$testify_version" ]] && testify_seg+=" ${FG_ACCENT}v${testify_version}"
+  add_seg "$testify_seg"
+fi
 
 # Slot 6: Tooling
-$has_gorm \
-  && add_seg "${FG_ACCENT}${IC_DB} ${FG_TEXT}gorm"
-$has_golangci \
-  && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}golangci-lint"
+# static analysis first
+if $has_golangci; then
+  lint_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}golangci-lint"
+  [[ -n "$golangci_version" ]] && lint_seg+=" ${FG_ACCENT}v${golangci_version}"
+  add_seg "$lint_seg"
+fi
+# ORM second
+if $has_gorm; then
+  gorm_seg="${FG_ACCENT}${IC_DB} ${FG_TEXT}GORM"
+  [[ -n "$gorm_version" ]] && gorm_seg+=" ${FG_ACCENT}v${gorm_version}"
+  add_seg "$gorm_seg"
+fi
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"

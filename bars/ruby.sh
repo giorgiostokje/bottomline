@@ -90,6 +90,12 @@ fi
 # RuboCop can also be detected via config file alone
 [[ -z "$rubocop_version" && -f "$PROJ/.rubocop.yml" ]] && rubocop_version='present'
 
+# ── Version detection for add-ons ──────────────────────────────────────────────
+sidekiq_version=''
+devise_version=''
+$has_sidekiq && sidekiq_version=$(gem_version "sidekiq")
+$has_devise  && devise_version=$(gem_version "devise")
+
 
 # ── Ruby runtime ──────────────────────────────────────────────────────────────
 ruby_seg="${FG_ACCENT}${IC_RUBY} ${FG_TEXT}Ruby"
@@ -117,15 +123,23 @@ fi
 $has_rspec    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}RSpec"
 $has_minitest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Minitest"
 
-# Slot 6: Tooling
-$has_sidekiq && add_seg "${FG_ACCENT}${IC_QUEUE} ${FG_TEXT}Sidekiq"
-$has_devise  && add_seg "${FG_ACCENT}${IC_AUTH} ${FG_TEXT}Devise"
+# Slot 6: Tooling (order: RuboCop → Sidekiq → Devise)
 if [[ -n "$rubocop_version" ]]; then
   if [[ "$rubocop_version" == "present" ]]; then
     add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop"
   else
     add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop ${FG_ACCENT}v${rubocop_version}"
   fi
+fi
+if $has_sidekiq; then
+  sk_seg="${FG_ACCENT}${IC_QUEUE} ${FG_TEXT}Sidekiq"
+  [[ -n "$sidekiq_version" ]] && sk_seg+=" ${FG_ACCENT}v${sidekiq_version}"
+  add_seg "$sk_seg"
+fi
+if $has_devise; then
+  dv_seg="${FG_ACCENT}${IC_AUTH} ${FG_TEXT}Devise"
+  [[ -n "$devise_version" ]] && dv_seg+=" ${FG_ACCENT}v${devise_version}"
+  add_seg "$dv_seg"
 fi
 
 (( ${#_sc[@]} == 0 )) && exit 0

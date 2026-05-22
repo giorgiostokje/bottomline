@@ -8,6 +8,21 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
+# Returns the locked version of a dep from pubspec.lock, or constraint from pubspec.yaml.
+pubspec_dep_version() {
+  local pkg="$1"
+  if [[ -f "$PROJ/pubspec.lock" ]]; then
+    awk -v p="$pkg" '
+      /^  [a-z_]/ { cur=substr($1,1,length($1)-1) }
+      cur==p && /version:/ { match($0,/[0-9]+\.[0-9]+(\.[0-9]+)?/,a); print a[0]; exit }
+    ' "$PROJ/pubspec.lock" 2>/dev/null
+    return
+  fi
+  awk -v p="$pkg" '
+    $0 ~ "^[[:space:]]+"p":" { match($0,/[0-9]+\.[0-9]+(\.[0-9]+)?/,a); print a[0]; exit }
+  ' "$PROJ/pubspec.yaml" 2>/dev/null
+}
+
 # ── Palette (Dart brand blue) ─────────────────────────────────────────────────
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
   FG_TEXT=$(make_fg   "$(hex_to_rgb "#c5e8ff")")
@@ -60,21 +75,36 @@ grep -Eq '^[[:space:]]+flutter_test:' "$pubspec" 2>/dev/null && has_flutter_test
 $has_flutter_test && has_test=false
 
 state_mgmt=''
+state_mgmt_display=''
+state_mgmt_version=''
 for sm in flutter_riverpod riverpod flutter_bloc bloc provider; do
   if grep -Eq "^[[:space:]]+${sm}:" "$pubspec" 2>/dev/null; then
     case "$sm" in
-      flutter_riverpod|riverpod) state_mgmt='riverpod' ;;
-      flutter_bloc|bloc)         state_mgmt='bloc'     ;;
-      provider)                  state_mgmt='provider' ;;
+      flutter_riverpod|riverpod) state_mgmt='riverpod';  state_mgmt_display='Riverpod' ;;
+      flutter_bloc|bloc)         state_mgmt='bloc';      state_mgmt_display='BLoC'     ;;
+      provider)                  state_mgmt='provider';  state_mgmt_display='Provider' ;;
     esac
     break
   fi
 done
 
+if [[ -n "$state_mgmt" ]]; then
+  case "$state_mgmt" in
+    riverpod) state_mgmt_version=$(pubspec_dep_version "flutter_riverpod")
+              [[ -z "$state_mgmt_version" ]] && state_mgmt_version=$(pubspec_dep_version "riverpod") ;;
+    bloc)     state_mgmt_version=$(pubspec_dep_version "flutter_bloc")
+              [[ -z "$state_mgmt_version" ]] && state_mgmt_version=$(pubspec_dep_version "bloc") ;;
+    provider) state_mgmt_version=$(pubspec_dep_version "provider") ;;
+  esac
+fi
+
 has_dio=false
+dio_version=''
 grep -Eq '^[[:space:]]+dio:' "$pubspec" 2>/dev/null && has_dio=true
+$has_dio && dio_version=$(pubspec_dep_version "dio")
 
 lint_pkg=''
+lint_pkg_version=''
 if grep -Eq '^[[:space:]]+very_good_analysis:' "$pubspec" 2>/dev/null; then
   lint_pkg='very_good_analysis'
 elif grep -Eq '^[[:space:]]+flutter_lints:' "$pubspec" 2>/dev/null; then
@@ -82,6 +112,7 @@ elif grep -Eq '^[[:space:]]+flutter_lints:' "$pubspec" 2>/dev/null; then
 elif grep -Eq '^[[:space:]]+lints:' "$pubspec" 2>/dev/null; then
   lint_pkg='lints'
 fi
+[[ -n "$lint_pkg" ]] && lint_pkg_version=$(pubspec_dep_version "$lint_pkg")
 
 # ── Segments ──────────────────────────────────────────────────────────────────
 dart_seg="${FG_ACCENT}${IC_DART} ${FG_TEXT}Dart"
@@ -98,12 +129,24 @@ $has_test \
   && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}test"
 
 # Slot 6: Tooling
-[[ -n "$state_mgmt" ]] \
-  && add_seg "${FG_ACCENT}${IC_STATE} ${FG_TEXT}${state_mgmt}"
-$has_dio \
-  && add_seg "${FG_ACCENT}${IC_NET} ${FG_TEXT}dio"
-[[ -n "$lint_pkg" ]] \
-  && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}${lint_pkg}"
+# static analysis first
+if [[ -n "$lint_pkg" ]]; then
+  lp_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}${lint_pkg}"
+  [[ -n "$lint_pkg_version" ]] && lp_seg+=" ${FG_ACCENT}v${lint_pkg_version}"
+  add_seg "$lp_seg"
+fi
+# business logic / state management
+if [[ -n "$state_mgmt" ]]; then
+  sm_seg="${FG_ACCENT}${IC_STATE} ${FG_TEXT}${state_mgmt_display}"
+  [[ -n "$state_mgmt_version" ]] && sm_seg+=" ${FG_ACCENT}v${state_mgmt_version}"
+  add_seg "$sm_seg"
+fi
+# HTTP client
+if $has_dio; then
+  dio_seg="${FG_ACCENT}${IC_NET} ${FG_TEXT}Dio"
+  [[ -n "$dio_version" ]] && dio_seg+=" ${FG_ACCENT}v${dio_version}"
+  add_seg "$dio_seg"
+fi
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"

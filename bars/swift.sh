@@ -64,6 +64,7 @@ fi
 # ── Detect ecosystem from Package.resolved ────────────────────────────────────
 has_hummingbird=false
 has_alamofire=false
+alamofire_version=''
 has_quick=false
 has_swift_testing=false
 if [[ -f "$resolved" ]]; then
@@ -71,6 +72,14 @@ if [[ -f "$resolved" ]]; then
   grep -q '"alamofire"' "$resolved" 2>/dev/null && has_alamofire=true
   grep -q '"quick"' "$resolved" 2>/dev/null && has_quick=true
   grep -q '"swift-testing"' "$resolved" 2>/dev/null && has_swift_testing=true
+fi
+
+# Alamofire version detection
+if $has_alamofire && [[ -f "$resolved" ]]; then
+  alamofire_version=$(jq -r '
+    .pins[] | select(.identity == "alamofire" or ((.package // "") | ascii_downcase) == "alamofire")
+    | .state.version // ""
+  ' "$resolved" 2>/dev/null)
 fi
 
 # XCTest: present when Package.swift declares a .testTarget AND Quick/SwiftTesting absent
@@ -120,13 +129,16 @@ $has_swift_testing \
 $has_xctest \
   && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}XCTest"
 
-# Slot 6: Tooling
-$has_alamofire \
-  && add_seg "${FG_ACCENT}${IC_NET} ${FG_TEXT}Alamofire"
+# Slot 6: Tooling (order: SwiftLint → SwiftFormat → Alamofire)
 $has_swiftlint \
   && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}SwiftLint"
 $has_swiftformat \
   && add_seg "${FG_ACCENT}${IC_FMT} ${FG_TEXT}SwiftFormat"
+if $has_alamofire; then
+  al_seg="${FG_ACCENT}${IC_NET} ${FG_TEXT}Alamofire"
+  [[ -n "$alamofire_version" ]] && al_seg+=" ${FG_ACCENT}v${alamofire_version}"
+  add_seg "$al_seg"
+fi
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"
