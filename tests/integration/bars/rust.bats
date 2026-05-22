@@ -36,7 +36,7 @@ teardown() { teardown_fake_proj; }
 @test "rust: renders actix-web when present in Cargo.toml" {
   printf '[package]\nname="x"\nedition="2021"\n\n[dependencies]\nactix-web = "4"\n' > "$FAKE_PROJ/Cargo.toml"
   bar_run rust "$FAKE_PROJ"
-  [[ "$BAR_OUTPUT" == *"actix-web"* ]]
+  [[ "$BAR_OUTPUT" == *"Actix"* ]]
 }
 
 @test "rust: renders axum when present in Cargo.toml" {
@@ -48,7 +48,7 @@ teardown() { teardown_fake_proj; }
 @test "rust: renders tokio when present in Cargo.toml" {
   printf '[package]\nname="x"\nedition="2021"\n\n[dependencies]\ntokio = { version = "1", features = ["full"] }\n' > "$FAKE_PROJ/Cargo.toml"
   bar_run rust "$FAKE_PROJ"
-  [[ "$BAR_OUTPUT" == *"tokio"* ]]
+  [[ "$BAR_OUTPUT" == *"Tokio"* ]]
 }
 
 @test "rust: renders sqlx when present in Cargo.toml" {
@@ -70,5 +70,5 @@ teardown() { teardown_fake_proj; }
   printf '#!/bin/sh\necho ok\n' > "$FAKE_PROJ/cargo-clippy"
   chmod +x "$FAKE_PROJ/cargo-clippy"
   PATH="$FAKE_PROJ:$PATH" bar_run rust "$FAKE_PROJ"
-  [[ "$BAR_OUTPUT" == *"clippy"* ]]
+  [[ "$BAR_OUTPUT" == *"Clippy"* ]]
 }

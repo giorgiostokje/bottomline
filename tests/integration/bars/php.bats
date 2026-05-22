@@ -96,6 +96,6 @@ teardown() { teardown_fake_proj; }
   printf '%s\n' '{"packages":[],"packages-dev":[{"name":"friendsofphp/php-cs-fixer","version":"v3.0.0"}]}' \
     > "$FAKE_PROJ/composer.lock"
   bar_run php "$FAKE_PROJ"
-  [[ "$BAR_OUTPUT" == *"CS-Fixer"* ]]
+  [[ "$BAR_OUTPUT" == *"CS Fixer"* ]]
   [[ "$BAR_OUTPUT" == *"3.0.0"* ]]
 }

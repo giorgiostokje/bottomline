@@ -37,7 +37,7 @@ teardown() { teardown_fake_proj; }
   command -v shellcheck > /dev/null 2>&1 || skip "shellcheck not installed"
   printf '#!/usr/bin/env bash\n' > "$FAKE_PROJ/test.sh"
   bar_run shell "$FAKE_PROJ"
-  [[ "$BAR_OUTPUT" == *"sc"* ]]
+  [[ "$BAR_OUTPUT" == *"ShellCheck"* ]]
 }
 
 @test "shell: renders bats when binary on PATH" {

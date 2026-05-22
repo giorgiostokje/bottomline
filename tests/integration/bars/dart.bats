@@ -81,19 +81,19 @@ EOF
 @test "dart: renders riverpod when present" {
   printf 'name: x\ndependencies:\n  flutter_riverpod: ^2.5.0\n' > "$FAKE_PROJ/pubspec.yaml"
   bar_run dart "$FAKE_PROJ"
-  [[ "$BAR_OUTPUT" == *"riverpod"* ]]
+  [[ "$BAR_OUTPUT" == *"Riverpod"* ]]
 }
 
 @test "dart: renders bloc when present" {
   printf 'name: x\ndependencies:\n  flutter_bloc: ^8.1.0\n' > "$FAKE_PROJ/pubspec.yaml"
   bar_run dart "$FAKE_PROJ"
-  [[ "$BAR_OUTPUT" == *"bloc"* ]]
+  [[ "$BAR_OUTPUT" == *"BLoC"* ]]
 }
 
 @test "dart: renders dio when present" {
   printf 'name: x\ndependencies:\n  dio: ^5.4.0\n' > "$FAKE_PROJ/pubspec.yaml"
   bar_run dart "$FAKE_PROJ"
-  [[ "$BAR_OUTPUT" == *"dio"* ]]
+  [[ "$BAR_OUTPUT" == *"Dio"* ]]
 }
 
 @test "dart: renders very_good_analysis when present" {

@@ -36,13 +36,13 @@ teardown() { teardown_fake_proj; }
 @test "go: renders gin when in go.mod require" {
   printf 'module x\n\ngo 1.22\n\nrequire github.com/gin-gonic/gin v1.10.0\n' > "$FAKE_PROJ/go.mod"
   bar_run go "$FAKE_PROJ"
-  [[ "$BAR_OUTPUT" == *"gin"* ]]
+  [[ "$BAR_OUTPUT" == *"Gin"* ]]
 }
 
 @test "go: renders echo when in go.mod require" {
   printf 'module x\n\ngo 1.22\n\nrequire github.com/labstack/echo/v4 v4.11.0\n' > "$FAKE_PROJ/go.mod"
   bar_run go "$FAKE_PROJ"
-  [[ "$BAR_OUTPUT" == *"echo"* ]]
+  [[ "$BAR_OUTPUT" == *"Echo"* ]]
 }
 
 @test "go: renders testify when in go.mod" {
@@ -61,7 +61,7 @@ teardown() { teardown_fake_proj; }
 @test "go: renders gorm when in go.mod" {
   printf 'module x\n\ngo 1.22\n\nrequire gorm.io/gorm v1.25.0\n' > "$FAKE_PROJ/go.mod"
   bar_run go "$FAKE_PROJ"
-  [[ "$BAR_OUTPUT" == *"gorm"* ]]
+  [[ "$BAR_OUTPUT" == *"GORM"* ]]
 }
 
 @test "go: renders golangci-lint when binary on PATH" {
