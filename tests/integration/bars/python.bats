@@ -36,3 +36,43 @@ teardown() { teardown_fake_proj; }
   bar_run python "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"Flask"* ]]
 }
+
+@test "python: renders Python version from .python-version" {
+  printf '[project]\nname = "x"\n' > "$FAKE_PROJ/pyproject.toml"
+  printf '3.12.1\n' > "$FAKE_PROJ/.python-version"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"3.12"* ]]
+}
+
+@test "python: renders pytest when in pyproject.toml" {
+  printf '[project]\nname = "x"\ndependencies = ["pytest"]\n' > "$FAKE_PROJ/pyproject.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"pytest"* ]]
+}
+
+@test "python: renders pytest when pytest.ini exists" {
+  printf '[project]\nname = "x"\n' > "$FAKE_PROJ/pyproject.toml"
+  printf '[pytest]\n' > "$FAKE_PROJ/pytest.ini"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"pytest"* ]]
+}
+
+@test "python: renders ruff when ruff.toml exists" {
+  printf '[project]\nname = "x"\n' > "$FAKE_PROJ/pyproject.toml"
+  printf 'line-length = 100\n' > "$FAKE_PROJ/ruff.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"ruff"* ]]
+}
+
+@test "python: renders mypy when mypy.ini exists" {
+  printf '[project]\nname = "x"\n' > "$FAKE_PROJ/pyproject.toml"
+  printf '[mypy]\nstrict = true\n' > "$FAKE_PROJ/mypy.ini"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"mypy"* ]]
+}
+
+@test "python: renders Celery when in dependencies" {
+  printf '[project]\nname = "x"\ndependencies = ["celery"]\n' > "$FAKE_PROJ/pyproject.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Celery"* ]]
+}

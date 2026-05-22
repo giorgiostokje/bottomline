@@ -31,6 +31,11 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_FASTAPI=$'\xef\x83\xa7'  # U+F0E7  nf-fa-bolt
     IC_POETRY=$'\xef\x83\x90'   # U+F0D0  nf-fa-diamond
     IC_PIPENV=$'\xef\x84\xa1'   # U+F121  nf-fa-code
+    IC_TEST=$'\xef\x81\x80'      # U+F040  nf-fa-pencil
+    IC_QUEUE=$'\xef\x83\xa2'     # U+F0E2  nf-fa-history
+    IC_DB=$'\xef\x87\x80'        # U+F1C0  nf-fa-database
+    IC_LINT=$'\xef\x80\x8c'      # U+F00C  nf-fa-check
+    IC_TYPE=$'\xef\x80\xae'      # U+F02E  nf-fa-bookmark
     ;;
   emoji)
     IC_PYTHON='🐍'
@@ -39,12 +44,24 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_FASTAPI='⚡'
     IC_POETRY='📦'
     IC_PIPENV='📦'
+    IC_TEST='🧪' IC_QUEUE='📨' IC_DB='🗄' IC_LINT='✓' IC_TYPE='🔎'
     ;;
   *)
     IC_PYTHON='' IC_DJANGO='' IC_FLASK='' IC_FASTAPI='' IC_POETRY='' IC_PIPENV=''
+    IC_TEST='' IC_QUEUE='' IC_DB='' IC_LINT='' IC_TYPE=''
     ;;
 esac
 
+# ── Python version detection (priority: .python-version → pyproject.toml → .tool-versions) ──
+py_version=''
+if [[ -f "$PROJ/.python-version" ]]; then
+  py_version=$(awk '/^[0-9]/{print; exit}' "$PROJ/.python-version" 2>/dev/null)
+elif [[ -f "$PROJ/pyproject.toml" ]]; then
+  py_version=$(awk -F'"' '/requires-python/{print $2; exit}' "$PROJ/pyproject.toml" 2>/dev/null | sed 's/[^0-9.]//g')
+fi
+if [[ -z "$py_version" && -f "$PROJ/.tool-versions" ]]; then
+  py_version=$(awk '/^python /{print $2; exit}' "$PROJ/.tool-versions" 2>/dev/null)
+fi
 
 # ── Detect package manager / tool ─────────────────────────────────────────────
 tool_label=''
@@ -109,9 +126,39 @@ elif printf '%s' "$_all_deps" | grep -qiE 'flask'; then
   has_flask=true; flask_version=$(pkg_version "flask")
 fi
 
+# ── Detect testing + tooling ──────────────────────────────────────────────────
+# Single combined source for lockfile-driven deps: poetry.lock | pdm.lock | uv.lock | requirements.txt | pyproject.toml
+_deps_file=''
+for _df in poetry.lock pdm.lock uv.lock requirements.txt pyproject.toml; do
+  [[ -f "$PROJ/$_df" ]] && _deps_file="$PROJ/$_df" && break
+done
+
+has_pytest=false
+has_celery=false
+has_sqlalchemy=false
+has_ruff=false
+has_mypy=false
+
+if [[ -n "$_deps_file" ]]; then
+  grep -Eqi '(^|[^a-z])pytest([^a-z]|$)' "$_deps_file" 2>/dev/null && has_pytest=true
+  grep -Eqi '(^|[^a-z])celery([^a-z]|$)' "$_deps_file" 2>/dev/null && has_celery=true
+  grep -Eqi '(^|[^a-z])sqlalchemy([^a-z]|$)' "$_deps_file" 2>/dev/null && has_sqlalchemy=true
+  grep -Eqi '(^|[^a-z])ruff([^a-z]|$)' "$_deps_file" 2>/dev/null && has_ruff=true
+  grep -Eqi '(^|[^a-z])mypy([^a-z]|$)' "$_deps_file" 2>/dev/null && has_mypy=true
+fi
+
+# Config-file fallbacks
+! $has_pytest && [[ -f "$PROJ/pytest.ini" ]] && has_pytest=true
+[[ -f "$PROJ/ruff.toml" || -f "$PROJ/.ruff.toml" ]] && has_ruff=true
+[[ -f "$PROJ/mypy.ini" || -f "$PROJ/.mypy.ini" ]] && has_mypy=true
+
+# SQLAlchemy is suppressed when Django is present (Django ORM is the primary)
+[[ -n "${django_version:-}" ]] && has_sqlalchemy=false
+unset _df _deps_file
 
 # ── Python runtime ────────────────────────────────────────────────────────────
 python_seg="${FG_ACCENT}${IC_PYTHON} ${FG_TEXT}Python"
+[[ -n "$py_version" ]] && python_seg+=" ${FG_ACCENT}v${py_version}"
 [[ -n "$tool_label" ]] && python_seg+=" ${FG_ACCENT}[${FG_TEXT}${tool_icon}${tool_label}${FG_ACCENT}]"
 add_seg "$python_seg"
 
@@ -129,6 +176,15 @@ elif $has_flask; then
   [[ -n "$flask_version" ]] && fw_seg+=" ${FG_ACCENT}v${flask_version}"
   add_seg "$fw_seg"
 fi
+
+# Slot 5: Testing
+$has_pytest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}pytest"
+
+# Slot 6: Tooling
+$has_celery     && add_seg "${FG_ACCENT}${IC_QUEUE} ${FG_TEXT}Celery"
+$has_sqlalchemy && add_seg "${FG_ACCENT}${IC_DB} ${FG_TEXT}SQLAlchemy"
+$has_ruff       && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}ruff"
+$has_mypy       && add_seg "${FG_ACCENT}${IC_TYPE} ${FG_TEXT}mypy"
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"
