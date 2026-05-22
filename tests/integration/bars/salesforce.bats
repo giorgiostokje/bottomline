@@ -118,3 +118,31 @@ EOF
   bar_run salesforce "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"dev@example.com"* ]]
 }
+
+@test "salesforce: PMD detected from .pmdrc config file" {
+  _minimal_sfdx_json
+  touch "$FAKE_PROJ/.pmdrc"
+  bar_run salesforce "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"PMD"* ]]
+}
+
+@test "salesforce: ESLint LWC detected from package.json" {
+  _minimal_sfdx_json
+  cat > "$FAKE_PROJ/package.json" <<'EOF'
+{
+  "devDependencies": {
+    "@salesforce/eslint-config-lwc": "^3.0.0"
+  }
+}
+EOF
+  bar_run salesforce "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"ESLint"* ]]
+  [[ "$BAR_OUTPUT" == *"LWC"* ]]
+}
+
+@test "salesforce: neither PMD nor ESLint when absent" {
+  _minimal_sfdx_json
+  bar_run salesforce "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" != *"PMD"* ]]
+  [[ "$BAR_OUTPUT" != *"ESLint"* ]]
+}

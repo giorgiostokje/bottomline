@@ -24,15 +24,19 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_ORG=$'\xef\x86\xad'  # U+F1AD  nf-fa-building
     IC_USER=$'\xef\x80\x87' # U+F007  nf-fa-user
     IC_API=$'\xef\x84\xa1'  # U+F121  nf-fa-code
+    IC_PMD=$'\xef\x80\x8c'  # U+F00C  nf-fa-check
+    IC_LWC=$'\xef\x84\xa1'  # U+F121  nf-fa-code
     ;;
   emoji)
     IC_SF='☁️'
     IC_ORG='🏢'
     IC_USER='👤'
     IC_API='🔗'
+    IC_PMD='🔍'
+    IC_LWC='⚡'
     ;;
   *)
-    IC_SF='' IC_ORG='' IC_USER='' IC_API=''
+    IC_SF='' IC_ORG='' IC_USER='' IC_API='' IC_PMD='' IC_LWC=''
     ;;
 esac
 
@@ -83,6 +87,20 @@ if command -v sf &>/dev/null; then
   sf_version=$(sf --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 fi
 
+# ── PMD (Apex static analysis) ────────────────────────────────────────────────
+has_pmd=false
+[[ -f "$PROJ/.pmdrc" ]] && has_pmd=true
+! $has_pmd && command -v pmd > /dev/null 2>&1 && has_pmd=true
+
+# ── ESLint for LWC ───────────────────────────────────────────────────────────
+has_lwc_eslint=false
+if [[ -f "$PROJ/package.json" ]]; then
+  if jq -e '((.dependencies // {}) + (.devDependencies // {})) | has("@salesforce/eslint-config-lwc")' \
+    "$PROJ/package.json" > /dev/null 2>&1; then
+    has_lwc_eslint=true
+  fi
+fi
+
 # ── Segments ──────────────────────────────────────────────────────────────────
 # 1. SF header: icon + label + CLI version
 sf_seg="${FG_ACCENT}${IC_SF} ${FG_TEXT}Salesforce"
@@ -106,6 +124,10 @@ fi
 
 # 5. Namespace (when explicitly set in the project config)
 [[ -n "$namespace" ]] && seg "${FG_TEXT}ns:${FG_ACCENT}${namespace}"
+
+# Slot 6: Tooling
+$has_pmd         && seg "${FG_ACCENT}${IC_PMD} ${FG_TEXT}PMD"
+$has_lwc_eslint  && seg "${FG_ACCENT}${IC_LWC} ${FG_TEXT}ESLint (LWC)"
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"
