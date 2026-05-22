@@ -13,7 +13,7 @@ setup() {
 teardown() {
   teardown_fake_proj
   local hash; hash=$(printf '%s' "$FAKE_PROJ" | (md5sum 2>/dev/null || md5) | cut -c1-8)
-  find /tmp -maxdepth 1 \( -name "bl_go_${hash}_*.txt" -o -name "bl_python_${hash}_*.txt" \) \
+  find -L /tmp -maxdepth 1 \( -name "bl_go_${hash}_*.txt" -o -name "bl_python_${hash}_*.txt" \) \
     -delete 2>/dev/null || true
 }
 
@@ -22,14 +22,14 @@ teardown() {
 @test "cache miss: go bar creates a cache file on first run" {
   bar_run go "$FAKE_PROJ" 60
   local hash; hash=$(printf '%s' "$FAKE_PROJ" | (md5sum 2>/dev/null || md5) | cut -c1-8)
-  local count; count=$(find /tmp -maxdepth 1 -name "bl_go_${hash}_*.txt" 2>/dev/null | wc -l | tr -d ' ')
+  local count; count=$(find -L /tmp -maxdepth 1 -name "bl_go_${hash}_*.txt" 2>/dev/null | wc -l | tr -d ' ')
   [ "$count" -ge 1 ]
 }
 
 @test "cache miss: go bar cache file contains rendered output" {
   bar_run go "$FAKE_PROJ" 60
   local hash; hash=$(printf '%s' "$FAKE_PROJ" | (md5sum 2>/dev/null || md5) | cut -c1-8)
-  local cache_file; cache_file=$(find /tmp -maxdepth 1 -name "bl_go_${hash}_*.txt" 2>/dev/null | head -1)
+  local cache_file; cache_file=$(find -L /tmp -maxdepth 1 -name "bl_go_${hash}_*.txt" 2>/dev/null | head -1)
   [ -n "$cache_file" ]
   [[ "$(strip_ansi < "$cache_file")" == *"Go"* ]]
 }
@@ -55,7 +55,7 @@ teardown() {
 @test "TTL=0: go bar writes no cache file" {
   bar_run go "$FAKE_PROJ" 0
   local hash; hash=$(printf '%s' "$FAKE_PROJ" | (md5sum 2>/dev/null || md5) | cut -c1-8)
-  local count; count=$(find /tmp -maxdepth 1 -name "bl_go_${hash}_*.txt" 2>/dev/null | wc -l | tr -d ' ')
+  local count; count=$(find -L /tmp -maxdepth 1 -name "bl_go_${hash}_*.txt" 2>/dev/null | wc -l | tr -d ' ')
   [ "$count" -eq 0 ]
 }
 

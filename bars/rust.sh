@@ -8,6 +8,12 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "rust" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
 # Returns the exact version of a package from Cargo.lock.
 cargo_lock_version() {
   local pkg="$1"
@@ -112,40 +118,46 @@ elif command -v cargo-clippy > /dev/null 2>&1; then
   has_clippy=true
 fi
 
-# ── Segments (canonical slot order) ───────────────────────────────────────────
-# Slot 1: Runtime
-rust_seg="${FG_ACCENT}${IC_RUST} ${FG_TEXT}Rust"
-[[ -n "$edition" ]] && rust_seg+=" ${FG_ACCENT}${edition}"
-$is_workspace && rust_seg+=" ${FG_ACCENT}${IC_WORKSPACE}${FG_TEXT} workspace"
-add_seg "$rust_seg"
+_bl_out=$(
+  # ── Segments (canonical slot order) ───────────────────────────────────────────
+  # Slot 1: Runtime
+  rust_seg="${FG_ACCENT}${IC_RUST} ${FG_TEXT}Rust"
+  [[ -n "$edition" ]] && rust_seg+=" ${FG_ACCENT}${edition}"
+  $is_workspace && rust_seg+=" ${FG_ACCENT}${IC_WORKSPACE}${FG_TEXT} workspace"
+  add_seg "$rust_seg"
 
-# Slot 3: Framework
-if [[ -n "$framework" ]]; then
-  fw_seg="${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework_display}"
-  [[ -n "$framework_version" ]] && fw_seg+=" ${FG_ACCENT}v${framework_version}"
-  add_seg "$fw_seg"
-fi
+  # Slot 3: Framework
+  if [[ -n "$framework" ]]; then
+    fw_seg="${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework_display}"
+    [[ -n "$framework_version" ]] && fw_seg+=" ${FG_ACCENT}v${framework_version}"
+    add_seg "$fw_seg"
+  fi
 
-# Slot 5: Testing
-if $has_nextest; then
-  nx_seg="${FG_ACCENT}${IC_TEST} ${FG_TEXT}nextest"
-  [[ -n "$nextest_version" ]] && nx_seg+=" ${FG_ACCENT}v${nextest_version}"
-  add_seg "$nx_seg"
-fi
+  # Slot 5: Testing
+  if $has_nextest; then
+    nx_seg="${FG_ACCENT}${IC_TEST} ${FG_TEXT}nextest"
+    [[ -n "$nextest_version" ]] && nx_seg+=" ${FG_ACCENT}v${nextest_version}"
+    add_seg "$nx_seg"
+  fi
 
-# Slot 6: Tooling
-$has_clippy \
-  && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}Clippy"
-if $has_tokio; then
-  tokio_seg="${FG_ACCENT}${IC_RUNTIME} ${FG_TEXT}Tokio"
-  [[ -n "$tokio_version" ]] && tokio_seg+=" ${FG_ACCENT}v${tokio_version}"
-  add_seg "$tokio_seg"
-fi
-if [[ -n "$orm" ]]; then
-  orm_seg="${FG_ACCENT}${IC_DB} ${FG_TEXT}${orm}"
-  [[ -n "$orm_version" ]] && orm_seg+=" ${FG_ACCENT}v${orm_version}"
-  add_seg "$orm_seg"
-fi
+  # Slot 6: Tooling
+  $has_clippy \
+    && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}Clippy"
+  if $has_tokio; then
+    tokio_seg="${FG_ACCENT}${IC_RUNTIME} ${FG_TEXT}Tokio"
+    [[ -n "$tokio_version" ]] && tokio_seg+=" ${FG_ACCENT}v${tokio_version}"
+    add_seg "$tokio_seg"
+  fi
+  if [[ -n "$orm" ]]; then
+    orm_seg="${FG_ACCENT}${IC_DB} ${FG_TEXT}${orm}"
+    [[ -n "$orm_version" ]] && orm_seg+=" ${FG_ACCENT}v${orm_version}"
+    add_seg "$orm_seg"
+  fi
 
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
+  (( ${#_sc[@]} == 0 )) && exit 0
+  flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
+fi
+printf '%s' "$_bl_out"

@@ -14,6 +14,12 @@ unset _f _has_sh
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "shell" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
 # ── Icons ─────────────────────────────────────────────────────────────────────
 case "$BOTTOMLINE_ICON_TYPE" in
   nerd)
@@ -80,24 +86,30 @@ fi
 has_make=false
 [[ -f "$PROJ/Makefile" ]] && has_make=true
 
-# ── Segments (canonical slot order) ───────────────────────────────────────────
-# Slot 1: Runtime
-shell_seg="${FG_ACCENT}${IC_SHELL} ${FG_TEXT}${target_shell}"
-[[ -n "$bash_version" ]] && shell_seg+=" ${FG_ACCENT}v${bash_version}"
-add_seg "$shell_seg"
+_bl_out=$(
+  # ── Segments (canonical slot order) ───────────────────────────────────────────
+  # Slot 1: Runtime
+  shell_seg="${FG_ACCENT}${IC_SHELL} ${FG_TEXT}${target_shell}"
+  [[ -n "$bash_version" ]] && shell_seg+=" ${FG_ACCENT}v${bash_version}"
+  add_seg "$shell_seg"
 
-# Slot 5: Testing
-if $has_bats; then
-  if [[ -n "$bats_version" ]]; then
-    add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}bats ${FG_ACCENT}v${bats_version}"
-  else
-    add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}bats"
+  # Slot 5: Testing
+  if $has_bats; then
+    if [[ -n "$bats_version" ]]; then
+      add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}bats ${FG_ACCENT}v${bats_version}"
+    else
+      add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}bats"
+    fi
   fi
+
+  # Slot 6: Tooling
+  [[ -n "$sc_version" ]] && add_seg "${FG_ACCENT}${IC_SC} ${FG_TEXT}ShellCheck ${FG_ACCENT}v${sc_version}"
+  $has_make && add_seg "${FG_ACCENT}${IC_MAKE} ${FG_TEXT}make"
+
+  (( ${#_sc[@]} == 0 )) && exit 0
+  flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
 fi
-
-# Slot 6: Tooling
-[[ -n "$sc_version" ]] && add_seg "${FG_ACCENT}${IC_SC} ${FG_TEXT}ShellCheck ${FG_ACCENT}v${sc_version}"
-$has_make && add_seg "${FG_ACCENT}${IC_MAKE} ${FG_TEXT}make"
-
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
+printf '%s' "$_bl_out"

@@ -3,10 +3,18 @@
 # Only renders when the project contains a go.mod.
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
-[[ -z "$PROJ" || ! -f "$PROJ/go.mod" ]] && exit 0
+[[ -z "$PROJ" ]] && exit 0
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
+
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "go" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
+[[ ! -f "$PROJ/go.mod" ]] && exit 0
 
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
   FG_TEXT=$(make_fg "$(hex_to_rgb "#c8e8f4")")
@@ -92,45 +100,51 @@ elif [[ -f "$PROJ/.golangci.yml" || -f "$PROJ/.golangci.yaml" || -f "$PROJ/.gola
   has_golangci=true
 fi
 
-# ── Segments (canonical slot order) ───────────────────────────────────────────
-# Slot 1: Runtime
-go_seg="${FG_ACCENT}${IC_GO} ${FG_TEXT}Go"
-[[ -n "$go_version" ]] && go_seg+=" ${FG_ACCENT}v${go_version}"
-$is_workspace && go_seg+=" ${FG_ACCENT}${IC_WORKSPACE}${FG_TEXT} workspace"
-add_seg "$go_seg"
+_bl_out=$(
+  # ── Segments (canonical slot order) ───────────────────────────────────────────
+  # Slot 1: Runtime
+  go_seg="${FG_ACCENT}${IC_GO} ${FG_TEXT}Go"
+  [[ -n "$go_version" ]] && go_seg+=" ${FG_ACCENT}v${go_version}"
+  $is_workspace && go_seg+=" ${FG_ACCENT}${IC_WORKSPACE}${FG_TEXT} workspace"
+  add_seg "$go_seg"
 
-# Slot 3: Framework
-if [[ -n "$framework" ]]; then
-  fw_seg="${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework_display}"
-  [[ -n "$framework_version" ]] && fw_seg+=" ${FG_ACCENT}v${framework_version}"
-  add_seg "$fw_seg"
-fi
+  # Slot 3: Framework
+  if [[ -n "$framework" ]]; then
+    fw_seg="${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework_display}"
+    [[ -n "$framework_version" ]] && fw_seg+=" ${FG_ACCENT}v${framework_version}"
+    add_seg "$fw_seg"
+  fi
 
-# Slot 5: Testing
-if $has_ginkgo; then
-  ginkgo_seg="${FG_ACCENT}${IC_TEST} ${FG_TEXT}Ginkgo"
-  [[ -n "$ginkgo_version" ]] && ginkgo_seg+=" ${FG_ACCENT}v${ginkgo_version}"
-  add_seg "$ginkgo_seg"
-fi
-if $has_testify; then
-  testify_seg="${FG_ACCENT}${IC_TEST} ${FG_TEXT}testify"
-  [[ -n "$testify_version" ]] && testify_seg+=" ${FG_ACCENT}v${testify_version}"
-  add_seg "$testify_seg"
-fi
+  # Slot 5: Testing
+  if $has_ginkgo; then
+    ginkgo_seg="${FG_ACCENT}${IC_TEST} ${FG_TEXT}Ginkgo"
+    [[ -n "$ginkgo_version" ]] && ginkgo_seg+=" ${FG_ACCENT}v${ginkgo_version}"
+    add_seg "$ginkgo_seg"
+  fi
+  if $has_testify; then
+    testify_seg="${FG_ACCENT}${IC_TEST} ${FG_TEXT}testify"
+    [[ -n "$testify_version" ]] && testify_seg+=" ${FG_ACCENT}v${testify_version}"
+    add_seg "$testify_seg"
+  fi
 
-# Slot 6: Tooling
-# static analysis first
-if $has_golangci; then
-  lint_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}golangci-lint"
-  [[ -n "$golangci_version" ]] && lint_seg+=" ${FG_ACCENT}v${golangci_version}"
-  add_seg "$lint_seg"
-fi
-# ORM second
-if $has_gorm; then
-  gorm_seg="${FG_ACCENT}${IC_DB} ${FG_TEXT}GORM"
-  [[ -n "$gorm_version" ]] && gorm_seg+=" ${FG_ACCENT}v${gorm_version}"
-  add_seg "$gorm_seg"
-fi
+  # Slot 6: Tooling
+  # static analysis first
+  if $has_golangci; then
+    lint_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}golangci-lint"
+    [[ -n "$golangci_version" ]] && lint_seg+=" ${FG_ACCENT}v${golangci_version}"
+    add_seg "$lint_seg"
+  fi
+  # ORM second
+  if $has_gorm; then
+    gorm_seg="${FG_ACCENT}${IC_DB} ${FG_TEXT}GORM"
+    [[ -n "$gorm_version" ]] && gorm_seg+=" ${FG_ACCENT}v${gorm_version}"
+    add_seg "$gorm_seg"
+  fi
 
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
+  (( ${#_sc[@]} == 0 )) && exit 0
+  flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
+fi
+printf '%s' "$_bl_out"
