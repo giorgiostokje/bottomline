@@ -3,10 +3,18 @@
 # Only renders when the project contains a mix.exs.
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
-[[ -z "$PROJ" || ! -f "$PROJ/mix.exs" ]] && exit 0
+[[ -z "$PROJ" ]] && exit 0
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
+
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "elixir" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
+[[ ! -f "$PROJ/mix.exs" ]] && exit 0
 
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
   FG_TEXT=$(make_fg "$(hex_to_rgb "#e8d8f8")")
@@ -83,35 +91,41 @@ fi
 has_exunit=false
 [[ -d "$PROJ/test" ]] && has_exunit=true
 
-# ── Elixir runtime ────────────────────────────────────────────────────────────
-elixir_seg="${FG_ACCENT}${IC_ELIXIR} ${FG_TEXT}Elixir"
-[[ -n "$elixir_version" ]] && elixir_seg+=" ${FG_ACCENT}v${elixir_version}"
-add_seg "$elixir_seg"
+_bl_out=$(
+  # ── Elixir runtime ────────────────────────────────────────────────────────────
+  elixir_seg="${FG_ACCENT}${IC_ELIXIR} ${FG_TEXT}Elixir"
+  [[ -n "$elixir_version" ]] && elixir_seg+=" ${FG_ACCENT}v${elixir_version}"
+  add_seg "$elixir_seg"
 
-# ── Phoenix ───────────────────────────────────────────────────────────────────
-if $has_phoenix; then
-  phoenix_seg="${FG_ACCENT}${IC_PHOENIX} ${FG_TEXT}Phoenix"
-  [[ -n "$phoenix_version" ]] && phoenix_seg+=" ${FG_ACCENT}v${phoenix_version}"
-  add_seg "$phoenix_seg"
+  # ── Phoenix ───────────────────────────────────────────────────────────────────
+  if $has_phoenix; then
+    phoenix_seg="${FG_ACCENT}${IC_PHOENIX} ${FG_TEXT}Phoenix"
+    [[ -n "$phoenix_version" ]] && phoenix_seg+=" ${FG_ACCENT}v${phoenix_version}"
+    add_seg "$phoenix_seg"
+  fi
+
+  # Slot 4: Add-ons
+  [[ -n "$liveview_version" ]] \
+    && add_seg "${FG_ACCENT}${IC_LV} ${FG_TEXT}LiveView ${FG_ACCENT}v${liveview_version}"
+  [[ -n "$ecto_version" ]] \
+    && add_seg "${FG_ACCENT}${IC_DB} ${FG_TEXT}Ecto ${FG_ACCENT}v${ecto_version}"
+  [[ -n "$oban_version" ]] \
+    && add_seg "${FG_ACCENT}${IC_QUEUE} ${FG_TEXT}Oban ${FG_ACCENT}v${oban_version}"
+
+  # Slot 5: Testing
+  $has_exunit \
+    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}ExUnit"
+
+  # Slot 6: Tooling
+  [[ -n "$credo_version" ]] \
+    && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}Credo ${FG_ACCENT}v${credo_version}"
+  [[ -n "$dialyxir_version" ]] \
+    && add_seg "${FG_ACCENT}${IC_TYPE} ${FG_TEXT}Dialyxir ${FG_ACCENT}v${dialyxir_version}"
+
+  (( ${#_sc[@]} == 0 )) && exit 0
+  flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
 fi
-
-# Slot 4: Add-ons
-[[ -n "$liveview_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_LV} ${FG_TEXT}LiveView ${FG_ACCENT}v${liveview_version}"
-[[ -n "$ecto_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_DB} ${FG_TEXT}Ecto ${FG_ACCENT}v${ecto_version}"
-[[ -n "$oban_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_QUEUE} ${FG_TEXT}Oban ${FG_ACCENT}v${oban_version}"
-
-# Slot 5: Testing
-$has_exunit \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}ExUnit"
-
-# Slot 6: Tooling
-[[ -n "$credo_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}Credo ${FG_ACCENT}v${credo_version}"
-[[ -n "$dialyxir_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_TYPE} ${FG_TEXT}Dialyxir ${FG_ACCENT}v${dialyxir_version}"
-
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
+printf '%s' "$_bl_out"

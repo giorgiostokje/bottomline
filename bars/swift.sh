@@ -3,10 +3,18 @@
 # Only renders when the project contains a Package.swift.
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
-[[ -z "$PROJ" || ! -f "$PROJ/Package.swift" ]] && exit 0
+[[ -z "$PROJ" ]] && exit 0
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
+
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "swift" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
+[[ ! -f "$PROJ/Package.swift" ]] && exit 0
 
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
   FG_TEXT=$(make_fg "$(hex_to_rgb "#f5ddd8")")
@@ -105,40 +113,46 @@ elif command -v swiftformat > /dev/null 2>&1; then
   has_swiftformat=true
 fi
 
-# ── Swift runtime ─────────────────────────────────────────────────────────────
-swift_seg="${FG_ACCENT}${IC_SWIFT} ${FG_TEXT}Swift"
-[[ -n "$tools_version" ]] && swift_seg+=" ${FG_ACCENT}tools v${tools_version}"
-add_seg "$swift_seg"
+_bl_out=$(
+  # ── Swift runtime ─────────────────────────────────────────────────────────────
+  swift_seg="${FG_ACCENT}${IC_SWIFT} ${FG_TEXT}Swift"
+  [[ -n "$tools_version" ]] && swift_seg+=" ${FG_ACCENT}tools v${tools_version}"
+  add_seg "$swift_seg"
 
-# ── Vapor ─────────────────────────────────────────────────────────────────────
-if $has_vapor; then
-  vapor_seg="${FG_ACCENT}${IC_VAPOR} ${FG_TEXT}Vapor"
-  [[ -n "$vapor_version" ]] && vapor_seg+=" ${FG_ACCENT}v${vapor_version}"
-  add_seg "$vapor_seg"
+  # ── Vapor ─────────────────────────────────────────────────────────────────────
+  if $has_vapor; then
+    vapor_seg="${FG_ACCENT}${IC_VAPOR} ${FG_TEXT}Vapor"
+    [[ -n "$vapor_version" ]] && vapor_seg+=" ${FG_ACCENT}v${vapor_version}"
+    add_seg "$vapor_seg"
+  fi
+
+  # Slot 3: Hummingbird (alongside Vapor if both present)
+  $has_hummingbird \
+    && add_seg "${FG_ACCENT}${IC_WEB} ${FG_TEXT}Hummingbird"
+
+  # Slot 5: Testing (layering: Quick > XCTest; Swift Testing standalone)
+  $has_quick \
+    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Quick"
+  $has_swift_testing \
+    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Swift Testing"
+  $has_xctest \
+    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}XCTest"
+
+  # Slot 6: Tooling (order: SwiftLint → SwiftFormat → Alamofire)
+  $has_swiftlint \
+    && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}SwiftLint"
+  $has_swiftformat \
+    && add_seg "${FG_ACCENT}${IC_FMT} ${FG_TEXT}SwiftFormat"
+  if $has_alamofire; then
+    al_seg="${FG_ACCENT}${IC_NET} ${FG_TEXT}Alamofire"
+    [[ -n "$alamofire_version" ]] && al_seg+=" ${FG_ACCENT}v${alamofire_version}"
+    add_seg "$al_seg"
+  fi
+
+  (( ${#_sc[@]} == 0 )) && exit 0
+  flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
 fi
-
-# Slot 3: Hummingbird (alongside Vapor if both present)
-$has_hummingbird \
-  && add_seg "${FG_ACCENT}${IC_WEB} ${FG_TEXT}Hummingbird"
-
-# Slot 5: Testing (layering: Quick > XCTest; Swift Testing standalone)
-$has_quick \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Quick"
-$has_swift_testing \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Swift Testing"
-$has_xctest \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}XCTest"
-
-# Slot 6: Tooling (order: SwiftLint → SwiftFormat → Alamofire)
-$has_swiftlint \
-  && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}SwiftLint"
-$has_swiftformat \
-  && add_seg "${FG_ACCENT}${IC_FMT} ${FG_TEXT}SwiftFormat"
-if $has_alamofire; then
-  al_seg="${FG_ACCENT}${IC_NET} ${FG_TEXT}Alamofire"
-  [[ -n "$alamofire_version" ]] && al_seg+=" ${FG_ACCENT}v${alamofire_version}"
-  add_seg "$al_seg"
-fi
-
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
+printf '%s' "$_bl_out"

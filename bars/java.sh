@@ -5,14 +5,20 @@
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
 
+# shellcheck source=lib/helpers.sh
+source "$BOTTOMLINE_LIB/helpers.sh"
+
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "java" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
 has_maven=false has_gradle=false
 [[ -f "$PROJ/pom.xml" ]]             && has_maven=true
 [[ -f "$PROJ/build.gradle" ]]        && has_gradle=true
 [[ -f "$PROJ/build.gradle.kts" ]]    && has_gradle=true
 $has_maven || $has_gradle || exit 0
-
-# shellcheck source=lib/helpers.sh
-source "$BOTTOMLINE_LIB/helpers.sh"
 
 # Extracts version from pom.xml for the named artifactId.
 _pom_dep_version() {
@@ -158,58 +164,64 @@ if $has_gradle; then
 fi
 
 
-# ── Build tool ────────────────────────────────────────────────────────────────
-if $has_maven; then
-  java_seg="${FG_ACCENT}${IC_MAVEN} ${FG_TEXT}Maven"
-  [[ -n "$java_version" ]] && java_seg+=" ${FG_ACCENT}(Java ${java_version})"
-  add_seg "$java_seg"
-elif $has_gradle; then
-  java_seg="${FG_ACCENT}${IC_GRADLE} ${FG_TEXT}Gradle"
-  [[ -n "$java_version" ]] && java_seg+=" ${FG_ACCENT}(Java ${java_version})"
-  add_seg "$java_seg"
-fi
+_bl_out=$(
+  # ── Build tool ────────────────────────────────────────────────────────────────
+  if $has_maven; then
+    java_seg="${FG_ACCENT}${IC_MAVEN} ${FG_TEXT}Maven"
+    [[ -n "$java_version" ]] && java_seg+=" ${FG_ACCENT}(Java ${java_version})"
+    add_seg "$java_seg"
+  elif $has_gradle; then
+    java_seg="${FG_ACCENT}${IC_GRADLE} ${FG_TEXT}Gradle"
+    [[ -n "$java_version" ]] && java_seg+=" ${FG_ACCENT}(Java ${java_version})"
+    add_seg "$java_seg"
+  fi
 
-# ── Framework ─────────────────────────────────────────────────────────────────
-if $has_spring; then
-  spring_seg="${FG_ACCENT}${IC_SPRING} ${FG_TEXT}Spring Boot"
-  [[ -n "$spring_version" ]] && spring_seg+=" ${FG_ACCENT}v${spring_version}"
-  add_seg "$spring_seg"
-elif $has_quarkus; then
-  quarkus_seg="${FG_ACCENT}${IC_QUARKUS} ${FG_TEXT}Quarkus"
-  [[ -n "$quarkus_version" ]] && quarkus_seg+=" ${FG_ACCENT}v${quarkus_version}"
-  add_seg "$quarkus_seg"
-elif $has_micronaut; then
-  micronaut_seg="${FG_ACCENT}${IC_MICRONAUT} ${FG_TEXT}Micronaut"
-  [[ -n "$micronaut_version" ]] && micronaut_seg+=" ${FG_ACCENT}v${micronaut_version}"
-  add_seg "$micronaut_seg"
-fi
+  # ── Framework ─────────────────────────────────────────────────────────────────
+  if $has_spring; then
+    spring_seg="${FG_ACCENT}${IC_SPRING} ${FG_TEXT}Spring Boot"
+    [[ -n "$spring_version" ]] && spring_seg+=" ${FG_ACCENT}v${spring_version}"
+    add_seg "$spring_seg"
+  elif $has_quarkus; then
+    quarkus_seg="${FG_ACCENT}${IC_QUARKUS} ${FG_TEXT}Quarkus"
+    [[ -n "$quarkus_version" ]] && quarkus_seg+=" ${FG_ACCENT}v${quarkus_version}"
+    add_seg "$quarkus_seg"
+  elif $has_micronaut; then
+    micronaut_seg="${FG_ACCENT}${IC_MICRONAUT} ${FG_TEXT}Micronaut"
+    [[ -n "$micronaut_version" ]] && micronaut_seg+=" ${FG_ACCENT}v${micronaut_version}"
+    add_seg "$micronaut_seg"
+  fi
 
-# Slot 5: Testing
-$has_junit5 && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}JUnit 5"
-$has_junit4 && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}JUnit 4"
-$has_testng && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}TestNG"
+  # Slot 5: Testing
+  $has_junit5 && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}JUnit 5"
+  $has_junit4 && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}JUnit 4"
+  $has_testng && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}TestNG"
 
-# Slot 6: Tooling
-if $has_checkstyle; then
-  cs_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}Checkstyle"
-  [[ -n "$checkstyle_version" ]] && cs_seg+=" ${FG_ACCENT}v${checkstyle_version}"
-  add_seg "$cs_seg"
-fi
-if $has_spotbugs; then
-  sb_seg="${FG_ACCENT}${IC_BUG} ${FG_TEXT}SpotBugs"
-  [[ -n "$spotbugs_version" ]] && sb_seg+=" ${FG_ACCENT}v${spotbugs_version}"
-  add_seg "$sb_seg"
-fi
-if $has_pmd; then
-  pmd_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}PMD"
-  [[ -n "$pmd_version" ]] && pmd_seg+=" ${FG_ACCENT}v${pmd_version}"
-  add_seg "$pmd_seg"
-fi
-if $has_lombok; then
-  lk_seg="${FG_ACCENT}${IC_GEAR} ${FG_TEXT}Lombok"
-  [[ -n "$lombok_version" ]] && lk_seg+=" ${FG_ACCENT}v${lombok_version}"
-  add_seg "$lk_seg"
-fi
+  # Slot 6: Tooling
+  if $has_checkstyle; then
+    cs_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}Checkstyle"
+    [[ -n "$checkstyle_version" ]] && cs_seg+=" ${FG_ACCENT}v${checkstyle_version}"
+    add_seg "$cs_seg"
+  fi
+  if $has_spotbugs; then
+    sb_seg="${FG_ACCENT}${IC_BUG} ${FG_TEXT}SpotBugs"
+    [[ -n "$spotbugs_version" ]] && sb_seg+=" ${FG_ACCENT}v${spotbugs_version}"
+    add_seg "$sb_seg"
+  fi
+  if $has_pmd; then
+    pmd_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}PMD"
+    [[ -n "$pmd_version" ]] && pmd_seg+=" ${FG_ACCENT}v${pmd_version}"
+    add_seg "$pmd_seg"
+  fi
+  if $has_lombok; then
+    lk_seg="${FG_ACCENT}${IC_GEAR} ${FG_TEXT}Lombok"
+    [[ -n "$lombok_version" ]] && lk_seg+=" ${FG_ACCENT}v${lombok_version}"
+    add_seg "$lk_seg"
+  fi
 
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
+  (( ${#_sc[@]} == 0 )) && exit 0
+  flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
+fi
+printf '%s' "$_bl_out"

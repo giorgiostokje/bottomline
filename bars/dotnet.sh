@@ -5,6 +5,15 @@
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
 
+# shellcheck source=lib/helpers.sh
+source "$BOTTOMLINE_LIB/helpers.sh"
+
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "dotnet" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
 shopt -s nullglob
 _csproj=("$PROJ"/*.csproj)
 _sln=("$PROJ"/*.sln)
@@ -13,9 +22,6 @@ shopt -u nullglob
   && ! -f "$PROJ/global.json" \
   && ! -f "$PROJ/Directory.Build.props" \
   && ! -f "$PROJ/Directory.Build.targets" ]] && exit 0
-
-# shellcheck source=lib/helpers.sh
-source "$BOTTOMLINE_LIB/helpers.sh"
 
 # Extracts PackageReference version from .csproj by partial package name match.
 _csproj_pkg_version() {
@@ -99,38 +105,44 @@ if [[ -n "$csproj" ]]; then
   $has_sonar    && sonar_version=$(_csproj_pkg_version "SonarAnalyzer" "$csproj")
 fi
 
-# ── Segments ──────────────────────────────────────────────────────────────────
-dotnet_seg="${FG_ACCENT}${IC_DOTNET} ${FG_TEXT}.NET"
-[[ -n "$sdk_version" ]] && dotnet_seg+=" ${FG_ACCENT}v${sdk_version}"
-add_seg "$dotnet_seg"
+_bl_out=$(
+  # ── Segments ──────────────────────────────────────────────────────────────────
+  dotnet_seg="${FG_ACCENT}${IC_DOTNET} ${FG_TEXT}.NET"
+  [[ -n "$sdk_version" ]] && dotnet_seg+=" ${FG_ACCENT}v${sdk_version}"
+  add_seg "$dotnet_seg"
 
-[[ -n "$target_framework" ]] && add_seg "${FG_TEXT}${target_framework}"
+  [[ -n "$target_framework" ]] && add_seg "${FG_TEXT}${target_framework}"
 
-# Slot 3: Framework
-[[ -n "$framework" ]] \
-  && add_seg "${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework}"
+  # Slot 3: Framework
+  [[ -n "$framework" ]] \
+    && add_seg "${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework}"
 
-# Slot 5: Testing
-$has_xunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}xUnit"
-$has_nunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}NUnit"
-$has_mstest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}MSTest"
+  # Slot 5: Testing
+  $has_xunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}xUnit"
+  $has_nunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}NUnit"
+  $has_mstest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}MSTest"
 
-# Slot 6: Tooling
-if $has_stylecop; then
-  sc_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}StyleCop"
-  [[ -n "$stylecop_version" ]] && sc_seg+=" ${FG_ACCENT}v${stylecop_version}"
-  add_seg "$sc_seg"
+  # Slot 6: Tooling
+  if $has_stylecop; then
+    sc_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}StyleCop"
+    [[ -n "$stylecop_version" ]] && sc_seg+=" ${FG_ACCENT}v${stylecop_version}"
+    add_seg "$sc_seg"
+  fi
+  if $has_sonar; then
+    sn_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}SonarAnalyzer"
+    [[ -n "$sonar_version" ]] && sn_seg+=" ${FG_ACCENT}v${sonar_version}"
+    add_seg "$sn_seg"
+  fi
+  if $has_ef; then
+    ef_seg="${FG_ACCENT}${IC_DB} ${FG_TEXT}EF Core"
+    [[ -n "$ef_version" ]] && ef_seg+=" ${FG_ACCENT}v${ef_version}"
+    add_seg "$ef_seg"
+  fi
+
+  (( ${#_sc[@]} == 0 )) && exit 0
+  flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
 fi
-if $has_sonar; then
-  sn_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}SonarAnalyzer"
-  [[ -n "$sonar_version" ]] && sn_seg+=" ${FG_ACCENT}v${sonar_version}"
-  add_seg "$sn_seg"
-fi
-if $has_ef; then
-  ef_seg="${FG_ACCENT}${IC_DB} ${FG_TEXT}EF Core"
-  [[ -n "$ef_version" ]] && ef_seg+=" ${FG_ACCENT}v${ef_version}"
-  add_seg "$ef_seg"
-fi
-
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
+printf '%s' "$_bl_out"
