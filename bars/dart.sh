@@ -3,10 +3,18 @@
 # Only renders when the project contains a pubspec.yaml.
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
-[[ -z "$PROJ" || ! -f "$PROJ/pubspec.yaml" ]] && exit 0
+[[ -z "$PROJ" ]] && exit 0
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
+
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "dart" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
+[[ ! -f "$PROJ/pubspec.yaml" ]] && exit 0
 
 # Returns the locked version of a dep from pubspec.lock, or constraint from pubspec.yaml.
 pubspec_dep_version() {
@@ -114,39 +122,45 @@ elif grep -Eq '^[[:space:]]+lints:' "$pubspec" 2>/dev/null; then
 fi
 [[ -n "$lint_pkg" ]] && lint_pkg_version=$(pubspec_dep_version "$lint_pkg")
 
-# ── Segments ──────────────────────────────────────────────────────────────────
-dart_seg="${FG_ACCENT}${IC_DART} ${FG_TEXT}Dart"
-[[ -n "$sdk_version" ]] && dart_seg+=" ${FG_ACCENT}v${sdk_version}"
-[[ -n "$pkg_name" ]]    && dart_seg+=" ${FG_TEXT}${pkg_name}"
-add_seg "$dart_seg"
+_bl_out=$(
+  # ── Segments ──────────────────────────────────────────────────────────────────
+  dart_seg="${FG_ACCENT}${IC_DART} ${FG_TEXT}Dart"
+  [[ -n "$sdk_version" ]] && dart_seg+=" ${FG_ACCENT}v${sdk_version}"
+  [[ -n "$pkg_name" ]]    && dart_seg+=" ${FG_TEXT}${pkg_name}"
+  add_seg "$dart_seg"
 
-$is_flutter && add_seg "${FG_ACCENT}${IC_FLUTTER} ${FG_TEXT}Flutter"
+  $is_flutter && add_seg "${FG_ACCENT}${IC_FLUTTER} ${FG_TEXT}Flutter"
 
-# Slot 5: Testing
-$has_flutter_test \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}flutter_test"
-$has_test \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}test"
+  # Slot 5: Testing
+  $has_flutter_test \
+    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}flutter_test"
+  $has_test \
+    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}test"
 
-# Slot 6: Tooling
-# static analysis first
-if [[ -n "$lint_pkg" ]]; then
-  lp_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}${lint_pkg}"
-  [[ -n "$lint_pkg_version" ]] && lp_seg+=" ${FG_ACCENT}v${lint_pkg_version}"
-  add_seg "$lp_seg"
+  # Slot 6: Tooling
+  # static analysis first
+  if [[ -n "$lint_pkg" ]]; then
+    lp_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}${lint_pkg}"
+    [[ -n "$lint_pkg_version" ]] && lp_seg+=" ${FG_ACCENT}v${lint_pkg_version}"
+    add_seg "$lp_seg"
+  fi
+  # business logic / state management
+  if [[ -n "$state_mgmt" ]]; then
+    sm_seg="${FG_ACCENT}${IC_STATE} ${FG_TEXT}${state_mgmt_display}"
+    [[ -n "$state_mgmt_version" ]] && sm_seg+=" ${FG_ACCENT}v${state_mgmt_version}"
+    add_seg "$sm_seg"
+  fi
+  # HTTP client
+  if $has_dio; then
+    dio_seg="${FG_ACCENT}${IC_NET} ${FG_TEXT}Dio"
+    [[ -n "$dio_version" ]] && dio_seg+=" ${FG_ACCENT}v${dio_version}"
+    add_seg "$dio_seg"
+  fi
+
+  (( ${#_sc[@]} == 0 )) && exit 0
+  flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
 fi
-# business logic / state management
-if [[ -n "$state_mgmt" ]]; then
-  sm_seg="${FG_ACCENT}${IC_STATE} ${FG_TEXT}${state_mgmt_display}"
-  [[ -n "$state_mgmt_version" ]] && sm_seg+=" ${FG_ACCENT}v${state_mgmt_version}"
-  add_seg "$sm_seg"
-fi
-# HTTP client
-if $has_dio; then
-  dio_seg="${FG_ACCENT}${IC_NET} ${FG_TEXT}Dio"
-  [[ -n "$dio_version" ]] && dio_seg+=" ${FG_ACCENT}v${dio_version}"
-  add_seg "$dio_seg"
-fi
-
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
+printf '%s' "$_bl_out"

@@ -3,10 +3,18 @@
 # Only renders when the project contains a package.json.
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
-[[ -z "$PROJ" || ! -f "$PROJ/package.json" ]] && exit 0
+[[ -z "$PROJ" ]] && exit 0
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
+
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "javascript" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
+[[ ! -f "$PROJ/package.json" ]] && exit 0
 
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
   FG_TEXT=$(make_fg "$(hex_to_rgb "#f5f0c8")")
@@ -148,54 +156,60 @@ js_seg() {
   seg "${FG_ACCENT}${icon} ${FG_TEXT}${label}${vsuf}"
 }
 
-# Slot 1: Runtime
-[[ -n "$node_version" ]] \
-  && seg "${FG_ACCENT}${IC_NODE} ${FG_TEXT}Node ${FG_ACCENT}v${node_version}"
+_bl_out=$(
+  # Slot 1: Runtime
+  [[ -n "$node_version" ]] \
+    && seg "${FG_ACCENT}${IC_NODE} ${FG_TEXT}Node ${FG_ACCENT}v${node_version}"
 
-# Slot 2: Package manager
-[[ -n "$pkg_mgr" ]] \
-  && seg "${FG_ACCENT}${IC_PKG} ${FG_TEXT}${pkg_mgr}"
+  # Slot 2: Package manager
+  [[ -n "$pkg_mgr" ]] \
+    && seg "${FG_ACCENT}${IC_PKG} ${FG_TEXT}${pkg_mgr}"
 
-# ── React ecosystem ───────────────────────────────────────────────────────────
-$has_next  && js_seg "$IC_NEXT"  "Next.js" "next"
-( $has_react && ! $has_next && ! $has_remix ) && js_seg "$IC_REACT" "React" "react"
-$has_remix && js_seg "$IC_REMIX" "Remix" "@remix-run/react"
+  # ── React ecosystem ───────────────────────────────────────────────────────────
+  $has_next  && js_seg "$IC_NEXT"  "Next.js" "next"
+  ( $has_react && ! $has_next && ! $has_remix ) && js_seg "$IC_REACT" "React" "react"
+  $has_remix && js_seg "$IC_REMIX" "Remix" "@remix-run/react"
 
-# ── Mobile ────────────────────────────────────────────────────────────────────
-$has_expo && js_seg "$IC_EXPO" "Expo" "expo"
-( $has_rn && ! $has_expo ) && js_seg "$IC_RN" "React Native" "react-native"
+  # ── Mobile ────────────────────────────────────────────────────────────────────
+  $has_expo && js_seg "$IC_EXPO" "Expo" "expo"
+  ( $has_rn && ! $has_expo ) && js_seg "$IC_RN" "React Native" "react-native"
 
-# ── Vue ecosystem ─────────────────────────────────────────────────────────────
-$has_nuxt && js_seg "$IC_NUXT" "Nuxt" "nuxt"
-( $has_vue && ! $has_nuxt ) && js_seg "$IC_VUE" "Vue" "vue"
+  # ── Vue ecosystem ─────────────────────────────────────────────────────────────
+  $has_nuxt && js_seg "$IC_NUXT" "Nuxt" "nuxt"
+  ( $has_vue && ! $has_nuxt ) && js_seg "$IC_VUE" "Vue" "vue"
 
-# ── Svelte ecosystem ──────────────────────────────────────────────────────────
-$has_sveltekit && js_seg "$IC_SVELTEKIT" "SvelteKit" "@sveltejs/kit"
-( $has_svelte && ! $has_sveltekit ) && js_seg "$IC_SVELTE" "Svelte" "svelte"
+  # ── Svelte ecosystem ──────────────────────────────────────────────────────────
+  $has_sveltekit && js_seg "$IC_SVELTEKIT" "SvelteKit" "@sveltejs/kit"
+  ( $has_svelte && ! $has_sveltekit ) && js_seg "$IC_SVELTE" "Svelte" "svelte"
 
-# ── Other frameworks ──────────────────────────────────────────────────────────
-$has_angular  && js_seg "$IC_ANGULAR"  "Angular"  "@angular/core"
-$has_astro    && js_seg "$IC_ASTRO"    "Astro"    "astro"
-$has_electron && js_seg "$IC_ELECTRON" "Electron" "electron"
+  # ── Other frameworks ──────────────────────────────────────────────────────────
+  $has_angular  && js_seg "$IC_ANGULAR"  "Angular"  "@angular/core"
+  $has_astro    && js_seg "$IC_ASTRO"    "Astro"    "astro"
+  $has_electron && js_seg "$IC_ELECTRON" "Electron" "electron"
 
-# Vite — suppress when implied by Vite-native meta-frameworks.
-( $has_vite && ! $has_nuxt && ! $has_sveltekit && ! $has_astro ) \
-  && js_seg "$IC_VITE" "Vite" "vite"
+  # Vite — suppress when implied by Vite-native meta-frameworks.
+  ( $has_vite && ! $has_nuxt && ! $has_sveltekit && ! $has_astro ) \
+    && js_seg "$IC_VITE" "Vite" "vite"
 
-# ── Language ──────────────────────────────────────────────────────────────────
-$has_ts && js_seg "$IC_TS" "TypeScript" "typescript"
+  # ── Language ──────────────────────────────────────────────────────────────────
+  $has_ts && js_seg "$IC_TS" "TypeScript" "typescript"
 
-# Slot 5: Testing
-$has_jest       && js_seg "$IC_TEST" "Jest" "jest"
-$has_vitest     && js_seg "$IC_TEST" "Vitest" "vitest"
-$has_playwright && js_seg "$IC_TEST" "Playwright" "@playwright/test"
-$has_cypress    && js_seg "$IC_TEST" "Cypress" "cypress"
+  # Slot 5: Testing
+  $has_jest       && js_seg "$IC_TEST" "Jest" "jest"
+  $has_vitest     && js_seg "$IC_TEST" "Vitest" "vitest"
+  $has_playwright && js_seg "$IC_TEST" "Playwright" "@playwright/test"
+  $has_cypress    && js_seg "$IC_TEST" "Cypress" "cypress"
 
-# Slot 6: Tooling
-$has_eslint   && js_seg "$IC_LINT" "ESLint"       "eslint"
-$has_prettier && js_seg "$IC_FMT"  "Prettier"     "prettier"
-$has_biome    && js_seg "$IC_LINT" "Biome"        "@biomejs/biome"
-$has_tailwind && js_seg "$IC_CSS"  "Tailwind CSS" "tailwindcss"
+  # Slot 6: Tooling
+  $has_eslint   && js_seg "$IC_LINT" "ESLint"       "eslint"
+  $has_prettier && js_seg "$IC_FMT"  "Prettier"     "prettier"
+  $has_biome    && js_seg "$IC_LINT" "Biome"        "@biomejs/biome"
+  $has_tailwind && js_seg "$IC_CSS"  "Tailwind CSS" "tailwindcss"
 
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
+  (( ${#_sc[@]} == 0 )) && exit 0
+  flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
+fi
+printf '%s' "$_bl_out"
