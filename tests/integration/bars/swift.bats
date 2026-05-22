@@ -36,3 +36,56 @@ teardown() { teardown_fake_proj; }
   bar_run swift "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" != *"Vapor"* ]]
 }
+
+@test "swift: renders Hummingbird when in Package.resolved" {
+  printf 'import PackageDescription\nlet package = Package(name: "x")\n' > "$FAKE_PROJ/Package.swift"
+  printf '%s\n' '{"pins":[{"identity":"hummingbird","location":"https://github.com/hummingbird-project/hummingbird"}]}' \
+    > "$FAKE_PROJ/Package.resolved"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Hummingbird"* ]]
+}
+
+@test "swift: renders Alamofire when in Package.resolved" {
+  printf 'import PackageDescription\nlet package = Package(name: "x")\n' > "$FAKE_PROJ/Package.swift"
+  printf '%s\n' '{"pins":[{"identity":"alamofire","location":"https://github.com/Alamofire/Alamofire"}]}' \
+    > "$FAKE_PROJ/Package.resolved"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Alamofire"* ]]
+}
+
+@test "swift: renders Swift Testing when swift-testing dep present" {
+  printf 'import PackageDescription\nlet package = Package(name: "x", targets: [.testTarget(name: "xTests", dependencies: [])])\n' > "$FAKE_PROJ/Package.swift"
+  printf '%s\n' '{"pins":[{"identity":"swift-testing","location":"https://github.com/apple/swift-testing"}]}' \
+    > "$FAKE_PROJ/Package.resolved"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Swift Testing"* ]]
+}
+
+@test "swift: renders XCTest when testTarget exists and no Swift Testing" {
+  printf 'import PackageDescription\nlet package = Package(name: "x", targets: [.testTarget(name: "xTests", dependencies: [])])\n' > "$FAKE_PROJ/Package.swift"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"XCTest"* ]]
+}
+
+@test "swift: Quick suppresses XCTest when both present" {
+  printf 'import PackageDescription\nlet package = Package(name: "x", targets: [.testTarget(name: "xTests", dependencies: [])])\n' > "$FAKE_PROJ/Package.swift"
+  printf '%s\n' '{"pins":[{"identity":"quick","location":"https://github.com/Quick/Quick"}]}' \
+    > "$FAKE_PROJ/Package.resolved"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Quick"* ]]
+  [[ "$BAR_OUTPUT" != *"XCTest"* ]]
+}
+
+@test "swift: renders SwiftLint when config present" {
+  printf 'import PackageDescription\nlet package = Package(name: "x")\n' > "$FAKE_PROJ/Package.swift"
+  printf 'disabled_rules: []\n' > "$FAKE_PROJ/.swiftlint.yml"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"SwiftLint"* ]]
+}
+
+@test "swift: renders SwiftFormat when config present" {
+  printf 'import PackageDescription\nlet package = Package(name: "x")\n' > "$FAKE_PROJ/Package.swift"
+  printf '%s\n' '--indent 4' > "$FAKE_PROJ/.swiftformat"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"SwiftFormat"* ]]
+}
