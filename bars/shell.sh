@@ -96,7 +96,7 @@ if $has_bats; then
 fi
 
 # Slot 6: Tooling
-[[ -n "$sc_version" ]] && add_seg "${FG_ACCENT}${IC_SC} ${FG_TEXT}sc ${FG_ACCENT}v${sc_version}"
+[[ -n "$sc_version" ]] && add_seg "${FG_ACCENT}${IC_SC} ${FG_TEXT}ShellCheck ${FG_ACCENT}v${sc_version}"
 $has_make && add_seg "${FG_ACCENT}${IC_MAKE} ${FG_TEXT}make"
 
 (( ${#_sc[@]} == 0 )) && exit 0
