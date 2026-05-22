@@ -107,15 +107,19 @@ teardown_fake_proj() {
 
 # Run a bar script with an isolated project directory.
 #
-#   bar_run BAR_NAME PROJ_DIR
+#   bar_run BAR_NAME PROJ_DIR [TTL_MINUTES]
 #
 # PROJ_DIR must already contain any signal files the bar needs.
+# TTL_MINUTES defaults to 0 (caching disabled). Pass a positive integer to
+# exercise cache hit/miss behaviour in cache.bats.
 # Sets $BAR_OUTPUT_RAW (ANSI) and $BAR_OUTPUT (stripped).
 bar_run() {
   local bar_name="$1"
   local proj_dir="${2:-}"
+  local ttl="${3:-0}"
 
   BAR_OUTPUT_RAW=$(
+    BOTTOMLINE_BAR_REFRESH_MINUTES="$ttl" \
     BOTTOMLINE_PROJECT_DIR="$proj_dir" \
     BOTTOMLINE_LIB="$BOTTOMLINE_ROOT/lib" \
     BOTTOMLINE_ICON_TYPE=none \
