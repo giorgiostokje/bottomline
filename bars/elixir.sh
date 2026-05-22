@@ -20,13 +20,21 @@ case "$BOTTOMLINE_ICON_TYPE" in
   nerd)
     IC_ELIXIR=$'\xef\x81\xad'   # U+F06D  nf-fa-fire  (Elixir's flame-like logo)
     IC_PHOENIX=$'\xef\x86\x85'  # U+F185  nf-fa-sun-o  (Phoenix rising)
+    IC_LV=$'\xef\x84\xa1'        # U+F121  nf-fa-code
+    IC_DB=$'\xef\x87\x80'        # U+F1C0  nf-fa-database
+    IC_QUEUE=$'\xef\x83\xa2'     # U+F0E2  nf-fa-history
+    IC_TEST=$'\xef\x81\x80'      # U+F040  nf-fa-pencil
+    IC_LINT=$'\xef\x80\x8c'      # U+F00C  nf-fa-check
+    IC_TYPE=$'\xef\x80\xae'      # U+F02E  nf-fa-bookmark (type analysis)
     ;;
   emoji)
     IC_ELIXIR='💧'
     IC_PHOENIX='🔥'
+    IC_LV='🔌' IC_DB='🗄' IC_QUEUE='📨' IC_TEST='🧪' IC_LINT='✓' IC_TYPE='🔎'
     ;;
   *)
     IC_ELIXIR='' IC_PHOENIX=''
+    IC_LV='' IC_DB='' IC_QUEUE='' IC_TEST='' IC_LINT='' IC_TYPE=''
     ;;
 esac
 
@@ -57,6 +65,23 @@ if ! $has_phoenix && grep -q ':phoenix,' "$PROJ/mix.exs" 2>/dev/null; then
   has_phoenix=true
 fi
 
+# ── Detect add-ons + tooling from mix.lock ────────────────────────────────────
+liveview_version=''
+ecto_version=''
+oban_version=''
+credo_version=''
+dialyxir_version=''
+
+if [[ -f "$lock" ]]; then
+  liveview_version=$(awk -F'"' '/"phoenix_live_view":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
+  ecto_version=$(awk -F'"' '/"ecto_sql":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
+  oban_version=$(awk -F'"' '/"oban":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
+  credo_version=$(awk -F'"' '/"credo":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
+  dialyxir_version=$(awk -F'"' '/"dialyxir":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
+fi
+
+has_exunit=false
+[[ -d "$PROJ/test" ]] && has_exunit=true
 
 # ── Elixir runtime ────────────────────────────────────────────────────────────
 elixir_seg="${FG_ACCENT}${IC_ELIXIR} ${FG_TEXT}Elixir"
@@ -69,6 +94,24 @@ if $has_phoenix; then
   [[ -n "$phoenix_version" ]] && phoenix_seg+=" ${FG_ACCENT}v${phoenix_version}"
   add_seg "$phoenix_seg"
 fi
+
+# Slot 4: Add-ons
+[[ -n "$liveview_version" ]] \
+  && add_seg "${FG_ACCENT}${IC_LV} ${FG_TEXT}LiveView ${FG_ACCENT}v${liveview_version}"
+[[ -n "$ecto_version" ]] \
+  && add_seg "${FG_ACCENT}${IC_DB} ${FG_TEXT}Ecto ${FG_ACCENT}v${ecto_version}"
+[[ -n "$oban_version" ]] \
+  && add_seg "${FG_ACCENT}${IC_QUEUE} ${FG_TEXT}Oban ${FG_ACCENT}v${oban_version}"
+
+# Slot 5: Testing
+$has_exunit \
+  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}ExUnit"
+
+# Slot 6: Tooling
+[[ -n "$credo_version" ]] \
+  && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}Credo ${FG_ACCENT}v${credo_version}"
+[[ -n "$dialyxir_version" ]] \
+  && add_seg "${FG_ACCENT}${IC_TYPE} ${FG_TEXT}Dialyxir ${FG_ACCENT}v${dialyxir_version}"
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"

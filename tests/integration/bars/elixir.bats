@@ -44,3 +44,50 @@ EOF
   bar_run elixir "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" != *"Phoenix"* ]]
 }
+
+@test "elixir: renders LiveView when in mix.lock" {
+  printf 'defmodule X.MixProject do\n  def project, do: []\nend\n' > "$FAKE_PROJ/mix.exs"
+  printf '%%{\n  "phoenix_live_view": {:hex, :phoenix_live_view, "1.0.0", "abc", [:mix], [], "hexpm", "def"},\n}\n' \
+    > "$FAKE_PROJ/mix.lock"
+  bar_run elixir "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"LiveView"* ]]
+}
+
+@test "elixir: renders Ecto when ecto_sql in mix.lock" {
+  printf 'defmodule X.MixProject do\nend\n' > "$FAKE_PROJ/mix.exs"
+  printf '%%{\n  "ecto_sql": {:hex, :ecto_sql, "3.11.0", "abc", [:mix], [], "hexpm", "def"},\n}\n' \
+    > "$FAKE_PROJ/mix.lock"
+  bar_run elixir "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Ecto"* ]]
+}
+
+@test "elixir: renders Oban when in mix.lock" {
+  printf 'defmodule X.MixProject do\nend\n' > "$FAKE_PROJ/mix.exs"
+  printf '%%{\n  "oban": {:hex, :oban, "2.17.0", "abc", [:mix], [], "hexpm", "def"},\n}\n' \
+    > "$FAKE_PROJ/mix.lock"
+  bar_run elixir "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Oban"* ]]
+}
+
+@test "elixir: renders ExUnit when test/ exists" {
+  printf 'defmodule X.MixProject do\nend\n' > "$FAKE_PROJ/mix.exs"
+  mkdir -p "$FAKE_PROJ/test"
+  bar_run elixir "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"ExUnit"* ]]
+}
+
+@test "elixir: renders Credo when in mix.lock" {
+  printf 'defmodule X.MixProject do\nend\n' > "$FAKE_PROJ/mix.exs"
+  printf '%%{\n  "credo": {:hex, :credo, "1.7.0", "abc", [:mix], [], "hexpm", "def"},\n}\n' \
+    > "$FAKE_PROJ/mix.lock"
+  bar_run elixir "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Credo"* ]]
+}
+
+@test "elixir: renders Dialyxir when in mix.lock" {
+  printf 'defmodule X.MixProject do\nend\n' > "$FAKE_PROJ/mix.exs"
+  printf '%%{\n  "dialyxir": {:hex, :dialyxir, "1.4.0", "abc", [:mix], [], "hexpm", "def"},\n}\n' \
+    > "$FAKE_PROJ/mix.lock"
+  bar_run elixir "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Dialyxir"* ]]
+}
