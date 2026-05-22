@@ -39,3 +39,26 @@ teardown() { teardown_fake_proj; }
   bar_run shell "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"sc"* ]]
 }
+
+@test "shell: renders bats when binary on PATH" {
+  printf '#!/bin/bash\necho hi\n' > "$FAKE_PROJ/foo.sh"
+  printf '#!/bin/sh\necho "Bats 1.10.0"\n' > "$FAKE_PROJ/bats"
+  chmod +x "$FAKE_PROJ/bats"
+  PATH="$FAKE_PROJ:$PATH" bar_run shell "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"bats"* ]]
+}
+
+@test "shell: renders bats when .bats files exist in project" {
+  printf '#!/bin/bash\necho hi\n' > "$FAKE_PROJ/foo.sh"
+  mkdir -p "$FAKE_PROJ/tests"
+  printf '#!/usr/bin/env bats\n@test "ok" { true; }\n' > "$FAKE_PROJ/tests/foo.bats"
+  bar_run shell "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"bats"* ]]
+}
+
+@test "shell: renders make when Makefile exists" {
+  printf '#!/bin/bash\necho hi\n' > "$FAKE_PROJ/foo.sh"
+  printf 'all:\n\t@echo ok\n' > "$FAKE_PROJ/Makefile"
+  bar_run shell "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"make"* ]]
+}

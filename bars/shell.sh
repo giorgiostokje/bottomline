@@ -19,13 +19,17 @@ case "$BOTTOMLINE_ICON_TYPE" in
   nerd)
     IC_SHELL=$'\xef\x84\xa0'    # U+F120  nf-fa-terminal
     IC_SC=$'\xef\x80\x8c'       # U+F00C  nf-fa-check
+    IC_TEST=$'\xef\x81\x80'     # U+F040  nf-fa-pencil
+    IC_MAKE=$'\xef\x84\x85'     # U+F085  nf-fa-cogs
     ;;
   emoji)
     IC_SHELL='🐚'
     IC_SC='✓'
+    IC_TEST='🧪'
+    IC_MAKE='⚙'
     ;;
   *)
-    IC_SHELL='' IC_SC=''
+    IC_SHELL='' IC_SC='' IC_TEST='' IC_MAKE=''
     ;;
 esac
 
@@ -58,12 +62,42 @@ if command -v shellcheck > /dev/null 2>&1; then
   sc_version=$(shellcheck --version 2>/dev/null | awk '/^version:/{print $2; exit}')
 fi
 
-# ── Segments ──────────────────────────────────────────────────────────────────
+# ── bats ──────────────────────────────────────────────────────────────────────
+bats_version=''
+if command -v bats > /dev/null 2>&1; then
+  bats_version=$(bats --version 2>/dev/null | awk '{print $2; exit}')
+fi
+has_bats=false
+[[ -n "$bats_version" ]] && has_bats=true
+# Fallback: any .bats file in the project tree (max 3 levels deep)
+if ! $has_bats; then
+  if find "$PROJ" -maxdepth 3 -type f -name '*.bats' -print -quit 2>/dev/null | grep -q .; then
+    has_bats=true
+  fi
+fi
+
+# ── make ──────────────────────────────────────────────────────────────────────
+has_make=false
+[[ -f "$PROJ/Makefile" ]] && has_make=true
+
+# ── Segments (canonical slot order) ───────────────────────────────────────────
+# Slot 1: Runtime
 shell_seg="${FG_ACCENT}${IC_SHELL} ${FG_TEXT}${target_shell}"
 [[ -n "$bash_version" ]] && shell_seg+=" ${FG_ACCENT}v${bash_version}"
 add_seg "$shell_seg"
 
+# Slot 5: Testing
+if $has_bats; then
+  if [[ -n "$bats_version" ]]; then
+    add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}bats ${FG_ACCENT}v${bats_version}"
+  else
+    add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}bats"
+  fi
+fi
+
+# Slot 6: Tooling
 [[ -n "$sc_version" ]] && add_seg "${FG_ACCENT}${IC_SC} ${FG_TEXT}sc ${FG_ACCENT}v${sc_version}"
+$has_make && add_seg "${FG_ACCENT}${IC_MAKE} ${FG_TEXT}make"
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"
