@@ -22,15 +22,21 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_RAILS=$'\xee\x9c\xbb'   # U+E73B  nf-dev-rails
     IC_SINATRA=$'\xef\x81\xad' # U+F06D  nf-fa-fire  (Sinatra — keeps it simple)
     IC_HANAMI=$'\xef\x81\xac'  # U+F06C  nf-fa-leaf
+    IC_TEST=$'\xef\x81\x80'    # U+F040  nf-fa-pencil
+    IC_QUEUE=$'\xef\x83\xa2'   # U+F0E2  nf-fa-history
+    IC_AUTH=$'\xef\x82\xa3'    # U+F0A3  nf-fa-certificate
+    IC_LINT=$'\xef\x80\x8c'    # U+F00C  nf-fa-check
     ;;
   emoji)
     IC_RUBY='💎'
     IC_RAILS='🛤'
     IC_SINATRA='🎵'
     IC_HANAMI='🌸'
+    IC_TEST='🧪' IC_QUEUE='📨' IC_AUTH='🔑' IC_LINT='✓'
     ;;
   *)
     IC_RUBY='' IC_RAILS='' IC_SINATRA='' IC_HANAMI=''
+    IC_TEST='' IC_QUEUE='' IC_AUTH='' IC_LINT=''
     ;;
 esac
 
@@ -65,6 +71,25 @@ if grep -qiE "gem ['\"]hanami['\"]" "$PROJ/Gemfile" 2>/dev/null; then
   has_hanami=true; hanami_version=$(gem_version "hanami")
 fi
 
+# ── Detect testing + add-ons + linter from Gemfile.lock ───────────────────────
+lock="$PROJ/Gemfile.lock"
+has_rspec=false
+has_minitest=false
+has_sidekiq=false
+has_devise=false
+rubocop_version=''
+
+if [[ -f "$lock" ]]; then
+  grep -Eq '^[[:space:]]+rspec(-core)?[[:space:]]' "$lock" 2>/dev/null && has_rspec=true
+  grep -Eq '^[[:space:]]+minitest[[:space:]]' "$lock" 2>/dev/null && has_minitest=true
+  grep -Eq '^[[:space:]]+sidekiq[[:space:]]' "$lock" 2>/dev/null && has_sidekiq=true
+  grep -Eq '^[[:space:]]+devise[[:space:]]' "$lock" 2>/dev/null && has_devise=true
+  rubocop_version=$(awk '/^[[:space:]]+rubocop[[:space:]]+\(/{gsub(/[()]/,"",$2); print $2; exit}' "$lock" 2>/dev/null)
+fi
+
+# RuboCop can also be detected via config file alone
+[[ -z "$rubocop_version" && -f "$PROJ/.rubocop.yml" ]] && rubocop_version='present'
+
 
 # ── Ruby runtime ──────────────────────────────────────────────────────────────
 ruby_seg="${FG_ACCENT}${IC_RUBY} ${FG_TEXT}Ruby"
@@ -86,6 +111,21 @@ if $has_hanami; then
   hanami_seg="${FG_ACCENT}${IC_HANAMI} ${FG_TEXT}Hanami"
   [[ -n "$hanami_version" ]] && hanami_seg+=" ${FG_ACCENT}v${hanami_version}"
   add_seg "$hanami_seg"
+fi
+
+# Slot 5: Testing
+$has_rspec    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}RSpec"
+$has_minitest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Minitest"
+
+# Slot 6: Tooling
+$has_sidekiq && add_seg "${FG_ACCENT}${IC_QUEUE} ${FG_TEXT}Sidekiq"
+$has_devise  && add_seg "${FG_ACCENT}${IC_AUTH} ${FG_TEXT}Devise"
+if [[ -n "$rubocop_version" ]]; then
+  if [[ "$rubocop_version" == "present" ]]; then
+    add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop"
+  else
+    add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop ${FG_ACCENT}v${rubocop_version}"
+  fi
 fi
 
 (( ${#_sc[@]} == 0 )) && exit 0
