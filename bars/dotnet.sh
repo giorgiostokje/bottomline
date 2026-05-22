@@ -28,9 +28,19 @@ fi
 
 # ── Icons ─────────────────────────────────────────────────────────────────────
 case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)  IC_DOTNET=$'\xee\x9d\xbf' ;;  # U+E77F  nf-dev-dotnet
-  emoji) IC_DOTNET='🔷'             ;;
-  *)     IC_DOTNET=''               ;;
+  nerd)
+    IC_DOTNET=$'\xee\x9d\xbf'   # U+E77F  nf-dev-dotnet
+    IC_WEB=$'\xef\x83\xac'      # U+F0EC  nf-fa-exchange
+    IC_TEST=$'\xef\x81\x80'     # U+F040  nf-fa-pencil
+    IC_DB=$'\xef\x87\x80'       # U+F1C0  nf-fa-database
+    IC_LINT=$'\xef\x80\x8c'     # U+F00C  nf-fa-check
+    ;;
+  emoji)
+    IC_DOTNET='🔷' IC_WEB='🌐' IC_TEST='🧪' IC_DB='🗄' IC_LINT='✓'
+    ;;
+  *)
+    IC_DOTNET='' IC_WEB='' IC_TEST='' IC_DB='' IC_LINT=''
+    ;;
 esac
 
 # ── SDK version ───────────────────────────────────────────────────────────────
@@ -49,12 +59,50 @@ if [[ ${#_csproj[@]} -gt 0 ]]; then
     | sed 's/.*<TargetFramework>\(.*\)<\/TargetFramework>.*/\1/' | tr -d '[:space:]')
 fi
 
+# ── Detect ecosystem from *.csproj ────────────────────────────────────────────
+csproj=''
+[[ ${#_csproj[@]} -gt 0 ]] && csproj="${_csproj[0]}"
+framework=''
+has_xunit=false
+has_nunit=false
+has_mstest=false
+has_ef=false
+has_stylecop=false
+has_sonar=false
+
+if [[ -n "$csproj" ]]; then
+  grep -q 'Microsoft.AspNetCore.Components' "$csproj" 2>/dev/null && framework='Blazor'
+  [[ -z "$framework" ]] && grep -q 'Microsoft.AspNetCore' "$csproj" 2>/dev/null && framework='ASP.NET Core'
+  [[ -z "$framework" ]] && grep -q 'Microsoft.Maui' "$csproj" 2>/dev/null && framework='MAUI'
+
+  grep -q '"xunit"' "$csproj" 2>/dev/null     && has_xunit=true
+  grep -q '"NUnit"' "$csproj" 2>/dev/null     && has_nunit=true
+  grep -q '"MSTest' "$csproj" 2>/dev/null     && has_mstest=true
+  grep -q 'Microsoft.EntityFrameworkCore' "$csproj" 2>/dev/null && has_ef=true
+  grep -q 'StyleCop.Analyzers' "$csproj" 2>/dev/null            && has_stylecop=true
+  grep -q 'SonarAnalyzer.CSharp' "$csproj" 2>/dev/null          && has_sonar=true
+fi
+
 # ── Segments ──────────────────────────────────────────────────────────────────
 dotnet_seg="${FG_ACCENT}${IC_DOTNET} ${FG_TEXT}.NET"
 [[ -n "$sdk_version" ]] && dotnet_seg+=" ${FG_ACCENT}v${sdk_version}"
 add_seg "$dotnet_seg"
 
 [[ -n "$target_framework" ]] && add_seg "${FG_TEXT}${target_framework}"
+
+# Slot 3: Framework
+[[ -n "$framework" ]] \
+  && add_seg "${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework}"
+
+# Slot 5: Testing
+$has_xunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}xUnit"
+$has_nunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}NUnit"
+$has_mstest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}MSTest"
+
+# Slot 6: Tooling
+$has_ef       && add_seg "${FG_ACCENT}${IC_DB} ${FG_TEXT}EF Core"
+$has_stylecop && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}StyleCop"
+$has_sonar    && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}SonarAnalyzer"
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"

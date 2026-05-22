@@ -58,3 +58,33 @@ EOF
   bar_run dotnet "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *".NET"* ]]
 }
+
+@test "dotnet: renders ASP.NET Core when in csproj" {
+  printf '<Project Sdk="Microsoft.NET.Sdk.Web"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup><ItemGroup><PackageReference Include="Microsoft.AspNetCore.App"/></ItemGroup></Project>\n' > "$FAKE_PROJ/x.csproj"
+  bar_run dotnet "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"ASP.NET"* ]]
+}
+
+@test "dotnet: renders xUnit when in csproj" {
+  printf '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup><ItemGroup><PackageReference Include="xunit" Version="2.6.0"/></ItemGroup></Project>\n' > "$FAKE_PROJ/x.csproj"
+  bar_run dotnet "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"xUnit"* ]]
+}
+
+@test "dotnet: renders NUnit when in csproj" {
+  printf '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup><ItemGroup><PackageReference Include="NUnit" Version="4.0.0"/></ItemGroup></Project>\n' > "$FAKE_PROJ/x.csproj"
+  bar_run dotnet "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"NUnit"* ]]
+}
+
+@test "dotnet: renders EF Core when in csproj" {
+  printf '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup><ItemGroup><PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0"/></ItemGroup></Project>\n' > "$FAKE_PROJ/x.csproj"
+  bar_run dotnet "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"EF"* ]]
+}
+
+@test "dotnet: renders StyleCop when in csproj" {
+  printf '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup><ItemGroup><PackageReference Include="StyleCop.Analyzers" Version="1.2.0"/></ItemGroup></Project>\n' > "$FAKE_PROJ/x.csproj"
+  bar_run dotnet "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"StyleCop"* ]]
+}
