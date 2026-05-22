@@ -170,6 +170,48 @@ For bars that do not make network calls (all language/ecosystem bars), `BOTTOMLI
 
 ---
 
+## Testing ecosystem-detection segments
+
+Every language bar exposes two new mandatory segment categories: testing frameworks (slot 5) and static analysis tools (slot 6). Tests must cover three behaviours for each:
+
+**1. Dependency / config-driven detection** — write the signal file with realistic content, assert the segment renders:
+
+```bash
+@test "<bar>: renders <linter> when present in lockfile" {
+  printf '<lockfile-content>\n' > "$FAKE_PROJ/<lockfile>"
+  bar_run <bar> "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"<Linter>"* ]]
+}
+```
+
+**2. Binary-on-PATH detection** — stub the binary on a temporary `PATH`:
+
+```bash
+@test "<bar>: renders <tool> when binary on PATH" {
+  printf '#!/bin/sh\necho "<tool> 1.2.3"\n' > "$FAKE_PROJ/<tool>"
+  chmod +x "$FAKE_PROJ/<tool>"
+  PATH="$FAKE_PROJ:$PATH" bar_run <bar> "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"<tool>"* ]]
+}
+```
+
+**3. Layering suppression** — for stacks where one testing framework wraps another, assert the base is hidden when the layer is present:
+
+```bash
+@test "<bar>: Pest suppresses PHPUnit when both present" {
+  printf '%s\n' '{"packages":[{"name":"phpunit/phpunit","version":"v11.0.0"},{"name":"pestphp/pest","version":"v3.0.0"}],"packages-dev":[]}' \
+    > "$FAKE_PROJ/composer.lock"
+  printf '{"name":"test/app"}\n' > "$FAKE_PROJ/composer.json"
+  bar_run php "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Pest"* ]]
+  [[ "$BAR_OUTPUT" != *"PHPUnit"* ]]
+}
+```
+
+Layering suppression tests are MANDATORY for: php (Pest/PHPUnit), dart (flutter_test/test), swift (Quick/XCTest), go (Ginkgo/testify), java (JUnit5/JUnit4).
+
+---
+
 ## Critical gotcha: `${var:-{}}` corrupts JSON
 
 Never write `"${var:-{}}"` as a default-to-empty-object expression in any bats-loaded script. Bash parses `${1:-{}` as the full expansion (default = `{`), leaving a bare `}` that is concatenated onto the result. Any JSON argument with nested braces becomes invalid JSON silently.

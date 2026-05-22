@@ -92,6 +92,35 @@ Development skills live in `.claude/skills/` and are invoked by Claude Code agen
 
 ## Invariants
 
+### Language bar segment ordering
+
+Every language/ecosystem bar in `bars/` follows this canonical 6-slot order. Slots with nothing to show are silently skipped, but the *order* must never be deviated from:
+
+| Slot | Category        | Examples                                          |
+|------|-----------------|---------------------------------------------------|
+| 1    | Runtime         | language name + version                           |
+| 2    | Package manager | Maven, Poetry, pnpm, Cargo (implicit), npm        |
+| 3    | Framework       | Rails, Django, Laravel, Spring Boot, gin          |
+| 4    | Add-ons         | Livewire, Octane, LiveView, Inertia, Ecto, Oban   |
+| 5    | Testing         | RSpec, pytest, Jest, JUnit, bats, Pest, Ginkgo    |
+| 6    | Tooling         | TypeScript, ShellCheck, Herd URL, ORM, linters    |
+
+**Required coverage:** every language bar must include at least one slot-5 (testing) and one slot-6 (static analysis) segment when the relevant tool is detected. Bars that physically cannot detect testing (e.g. `salesforce.sh`) document the reason in a comment.
+
+**Detection signals**, in priority order: lockfile/manifest dep → config file → binary on `PATH`. Use whichever signal is reliable for the tool. All three are valid; many tools are detectable via more than one.
+
+**Testing framework layering** — when a higher-level framework wraps a lower-level one, show only the higher-level framework:
+
+| Stack  | Base                | Layer                | Rule                                       |
+|--------|---------------------|----------------------|--------------------------------------------|
+| PHP    | PHPUnit             | Pest                 | Pest detected → show Pest only             |
+| Dart   | `test` package      | `flutter_test`       | Flutter app → show `flutter_test` only     |
+| Swift  | XCTest              | Quick/Nimble         | Quick present → show Quick, suppress XCTest|
+| Go     | go test (stdlib)    | Ginkgo/Gomega        | Ginkgo present → show Ginkgo, suppress testify |
+| Java   | JUnit 4             | JUnit 5              | Both present → show JUnit 5 only           |
+
+Frameworks that serve **different jobs** (unit vs E2E, linting vs formatting, test vs type-check) are *not* suppressed — show all present.
+
 ### Icon representation
 
 Icons are stored two ways and must not be mixed up:

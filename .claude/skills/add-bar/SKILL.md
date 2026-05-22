@@ -43,8 +43,24 @@ fi
 # ── Gather data ───────────────────────────────────────────────────────────────
 # ... read files, run commands, build segment strings ...
 
-# ── Segments ──────────────────────────────────────────────────────────────────
-[[ -n "$some_value" ]] && add_seg "${FG_ACCENT}${IC_LANG} ${FG_TEXT}${some_value}"
+# ── Segments (canonical slot order) ───────────────────────────────────────────
+# Slot 1: Runtime
+[[ -n "$lang_version" ]] && add_seg "${FG_ACCENT}${IC_LANG} ${FG_TEXT}<Name> ${FG_ACCENT}v${lang_version}"
+
+# Slot 2: Package manager (when not implicit)
+# [[ -n "$pm_name" ]] && add_seg "${FG_ACCENT}${IC_PM} ${FG_TEXT}${pm_name}"
+
+# Slot 3: Framework
+# [[ -n "$framework_version" ]] && add_seg "${FG_ACCENT}${IC_FRAMEWORK} ${FG_TEXT}<Framework> ${FG_ACCENT}v${framework_version}"
+
+# Slot 4: Framework add-ons
+# [[ -n "$addon_version" ]] && add_seg "${FG_ACCENT}${IC_ADDON} ${FG_TEXT}<Addon> ${FG_ACCENT}v${addon_version}"
+
+# Slot 5: Testing (REQUIRED — see CLAUDE.md "Language bar segment ordering")
+# [[ -n "$test_framework" ]] && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}${test_framework}"
+
+# Slot 6: Static analysis / tooling (REQUIRED — at least one)
+# [[ -n "$linter_version" ]] && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}<Linter> ${FG_ACCENT}v${linter_version}"
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"
@@ -117,7 +133,13 @@ Cover at minimum:
 - [ ] Hard guard exits silently when signal file is absent
 - [ ] `(( ${#_sc[@]} == 0 )) && exit 0` before `flush`
 - [ ] `_bar_gradient` used, not `$BOTTOMLINE_GRADIENT` directly
+- [ ] Segments emitted in canonical slot order (Runtime → PM → Framework → Add-ons → Testing → Tooling)
+- [ ] At least one **testing segment** (slot 5) — see [[testing-framework-layering]]
+- [ ] At least one **static analysis segment** (slot 6) — linter, type checker, or formatter
+- [ ] Testing framework **layering rules** applied (Pest > PHPUnit, JUnit5 > JUnit4, etc.)
+- [ ] Detection uses the correct signal type — dep / config file / binary
 - [ ] Entry added to `auto_bars.scripts` in `settings.json`
 - [ ] `tests/integration/bars/<name>.bats` written
 - [ ] Silent-exit test passes
-- [ ] Functional tests cover primary output and key conditional segments
+- [ ] Functional tests cover primary output, testing segment, and static analysis segment
+- [ ] Layering suppression test included where the stack has layered frameworks
