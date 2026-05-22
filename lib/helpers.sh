@@ -98,6 +98,30 @@ flush() {
   done
 }
 
+# ── Cache helpers ─────────────────────────────────────────────────────────────
+
+# Compute the /tmp cache file path for a bar.
+# Usage: bl_cache_path <bar_name> <ttl_mins> <proj_dir>
+bl_cache_path() {
+  local name="$1" ttl="${2:-5}" proj="$3"
+  local bucket=$(( $(date +%s) / (ttl * 60) ))
+  local hash
+  hash=$(printf '%s' "$proj" | md5 | cut -c1-8)
+  printf '/tmp/bl_%s_%s_%s.txt' "$name" "$hash" "$bucket"
+}
+
+# Write rendered output to cache and clean up stale entries for this bar+project.
+# Usage: bl_cache_write <cache_file> <output>
+# No-ops when output is empty so bars that produce nothing don't cache a blank.
+bl_cache_write() {
+  local cache_file="$1" output="$2"
+  if [[ -z "$output" ]]; then return; fi
+  printf '%s' "$output" > "$cache_file"
+  local stem; stem="${cache_file%_*.txt}"
+  find -L /tmp -maxdepth 1 -name "${stem##*/}_*.txt" \
+    ! -name "$(basename "$cache_file")" -print0 2>/dev/null | xargs -0 rm -f 2>/dev/null
+}
+
 # ── Convenience variables from BOTTOMLINE_* env vars ─────────────────────────
 R="$BOTTOMLINE_RESET"
 B="$BOTTOMLINE_BOLD"
