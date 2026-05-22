@@ -116,7 +116,7 @@ Every language/ecosystem bar in `bars/` follows this canonical 6-slot order. Slo
 | PHP    | PHPUnit             | Pest                 | Pest detected → show Pest only             |
 | Dart   | `test` package      | `flutter_test`       | Flutter app → show `flutter_test` only     |
 | Swift  | XCTest              | Quick/Nimble         | Quick present → show Quick, suppress XCTest|
-| Go     | go test (stdlib)    | Ginkgo/Gomega        | Ginkgo present → show Ginkgo, suppress testify |
+| Go     | go test (stdlib)    | Ginkgo               | Ginkgo present → show Ginkgo, suppress testify |
 | Java   | JUnit 4             | JUnit 5              | Both present → show JUnit 5 only           |
 
 Frameworks that serve **different jobs** (unit vs E2E, linting vs formatting, test vs type-check) are *not* suppressed — show all present.

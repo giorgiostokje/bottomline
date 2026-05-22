@@ -134,7 +134,7 @@ Cover at minimum:
 - [ ] `(( ${#_sc[@]} == 0 )) && exit 0` before `flush`
 - [ ] `_bar_gradient` used, not `$BOTTOMLINE_GRADIENT` directly
 - [ ] Segments emitted in canonical slot order (Runtime → PM → Framework → Add-ons → Testing → Tooling)
-- [ ] At least one **testing segment** (slot 5) — see [[testing-framework-layering]]
+- [ ] At least one **testing segment** (slot 5) — see "Language bar segment ordering" in CLAUDE.md
 - [ ] At least one **static analysis segment** (slot 6) — linter, type checker, or formatter
 - [ ] Testing framework **layering rules** applied (Pest > PHPUnit, JUnit5 > JUnit4, etc.)
 - [ ] Detection uses the correct signal type — dep / config file / binary
