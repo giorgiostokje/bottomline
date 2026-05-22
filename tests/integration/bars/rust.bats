@@ -32,3 +32,43 @@ teardown() { teardown_fake_proj; }
   bar_run rust "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" != *"workspace"* ]]
 }
+
+@test "rust: renders actix-web when present in Cargo.toml" {
+  printf '[package]\nname="x"\nedition="2021"\n\n[dependencies]\nactix-web = "4"\n' > "$FAKE_PROJ/Cargo.toml"
+  bar_run rust "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"actix-web"* ]]
+}
+
+@test "rust: renders axum when present in Cargo.toml" {
+  printf '[package]\nname="x"\nedition="2021"\n\n[dependencies]\naxum = "0.7"\n' > "$FAKE_PROJ/Cargo.toml"
+  bar_run rust "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"axum"* ]]
+}
+
+@test "rust: renders tokio when present in Cargo.toml" {
+  printf '[package]\nname="x"\nedition="2021"\n\n[dependencies]\ntokio = { version = "1", features = ["full"] }\n' > "$FAKE_PROJ/Cargo.toml"
+  bar_run rust "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"tokio"* ]]
+}
+
+@test "rust: renders sqlx when present in Cargo.toml" {
+  printf '[package]\nname="x"\nedition="2021"\n\n[dependencies]\nsqlx = "0.7"\n' > "$FAKE_PROJ/Cargo.toml"
+  bar_run rust "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"sqlx"* ]]
+}
+
+@test "rust: renders nextest when binary on PATH" {
+  printf '[package]\nname="x"\nedition="2021"\n' > "$FAKE_PROJ/Cargo.toml"
+  printf '#!/bin/sh\necho ok\n' > "$FAKE_PROJ/cargo-nextest"
+  chmod +x "$FAKE_PROJ/cargo-nextest"
+  PATH="$FAKE_PROJ:$PATH" bar_run rust "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"nextest"* ]]
+}
+
+@test "rust: renders clippy when binary on PATH" {
+  printf '[package]\nname="x"\nedition="2021"\n' > "$FAKE_PROJ/Cargo.toml"
+  printf '#!/bin/sh\necho ok\n' > "$FAKE_PROJ/cargo-clippy"
+  chmod +x "$FAKE_PROJ/cargo-clippy"
+  PATH="$FAKE_PROJ:$PATH" bar_run rust "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"clippy"* ]]
+}
