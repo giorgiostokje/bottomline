@@ -59,7 +59,7 @@ fi
 # Slot 5: Testing (REQUIRED — see CLAUDE.md "Language bar segment ordering")
 # [[ -n "$test_framework" ]] && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}${test_framework}"
 
-# Slot 6: Static analysis / tooling (REQUIRED — at least one)
+# Slot 6: Tooling (REQUIRED — at least one; sub-order: static analysis → service pkgs → ORM/DB → styling → other)
 # [[ -n "$linter_version" ]] && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}<Linter> ${FG_ACCENT}v${linter_version}"
 
 (( ${#_sc[@]} == 0 )) && exit 0
@@ -136,6 +136,7 @@ Cover at minimum:
 - [ ] Segments emitted in canonical slot order (Runtime → PM → Framework → Add-ons → Testing → Tooling)
 - [ ] At least one **testing segment** (slot 5) — see "Language bar segment ordering" in CLAUDE.md
 - [ ] At least one **static analysis segment** (slot 6) — linter, type checker, or formatter
+- [ ] Slot 6 items ordered: static analysis → service pkgs → ORM/DB → styling → other
 - [ ] Testing framework **layering rules** applied (Pest > PHPUnit, JUnit5 > JUnit4, etc.)
 - [ ] Detection uses the correct signal type — dep / config file / binary
 - [ ] Entry added to `auto_bars.scripts` in `settings.json`

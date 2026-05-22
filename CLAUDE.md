@@ -100,12 +100,20 @@ Every language/ecosystem bar in `bars/` follows this canonical 6-slot order. Slo
 |------|-----------------|---------------------------------------------------|
 | 1    | Runtime         | language name + version                           |
 | 2    | Package manager | Maven, Poetry, pnpm, Cargo (implicit), npm        |
-| 3    | Framework       | Rails, Django, Laravel, Spring Boot, gin          |
+| 3    | Framework       | Rails, Django, Laravel, Spring Boot, Gin          |
 | 4    | Add-ons         | Livewire, Octane, LiveView, Inertia, Ecto, Oban   |
 | 5    | Testing         | RSpec, pytest, Jest, JUnit, bats, Pest, Ginkgo    |
-| 6    | Tooling         | TypeScript, ShellCheck, Herd URL, ORM, linters    |
+| 6    | Tooling         | ShellCheck, golangci-lint, GORM, Tailwind CSS     |
 
 **Required coverage:** every language bar must include at least one slot-5 (testing) and one slot-6 (static analysis) segment when the relevant tool is detected. Bars that physically cannot detect testing (e.g. `salesforce.sh`) document the reason in a comment.
+
+**Tooling sub-order (slot 6):** within the tooling slot, items must appear in this order:
+
+1. Static analysis (linters, type checkers, formatters) — e.g. golangci-lint, RuboCop, PHPStan, Clippy, SwiftLint
+2. Business logic / service packages — e.g. Tokio, Sidekiq, Celery
+3. ORM / database packages — e.g. GORM, SQLAlchemy, EF Core, Diesel
+4. Styling packages — e.g. Tailwind CSS
+5. Other items — e.g. Herd URL
 
 **Detection signals**, in priority order: lockfile/manifest dep → config file → binary on `PATH`. Use whichever signal is reliable for the tool. All three are valid; many tools are detectable via more than one.
 
