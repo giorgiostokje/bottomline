@@ -32,6 +32,9 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_INERTIA=$'\xef\x84\xa4'   # U+F124  nf-fa-location-arrow
     IC_FILAMENT=$'\xef\x80\x85'  # U+F005  nf-fa-star
     IC_HERD=$'\xef\x82\xac'      # U+F0AC  nf-fa-globe
+    IC_TEST=$'\xef\x81\x80'      # U+F040  nf-fa-pencil
+    IC_PHPSTAN=$'\xef\x80\x8c'   # U+F00C  nf-fa-check
+    IC_CSFIXER=$'\xef\x80\xb1'   # U+F031  nf-fa-font
     IC_PRO=$'\xef\x82\x91'       # U+F091  nf-fa-trophy
     IC_WARN=$'\xef\x81\xb1'      # U+F071  nf-fa-warning
     ;;
@@ -50,13 +53,17 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_INERTIA='🚀'
     IC_FILAMENT='⭐'
     IC_HERD='🌐'
+    IC_TEST='🧪'
+    IC_PHPSTAN='🔍'
+    IC_CSFIXER='🔧'
     IC_PRO='🏅'
     IC_WARN='⚠'
     ;;
   *)
     IC_PHP='' IC_LARAVEL='' IC_LUMEN='' IC_SYMFONY='' IC_CAKE='' IC_SLIM=''
     IC_OCTANE='' IC_BOOST='' IC_REVERB='' IC_LIVEWIRE='' IC_FLUX='' IC_INERTIA=''
-    IC_FILAMENT='' IC_HERD='' IC_PRO='' IC_WARN=''
+    IC_FILAMENT='' IC_HERD='' IC_TEST='' IC_PHPSTAN='' IC_CSFIXER=''
+    IC_PRO='' IC_WARN=''
     ;;
 esac
 
@@ -80,6 +87,10 @@ flux_version=''
 flux_pro=false
 inertia_version=''
 filament_version=''
+pest_version=''
+phpunit_version=''
+phpstan_version=''
+csfixer_version=''
 
 if [[ -f "$lock" ]]; then
   while IFS=$'\t' read -r name version; do
@@ -98,6 +109,10 @@ if [[ -f "$lock" ]]; then
       inertiajs/inertia-laravel) inertia_version="${version#v}"  ;;
       inertiajs/inertia-symfony) inertia_version="${version#v}"  ;;
       filament/filament)         filament_version="${version#v}" ;;
+      pestphp/pest)              pest_version="${version#v}"     ;;
+      phpunit/phpunit)           phpunit_version="${version#v}"  ;;
+      phpstan/phpstan)           phpstan_version="${version#v}"  ;;
+      friendsofphp/php-cs-fixer) csfixer_version="${version#v}"  ;;
     esac
   done < <(jq -r '(.packages + (.["packages-dev"] // [])) | .[] | [.name, .version] | @tsv' "$lock" 2>/dev/null)
 fi
@@ -125,6 +140,11 @@ if [[ -f "$boost_json" ]]; then
   agents_has_claude=$(jq -r '(.agents // []) | if type == "array" then any(. == "claude_code") else has("claude_code") end' "$boost_json" 2>/dev/null)
   [[ "$agents_has_claude" == "true" ]] && boost_agents_ok=true
 fi
+
+# PHPStan config fallback
+[[ -z "$phpstan_version" ]] && { [[ -f "$PROJ/phpstan.neon" || -f "$PROJ/phpstan.dist.neon" ]] && phpstan_version='present'; }
+# PHP-CS-Fixer config fallback
+[[ -z "$csfixer_version" ]] && { [[ -f "$PROJ/.php-cs-fixer.php" || -f "$PROJ/.php-cs-fixer.dist.php" ]] && csfixer_version='present'; }
 
 # Herd: derive local URL from project directory name.
 # Herd secures all .test sites with a local certificate, so HTTPS is correct.
@@ -187,10 +207,33 @@ fi
 [[ -n "$filament_version" ]] \
   && add_seg "${FG_ACCENT}${IC_FILAMENT} ${FG_TEXT}Filament ${FG_ACCENT}v${filament_version}"
 
+# ── Testing (slot 5) ──────────────────────────────────────────────────────────
+if [[ -n "$pest_version" ]]; then
+  add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Pest ${FG_ACCENT}v${pest_version}"
+elif [[ -n "$phpunit_version" ]]; then
+  add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}PHPUnit ${FG_ACCENT}v${phpunit_version}"
+fi
+
 # ── Herd local URL ────────────────────────────────────────────────────────────
 if [[ -n "$herd_url" ]]; then
   herd_label="${FG_ACCENT}${IC_HERD} ${FG_TEXT}$(link "$herd_url" "${herd_site}.test")"
   add_seg "$herd_label"
+fi
+
+# ── Static analysis (slot 6) ──────────────────────────────────────────────
+if [[ -n "$phpstan_version" ]]; then
+  if [[ "$phpstan_version" == 'present' ]]; then
+    add_seg "${FG_ACCENT}${IC_PHPSTAN} ${FG_TEXT}PHPStan"
+  else
+    add_seg "${FG_ACCENT}${IC_PHPSTAN} ${FG_TEXT}PHPStan ${FG_ACCENT}v${phpstan_version}"
+  fi
+fi
+if [[ -n "$csfixer_version" ]]; then
+  if [[ "$csfixer_version" == 'present' ]]; then
+    add_seg "${FG_ACCENT}${IC_CSFIXER} ${FG_TEXT}CS-Fixer"
+  else
+    add_seg "${FG_ACCENT}${IC_CSFIXER} ${FG_TEXT}CS-Fixer ${FG_ACCENT}v${csfixer_version}"
+  fi
 fi
 
 (( ${#_sc[@]} == 0 )) && exit 0
