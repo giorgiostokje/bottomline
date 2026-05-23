@@ -3,10 +3,18 @@
 # Renders when the project contains a sfdx-project.json.
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
-[[ -z "$PROJ" || ! -f "$PROJ/sfdx-project.json" ]] && exit 0
+[[ -z "$PROJ" ]] && exit 0
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
+
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "salesforce" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
+[[ ! -f "$PROJ/sfdx-project.json" ]] && exit 0
 
 # ── Palette (Salesforce Lightning brand colours) ───────────────────────────────
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
@@ -105,6 +113,7 @@ if [[ -f "$PROJ/package.json" ]]; then
 fi
 
 # ── Segments ──────────────────────────────────────────────────────────────────
+_bl_out=$(
 # 1. SF header: icon + label + CLI version
 sf_seg="${FG_ACCENT}${IC_SF} ${FG_TEXT}Salesforce"
 [[ -n "$sf_version" ]] && sf_seg+=" ${FG_ACCENT}v${sf_version}"
@@ -134,3 +143,8 @@ $has_lwc_eslint  && seg "${FG_ACCENT}${IC_LWC} ${FG_TEXT}ESLint (LWC)"
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
+fi
+printf '%s' "$_bl_out"

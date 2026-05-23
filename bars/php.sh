@@ -3,10 +3,18 @@
 # Renders for any project containing a composer.json.
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
-[[ -z "$PROJ" || ! -f "$PROJ/composer.json" ]] && exit 0
+[[ -z "$PROJ" ]] && exit 0
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
+
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "php" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
+[[ ! -f "$PROJ/composer.json" ]] && exit 0
 
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
   FG_TEXT=$(make_fg "$(hex_to_rgb "#ddd6f3")")
@@ -156,6 +164,7 @@ if command -v herd > /dev/null 2>&1; then
 fi
 
 # ── PHP runtime ───────────────────────────────────────────────────────────────
+_bl_out=$(
 [[ -n "$php_version" ]] \
   && add_seg "${FG_ACCENT}${IC_PHP} ${FG_TEXT}PHP ${FG_ACCENT}${php_version}"
 
@@ -238,3 +247,8 @@ fi
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
+fi
+printf '%s' "$_bl_out"

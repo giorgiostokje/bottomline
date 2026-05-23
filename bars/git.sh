@@ -9,6 +9,12 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "git" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
 if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
   FG_TEXT=$(make_fg "$(hex_to_rgb "#f0ddd8")")
   FG_ACCENT=$(make_fg "$(hex_to_rgb "#f05033")")
@@ -45,6 +51,7 @@ esac
 
 
 # ── Git availability check ────────────────────────────────────────────────────
+_bl_out=$(
 if ! command -v git > /dev/null 2>&1; then
   add_seg "${FG_WARN}${IC_WARN} ${FG_TEXT}git not installed"
   flush "$_bar_gradient"
@@ -201,3 +208,8 @@ fi
 
 (( ${#_sc[@]} == 0 )) && exit 0
 flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
+fi
+printf '%s' "$_bl_out"
