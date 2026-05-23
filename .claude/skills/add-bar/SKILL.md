@@ -50,20 +50,20 @@ fi
 # ── Gather data ───────────────────────────────────────────────────────────────
 # ... read files, run commands, build segment strings ...
 
-# ── Segments (canonical slot order) ───────────────────────────────────────────
-# Slot 1: Runtime
-[[ -n "$lang_version" ]] && add_seg "${FG_ACCENT}${IC_LANG} ${FG_TEXT}<Name> ${FG_ACCENT}v${lang_version}"
-
-# Slot 2: Package manager (when not implicit)
-# [[ -n "$pm_name" ]] && add_seg "${FG_ACCENT}${IC_PM} ${FG_TEXT}${pm_name}"
-
-# Slot 3: Framework
-# [[ -n "$framework_version" ]] && add_seg "${FG_ACCENT}${IC_FRAMEWORK} ${FG_TEXT}<Framework> ${FG_ACCENT}v${framework_version}"
-
-# Slot 4: Framework add-ons
-# [[ -n "$addon_version" ]] && add_seg "${FG_ACCENT}${IC_ADDON} ${FG_TEXT}<Addon> ${FG_ACCENT}v${addon_version}"
-
 _bl_out=$(
+  # ── Segments (canonical slot order) ───────────────────────────────────────────
+  # Slot 1: Runtime
+  [[ -n "$lang_version" ]] && add_seg "${FG_ACCENT}${IC_LANG} ${FG_TEXT}<Name> ${FG_ACCENT}v${lang_version}"
+
+  # Slot 2: Package manager (when not implicit)
+  # [[ -n "$pm_name" ]] && add_seg "${FG_ACCENT}${IC_PM} ${FG_TEXT}${pm_name}"
+
+  # Slot 3: Framework
+  # [[ -n "$framework_version" ]] && add_seg "${FG_ACCENT}${IC_FRAMEWORK} ${FG_TEXT}<Framework> ${FG_ACCENT}v${framework_version}"
+
+  # Slot 4: Framework add-ons
+  # [[ -n "$addon_version" ]] && add_seg "${FG_ACCENT}${IC_ADDON} ${FG_TEXT}<Addon> ${FG_ACCENT}v${addon_version}"
+
   # Slot 5: Testing (REQUIRED — see CLAUDE.md "Language bar segment ordering")
   # [[ -n "$test_framework" ]] && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}${test_framework}"
 
