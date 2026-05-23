@@ -51,7 +51,11 @@
       { "script": "javascript", "signals": ["package.json"] },
       { "script": "dart", "signals": ["pubspec.yaml"] },
       { "script": "php", "signals": ["composer.json"] },
-      { "script": "salesforce", "signals": ["sfdx-project.json", ".forceignore"] },
+      {
+        "script": "salesforce",
+        "signals": ["sfdx-project.json", ".forceignore"],
+        "refresh_minutes": 0
+      },
       { "script": "git", "signals": [".git"], "refresh_minutes": 0 }
     ]
   }
