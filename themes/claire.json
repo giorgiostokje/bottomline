@@ -1,0 +1,12 @@
+{
+  "colors": {
+    "text": "#c3d0e2",
+    "accent": "#56b9da",
+    "warning": "#e0b84e",
+    "danger": "#cc5566",
+    "background": [
+      "#14232e",
+      "#0a1116"
+    ]
+  }
+}
