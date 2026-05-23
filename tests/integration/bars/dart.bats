@@ -35,6 +35,16 @@ EOF
   [[ "$BAR_OUTPUT" == *"3.2.0"* ]]
 }
 
+@test "dart: labels SDK constraint version with >= prefix not v prefix" {
+  cat > "$FAKE_PROJ/pubspec.yaml" <<'EOF'
+name: my_app
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+EOF
+  bar_run dart "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *">=3.4.0"* ]]
+}
+
 @test "dart: shows Flutter segment when flutter SDK dependency present" {
   cat > "$FAKE_PROJ/pubspec.yaml" <<'EOF'
 name: my_flutter_app
