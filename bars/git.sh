@@ -48,7 +48,25 @@ case "$BOTTOMLINE_ICON_TYPE" in
     ;;
 esac
 
-
+# ── Utility functions ─────────────────────────────────────────────────────────
+shorten_rel_time() {
+  printf '%s' "$1" | awk '{
+    if      ($0 ~ /a few seconds|just now/) print "now"
+    else if ($0 ~ /^a minute/)              print "1m"
+    else if ($0 ~ /minutes/)                { match($0, /[0-9]+/); print substr($0,RSTART,RLENGTH) "m" }
+    else if ($0 ~ /^an hour/)               print "1h"
+    else if ($0 ~ /hours/)                  { match($0, /[0-9]+/); print substr($0,RSTART,RLENGTH) "h" }
+    else if ($0 ~ /^a day/)                 print "1d"
+    else if ($0 ~ /days/)                   { match($0, /[0-9]+/); print substr($0,RSTART,RLENGTH) "d" }
+    else if ($0 ~ /^a week/)                print "1w"
+    else if ($0 ~ /weeks/)                  { match($0, /[0-9]+/); print substr($0,RSTART,RLENGTH) "w" }
+    else if ($0 ~ /^a month/)               print "1mo"
+    else if ($0 ~ /months/)                 { match($0, /[0-9]+/); print substr($0,RSTART,RLENGTH) "mo" }
+    else if ($0 ~ /^a year/)                print "1y"
+    else if ($0 ~ /years/)                  { match($0, /[0-9]+/); print substr($0,RSTART,RLENGTH) "y" }
+    else print $0
+  }'
+}
 
 # ── Git availability check ────────────────────────────────────────────────────
 _bl_out=$(
@@ -142,24 +160,6 @@ commit_author="${commit_info%%|*}"
 commit_author="${commit_author%% *}"  # first name only
 commit_time_raw="${commit_info##*|}"
 
-shorten_rel_time() {
-  printf '%s' "$1" | awk '{
-    if      ($0 ~ /a few seconds|just now/) print "now"
-    else if ($0 ~ /^a minute/)              print "1m"
-    else if ($0 ~ /minutes/)                { match($0, /[0-9]+/); print substr($0,RSTART,RLENGTH) "m" }
-    else if ($0 ~ /^an hour/)               print "1h"
-    else if ($0 ~ /hours/)                  { match($0, /[0-9]+/); print substr($0,RSTART,RLENGTH) "h" }
-    else if ($0 ~ /^a day/)                 print "1d"
-    else if ($0 ~ /days/)                   { match($0, /[0-9]+/); print substr($0,RSTART,RLENGTH) "d" }
-    else if ($0 ~ /^a week/)                print "1w"
-    else if ($0 ~ /weeks/)                  { match($0, /[0-9]+/); print substr($0,RSTART,RLENGTH) "w" }
-    else if ($0 ~ /^a month/)               print "1mo"
-    else if ($0 ~ /months/)                 { match($0, /[0-9]+/); print substr($0,RSTART,RLENGTH) "mo" }
-    else if ($0 ~ /^a year/)                print "1y"
-    else if ($0 ~ /years/)                  { match($0, /[0-9]+/); print substr($0,RSTART,RLENGTH) "y" }
-    else print $0
-  }'
-}
 commit_time=$(shorten_rel_time "$commit_time_raw")
 
 # ── Segments ──────────────────────────────────────────────────────────────────
