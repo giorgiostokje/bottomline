@@ -154,6 +154,19 @@ rust → go → shell → swift → elixir → dotnet → java → python → ru
 
 When adding a new bar, insert it at the position that best reflects where the language sits on that spectrum. `git` must always remain last.
 
+### Bar change checklist
+
+Any time a bar is **added** or its **segments change**, update every applicable item below. "Not applicable" is a valid answer, but must be a conscious decision — not an oversight.
+
+| Artifact | When to update |
+|---|---|
+| `docs/bars-reference.html` | Always — add a new bar card or update the segments table and terminal mocks for an existing bar. |
+| `CLAUDE.md` — `auto_bars.scripts` ordering | When adding a new bar — insert it at the correct depth position. |
+| `settings.json` — `auto_bars.scripts` | When adding a new bar — register its signal file(s) and script name. |
+| `.claude/skills/add-bar` (dev skill) | When the scaffolding process or auto-detection conventions change. |
+| `skills/configure/SKILL.md` (end-user skill) | When bar names change or new bars need to appear in the explicit-bars candidate list. |
+| `skills/create-bar/SKILL.md` (end-user skill) | When the template or naming conventions for new bars change. |
+
 ### `dmerge/2` is duplicated
 
 The `dmerge/2` jq function is copy-pasted verbatim into both `bottomline.sh` (config loading) and `skills/debug/SKILL.md` (the merged-config inspection snippet). If the algorithm changes, update both.
