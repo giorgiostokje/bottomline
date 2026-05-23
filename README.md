@@ -232,8 +232,6 @@ To create a new theme, run `/bottomline:create-theme`.
 |---|---|---|
 | `claude` | Dark brown gradient | Matches Claude's brand orange tones (the default palette) |
 | `catppuccin-mocha` | Dark blue-grey gradient | [Catppuccin](https://github.com/catppuccin/catppuccin) Mocha — dark lavender |
-| `catppuccin-macchiato` | Dark indigo gradient | Catppuccin Macchiato |
-| `catppuccin-frappe` | Dark slate gradient | Catppuccin Frappé |
 | `catppuccin-latte` | Light grey gradient | Catppuccin Latte — light mode |
 
 ---
