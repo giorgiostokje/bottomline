@@ -57,7 +57,7 @@ Themes sit above per-file color keys: when `appearance.theme` is set, it overrid
 ### Library split
 
 - **`lib/functions.sh`** — pure utilities with no global state: `fmt_n`, `fmt_k`, `fmt_remaining`, `decode_icon`. Sourced by `bottomline.sh` and loaded directly in unit tests (`source lib/functions.sh`).
-- **`lib/helpers.sh`** — ANSI primitives (`bg3`, `fg3`, `hex_to_rgb`), `expand_bg`, and a re-implementation of `seg()`/`flush()` for bar scripts. Reads color values from `BOTTOMLINE_*` env vars. Sourced by bar scripts via `source "$BOTTOMLINE_LIB/helpers.sh"`.
+- **`lib/helpers.sh`** — ANSI primitives (`bg3`, `fg3`, `hex_to_rgb`), `expand_bg`, a re-implementation of `seg()`/`flush()` for bar scripts, and the cache helpers `bl_cache_path`/`bl_cache_write`. Reads color values from `BOTTOMLINE_*` env vars. Sourced by bar scripts via `source "$BOTTOMLINE_LIB/helpers.sh"`.
 
 ### Test infrastructure
 

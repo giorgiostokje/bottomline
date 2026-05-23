@@ -464,6 +464,36 @@ Auto-bars are disabled by default (`enabled: false` in `settings.json`).
 { "auto_bars": { "disabled": ["java", "javascript"] } }
 ```
 
+#### Cache
+
+Auto-detected language bars cache their rendered output in `/tmp` to avoid re-running expensive detection (manifest parsing, binary version checks) on every refresh.
+
+```json
+{
+  "auto_bars": {
+    "refresh_minutes": 5
+  }
+}
+```
+
+`refresh_minutes` sets the cache TTL in minutes for all auto-detected bars. Set to `0` to disable caching for a bar. Default: `5`.
+
+Override per bar without rewriting the full `scripts` array:
+
+```json
+{
+  "auto_bars": {
+    "refresh_minutes": 5,
+    "overrides": {
+      "go":         { "refresh_minutes": 10 },
+      "javascript": { "refresh_minutes": 0 }
+    }
+  }
+}
+```
+
+The `git` bar ships with `refresh_minutes: 0` (live data by default). Set `auto_bars.overrides.git.refresh_minutes` to a positive integer to enable git bar caching.
+
 #### Suppressing language palettes
 
 When `inherit_colors` is `true`, all auto-detected bars behave as if `colors: "inherit"` was set — they use the merged config's colour scheme instead of their built-in language palette:
@@ -630,11 +660,14 @@ All keys, their types, and which config files they belong in.
 | `bars[].script` | `string` | Bar script name or path |
 | `bars[].segments` | `array` | Inline segment bar segments |
 | `bars[].colors` | object \| `"inherit"` | Bar colour overrides — object with any of `text`, `accent`, `warning`, `danger`, `background`; or `"inherit"` to use merged config colours and suppress the bar's built-in palette |
-| `bars[].refresh_minutes` | `integer` | How long (in minutes) the bar caches external data between fetches. Supported by bars that make network calls (e.g. `random-facts` defaults to 60). |
+| `bars[].refresh_minutes` | `integer` | Cache TTL in minutes for script bars that use `bl_cache_write`. All 14 built-in language bars respect this. `0` disables caching. For auto-detected bars, defaults to `auto_bars.refresh_minutes` unless overridden. |
 | `auto_bars.enabled` | `boolean` | Enable auto-bar detection for this config level (default: `false`) |
 | `auto_bars.disabled` | `string[]` | Bar names to exclude from auto-detection (unioned across config levels) |
 | `auto_bars.inherit_colors` | `boolean` | When `true`, all auto-detected bars behave as `colors: "inherit"` |
 | `auto_bars.scripts` | `array` | Registry of `{ "script", "signals" }` entries — defined by the plugin; do not edit |
+| `auto_bars.refresh_minutes` | `integer` | Global cache TTL in minutes for all auto-detected bars. `0` disables caching. Default: `5`. |
+| `auto_bars.overrides` | `{ "name": { "refresh_minutes": N } }` | Per-bar overrides — object merges cleanly without rewriting `scripts`. |
+| `auto_bars.scripts[].refresh_minutes` | `integer` | Shipped per-entry TTL default. Only set in `settings.json`; use `auto_bars.overrides` to override at user/project level. |
 
 **Color value formats** (anywhere a colour is accepted):
 
