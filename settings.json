@@ -53,7 +53,7 @@
       { "script": "php", "signals": ["composer.json"] },
       {
         "script": "salesforce",
-        "signals": ["sfdx-project.json", ".forceignore"],
+        "signals": ["sfdx-project.json"],
         "refresh_minutes": 0
       },
       { "script": "git", "signals": [".git"], "refresh_minutes": 0 }

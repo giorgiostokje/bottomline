@@ -174,3 +174,21 @@ EOF
   [[ "$BAR_OUTPUT" != *"PMD"* ]]
   [[ "$BAR_OUTPUT" != *"ESLint"* ]]
 }
+
+@test "salesforce: sanitises target_org path separators before legacy ~/.sfdx lookup" {
+  _minimal_sfdx_json
+  mkdir -p "$FAKE_PROJ/.sf"
+  printf '{"target-org":"path/alias"}\n' > "$FAKE_PROJ/.sf/config.json"
+
+  local fake_home; fake_home=$(mktemp -d)
+  mkdir -p "$fake_home/.sfdx"
+  printf '{"username":"safe@org.example"}\n' > "$fake_home/.sfdx/alias.json"
+
+  local saved_home="$HOME"
+  HOME="$fake_home"
+  bar_run salesforce "$FAKE_PROJ"
+  HOME="$saved_home"
+  rm -rf "$fake_home"
+
+  [[ "$BAR_OUTPUT" == *"safe@org.example"* ]]
+}

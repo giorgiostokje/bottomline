@@ -86,9 +86,11 @@ if [[ -n "$target_org" ]]; then
     username=$(jq -r --arg a "$target_org" '.orgs[$a] // empty' \
       "$HOME/.sfdx/alias.json" 2>/dev/null)
   fi
-  # Legacy: ~/.sfdx/<alias>.json
-  if [[ -z "$username" && -f "$HOME/.sfdx/${target_org}.json" ]]; then
-    username=$(jq -r '.username // empty' "$HOME/.sfdx/${target_org}.json" 2>/dev/null)
+  # Legacy: ~/.sfdx/<alias>.json — basename prevents path traversal from a
+  # jq-parsed alias value containing directory separators.
+  safe_alias=$(basename "$target_org")
+  if [[ -z "$username" && -f "$HOME/.sfdx/${safe_alias}.json" ]]; then
+    username=$(jq -r '.username // empty' "$HOME/.sfdx/${safe_alias}.json" 2>/dev/null)
   fi
 fi
 
