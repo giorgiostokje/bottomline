@@ -1572,6 +1572,8 @@ flush "$_bar_gradient"</code></pre>
     <tr><td>Stash</td><td>N stash/stashes</td><td>Hidden when stash is empty.</td></tr>
     <tr><td>Ahead/behind</td><td>↑N ↓N</td><td>Hidden when no upstream or fully in sync. Behind count in warning color.</td></tr>
     <tr><td>Last commit</td><td>Author · age</td><td>Author first name only; age abbreviated (3m, 2h, 1d, etc.).</td></tr>
+    <tr><td>CI status</td><td>CI passed ✓ / CI failed ✗ / CI timed out ✗ / CI running ⟳ / CI queued ⟳</td><td>Requires <code>gh</code> CLI and a GitHub remote. Shows the most recent workflow run for the current branch. Hidden when no run found, branch is detached, or remote is not GitHub.</td></tr>
+    <tr><td>PR state</td><td>PR #N [· draft / · ✓ / · changes]</td><td>Requires <code>gh</code> CLI and an open PR for the current branch. Shows draft status, review approval (accent ✓), or change requests (warning color). Hidden when no open PR.</td></tr>
   </tbody>
 </table>
 
@@ -1652,6 +1654,54 @@ flush "$_bar_gradient"</code></pre>
           <span style="color:#f0ddd8">&nbsp;Giorgio&nbsp;</span>
           <span style="color:#f05033">·</span>
           <span style="color:#f0ddd8">&nbsp;1h</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="term" style="margin-top:8px">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-project</span><span>GitHub remote · gh detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#1a0c08","#2e1610"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">&#xE0A0;</span>
+          <span style="color:#f0ddd8">&nbsp;main</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">&#xF00C;</span>
+          <span style="color:#f0ddd8">&nbsp;clean</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">&#xF1DA;</span>
+          <span style="color:#f0ddd8">&nbsp;Giorgio&nbsp;</span>
+          <span style="color:#f05033">·</span>
+          <span style="color:#f0ddd8">&nbsp;2h</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">CI&nbsp;</span>
+          <span style="color:#f0ddd8">passed&nbsp;&#xF00C;</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f05033">PR&nbsp;</span>
+          <span style="color:#f0ddd8">#42&nbsp;·&nbsp;&#xF00C;</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
