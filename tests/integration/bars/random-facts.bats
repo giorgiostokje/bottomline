@@ -9,6 +9,9 @@ setup() {
   FAKE_BIN=$(mktemp -d)
   printf '#!/bin/bash\nexit 1\n' > "$FAKE_BIN/curl"
   chmod +x "$FAKE_BIN/curl"
+  # Evict any cached fact so tests exercise the offline fallback path.
+  # Use -print0 | xargs -0 rm -f because macOS forbids -L with -delete.
+  find -L /tmp -maxdepth 1 -name 'bl_random-fact_*.txt' -print0 2>/dev/null | xargs -0 rm -f 2>/dev/null
 }
 
 teardown() {

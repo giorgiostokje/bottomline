@@ -10,6 +10,9 @@ case "$BOTTOMLINE_ICON_TYPE" in
   *)     IC_FACT='' ;;
 esac
 
+# Cache is managed manually here rather than via bl_cache_path/bl_cache_write
+# because the cache key is time-bucket based (not project-scoped), so there is
+# no per-project component in the filename.
 _refresh_mins="${BOTTOMLINE_BAR_REFRESH_MINUTES:-60}"
 _bucket=$(( $(date +%s) / (_refresh_mins * 60) ))
 _cache_file="/tmp/bl_random-fact_${_bucket}.txt"
@@ -25,8 +28,8 @@ if [[ -z "$fact" ]]; then
     2>/dev/null | jq -r '.text // empty' 2>/dev/null)
   if [[ -n "$fact" ]]; then
     printf '%s' "$fact" > "$_cache_file"
-    find /tmp -maxdepth 1 -name 'bl_random-fact_*.txt' \
-      ! -name "bl_random-fact_${_bucket}.txt" -delete 2>/dev/null
+    find -L /tmp -maxdepth 1 -name 'bl_random-fact_*.txt' \
+      ! -name "bl_random-fact_${_bucket}.txt" -print0 2>/dev/null | xargs -0 rm -f 2>/dev/null
   fi
 fi
 
