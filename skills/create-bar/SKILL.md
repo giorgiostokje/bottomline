@@ -45,6 +45,26 @@ my_value="hello"
 flush "$BOTTOMLINE_GRADIENT"
 ```
 
+**Optional caching:** if your bar does something expensive (reads many files, calls external tools), use `bl_cache_path` / `bl_cache_write` to cache the rendered output:
+
+```bash
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "mybar" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
+_bl_out=$(
+  add_seg "..."
+  (( ${#_sc[@]} == 0 )) && exit 0
+  flush "$_bar_gradient"
+)
+[[ "$_bl_ttl" -gt 0 ]] && bl_cache_write "$_bl_cache" "$_bl_out"
+printf '%s' "$_bl_out"
+```
+
+Control the TTL with `refresh_minutes` in the bar's config entry.
+
 ## Available Variables (from helpers.sh)
 
 After `source "$BOTTOMLINE_LIB/helpers.sh"` these are ready to use:

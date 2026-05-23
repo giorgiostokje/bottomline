@@ -19,9 +19,16 @@ Follow this structure exactly. The `BOTTOMLINE_BAR_COLORS` guard is mandatory fo
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
-[[ ! -f "$PROJ/<signal-file>" ]] && exit 0   # hard guard: exit when not applicable
 
 source "$BOTTOMLINE_LIB/helpers.sh"
+
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_cache=$(bl_cache_path "<bar_name>" "$_bl_ttl" "$PROJ")
+  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
+fi
+
+[[ ! -f "$PROJ/<signal-file>" ]] && exit 0   # hard guard: AFTER cache block
 
 # ── Icons ─────────────────────────────────────────────────────────────────────
 case "$BOTTOMLINE_ICON_TYPE" in
@@ -56,14 +63,20 @@ fi
 # Slot 4: Framework add-ons
 # [[ -n "$addon_version" ]] && add_seg "${FG_ACCENT}${IC_ADDON} ${FG_TEXT}<Addon> ${FG_ACCENT}v${addon_version}"
 
-# Slot 5: Testing (REQUIRED — see CLAUDE.md "Language bar segment ordering")
-# [[ -n "$test_framework" ]] && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}${test_framework}"
+_bl_out=$(
+  # Slot 5: Testing (REQUIRED — see CLAUDE.md "Language bar segment ordering")
+  # [[ -n "$test_framework" ]] && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}${test_framework}"
 
-# Slot 6: Tooling (REQUIRED — at least one; sub-order: static analysis → service pkgs → ORM/DB → styling → other)
-# [[ -n "$linter_version" ]] && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}<Linter> ${FG_ACCENT}v${linter_version}"
+  # Slot 6: Tooling (REQUIRED — at least one; sub-order: static analysis → service pkgs → ORM/DB → styling → other)
+  # [[ -n "$linter_version" ]] && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}<Linter> ${FG_ACCENT}v${linter_version}"
 
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
+  (( ${#_sc[@]} == 0 )) && exit 0
+  flush "$_bar_gradient"
+)
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_bl_cache" "$_bl_out"
+fi
+printf '%s' "$_bl_out"
 ```
 
 Key rules:
@@ -131,6 +144,8 @@ Cover at minimum:
 
 - [ ] `bars/<name>.sh` written with `BOTTOMLINE_BAR_COLORS` guard
 - [ ] Hard guard exits silently when signal file is absent
+- [ ] cache block present — top guard (after `source`) and bottom capture (`$()` + `bl_cache_write`)
+- [ ] signal-file hard guard placed AFTER the cache block (not before `source`)
 - [ ] `(( ${#_sc[@]} == 0 )) && exit 0` before `flush`
 - [ ] `_bar_gradient` used, not `$BOTTOMLINE_GRADIENT` directly
 - [ ] Segments emitted in canonical slot order (Runtime → PM → Framework → Add-ons → Testing → Tooling)

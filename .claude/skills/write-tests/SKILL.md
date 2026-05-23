@@ -166,7 +166,9 @@ Note the `| tr -d ' \n|'` — `bar_run` uses `BOTTOMLINE_SEP='|'` so separators 
 }
 ```
 
-For bars that do not make network calls (all language/ecosystem bars), `BOTTOMLINE_BAR_REFRESH_MINUTES` is irrelevant — use plain `bar_run`.
+`bar_run` passes `BOTTOMLINE_BAR_REFRESH_MINUTES=0` by default, disabling caching. Use plain `bar_run BAR PROJ` for all standard bar tests — no cache files are created and results are always fresh.
+
+To test cache hit/miss behaviour, pass a positive TTL as the third argument: `bar_run go "$FAKE_PROJ" 60`. See `tests/integration/cache.bats` for the full pattern, including teardown cleanup of `/tmp/bl_*` files.
 
 ---
 
