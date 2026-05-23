@@ -32,6 +32,9 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_COMMIT=$'\xef\x87\x9a'    # U+F1DA  nf-fa-history
     IC_WARN=$'\xef\x81\xb1'      # U+F071  nf-fa-warning
     IC_CLEAN=$'\xef\x80\x8c'     # U+F00C  nf-fa-check
+    IC_CI_PASS=$'\xef\x80\x8c'  # U+F00C  nf-fa-check
+    IC_CI_FAIL=$'\xef\x80\x8d'  # U+F00D  nf-fa-times
+    IC_CI_RUN=$'\xef\x80\xa1'   # U+F021  nf-fa-refresh
     ;;
   emoji)
     IC_BRANCH='⎇'
@@ -41,10 +44,14 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_COMMIT='🕐'
     IC_WARN='⚠️'
     IC_CLEAN='✓'
+    IC_CI_PASS='✓'
+    IC_CI_FAIL='✗'
+    IC_CI_RUN='⟳'
     ;;
   *)
     IC_BRANCH='' IC_WORKTREE='' IC_CHANGES='' IC_STASH=''
     IC_COMMIT='' IC_WARN='' IC_CLEAN='✓'
+    IC_CI_PASS='✓' IC_CI_FAIL='✗' IC_CI_RUN='~'
     ;;
 esac
 
@@ -204,6 +211,48 @@ fi
 # Last commit — author first name and abbreviated age
 if [[ -n "$commit_author" && -n "$commit_time" ]]; then
   add_seg "${FG_ACCENT}${IC_COMMIT} ${FG_TEXT}${commit_author} ${FG_ACCENT}·${FG_TEXT} ${commit_time}"
+fi
+
+# ── GitHub ────────────────────────────────────────────────────────────────────
+if ! $is_detached && command -v gh > /dev/null 2>&1; then
+  _remote_url=$(git -C "$PROJ" remote get-url origin 2>/dev/null)
+  if [[ "$_remote_url" == *"github.com"* ]]; then
+
+    # CI status — most recent run for this branch
+    _ci_json=$(cd "$PROJ" && gh run list --branch "$branch" --limit 1 \
+               --json status,conclusion 2>/dev/null)
+    _ci_status=$(printf '%s' "$_ci_json" | jq -r '.[0].status // empty' 2>/dev/null)
+    _ci_conclusion=$(printf '%s' "$_ci_json" | jq -r '.[0].conclusion // empty' 2>/dev/null)
+
+    _ci_key="${_ci_status}/${_ci_conclusion}"
+    if   [[ "$_ci_key" == "completed/success"   ]]; then add_seg "${FG_ACCENT}${IC_CI_PASS} ${FG_TEXT}passed"
+    elif [[ "$_ci_key" == "completed/failure"   ]]; then add_seg "${FG_WARN}${IC_CI_FAIL} ${FG_TEXT}failed"
+    elif [[ "$_ci_key" == "completed/timed_out" ]]; then add_seg "${FG_WARN}${IC_CI_FAIL} ${FG_TEXT}timed out"
+    elif [[ "$_ci_status" == "in_progress"      ]]; then add_seg "${FG_ACCENT}${IC_CI_RUN} ${FG_TEXT}running"
+    elif [[ "$_ci_status" == "queued" || "$_ci_status" == "waiting" ]]; then add_seg "${FG_ACCENT}${IC_CI_RUN} ${FG_TEXT}queued"
+    fi
+
+    # PR state — open PR for this branch
+    _pr_json=$(cd "$PROJ" && gh pr view \
+               --json number,isDraft,reviewDecision,state 2>/dev/null)
+    _pr_state=$(printf '%s' "$_pr_json" | jq -r '.state // empty' 2>/dev/null)
+    _pr_number=$(printf '%s' "$_pr_json" | jq -r '.number // empty' 2>/dev/null)
+    _pr_is_draft=$(printf '%s' "$_pr_json" | jq -r '.isDraft // empty' 2>/dev/null)
+    _pr_review=$(printf '%s' "$_pr_json" | jq -r '.reviewDecision // empty' 2>/dev/null)
+
+    if [[ "$_pr_state" == "OPEN" && -n "$_pr_number" ]]; then
+      if [[ "$_pr_is_draft" == "true" ]]; then
+        add_seg "${FG_ACCENT}PR ${FG_TEXT}#${_pr_number} · draft"
+      elif [[ "$_pr_review" == "APPROVED" ]]; then
+        add_seg "${FG_ACCENT}PR ${FG_TEXT}#${_pr_number} · ${IC_CI_PASS}"
+      elif [[ "$_pr_review" == "CHANGES_REQUESTED" ]]; then
+        add_seg "${FG_WARN}PR ${FG_TEXT}#${_pr_number} · ${FG_WARN}changes"
+      else
+        add_seg "${FG_ACCENT}PR ${FG_TEXT}#${_pr_number}"
+      fi
+    fi
+
+  fi
 fi
 
 (( ${#_sc[@]} == 0 )) && exit 0
