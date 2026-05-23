@@ -119,6 +119,7 @@ bl_cache_write() {
   if [[ -z "$output" ]]; then return; fi
   printf '%s' "$output" > "$cache_file"
   local stem; stem="${cache_file%_*.txt}"
+  # -L is required on macOS where /tmp is a symlink to /private/tmp.
   find -L /tmp -maxdepth 1 -name "${stem##*/}_*.txt" \
     ! -name "$(basename "$cache_file")" -print0 2>/dev/null | xargs -0 rm -f 2>/dev/null
 }

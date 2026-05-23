@@ -214,6 +214,9 @@ if [[ -n "$commit_author" && -n "$commit_time" ]]; then
 fi
 
 # ── GitHub ────────────────────────────────────────────────────────────────────
+# gh run list and gh pr view are live GitHub API calls. With refresh_minutes: 0
+# (the default) they fire on every status line refresh. Set refresh_minutes: 5
+# in your bottomline.json git bar config if you notice latency.
 if ! $is_detached && command -v gh > /dev/null 2>&1; then
   _remote_url=$(git -C "$PROJ" remote get-url origin 2>/dev/null)
   if [[ "$_remote_url" == *"github.com"* ]]; then
