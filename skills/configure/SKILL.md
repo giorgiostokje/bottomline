@@ -55,6 +55,36 @@ mkdir -p .claude \
 
 All edits in the steps below go into the chosen file.
 
+## Claude Plan vs API
+
+Before diving into configuration, ask:
+
+> "Are you using Claude via a subscription plan (claude.ai) or the Claude API?"
+
+**Subscription plan:**
+
+Ask: "Would you like to see Claude API cost approximations in the status line?"
+
+- **No** — disable the `cost` segment so it never appears:
+
+  ```bash
+  tmp=$(mktemp) \
+    && jq '.segments.disabled += ["cost"]' "$HOME/.claude/bottomline.json" > "$tmp" \
+    && mv "$tmp" "$HOME/.claude/bottomline.json"
+  ```
+
+- **Yes** — leave `cost` enabled (it is on by default); no action needed.
+
+**Claude API:**
+
+The `usage_5h` and `usage_7d` segments track subscription rate-limit consumption and are not meaningful for API users. Disable them:
+
+```bash
+tmp=$(mktemp) \
+  && jq '.segments.disabled += ["usage_5h", "usage_7d"]' "$HOME/.claude/bottomline.json" > "$tmp" \
+  && mv "$tmp" "$HOME/.claude/bottomline.json"
+```
+
 ## Starting Point
 
 Ask the user how they would like to proceed:
