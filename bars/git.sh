@@ -225,11 +225,11 @@ if ! $is_detached && command -v gh > /dev/null 2>&1; then
     _ci_conclusion=$(printf '%s' "$_ci_json" | jq -r '.[0].conclusion // empty' 2>/dev/null)
 
     _ci_key="${_ci_status}/${_ci_conclusion}"
-    if   [[ "$_ci_key" == "completed/success"   ]]; then add_seg "${FG_ACCENT}${IC_CI_PASS} ${FG_TEXT}passed"
-    elif [[ "$_ci_key" == "completed/failure"   ]]; then add_seg "${FG_WARN}${IC_CI_FAIL} ${FG_TEXT}failed"
-    elif [[ "$_ci_key" == "completed/timed_out" ]]; then add_seg "${FG_WARN}${IC_CI_FAIL} ${FG_TEXT}timed out"
-    elif [[ "$_ci_status" == "in_progress"      ]]; then add_seg "${FG_ACCENT}${IC_CI_RUN} ${FG_TEXT}running"
-    elif [[ "$_ci_status" == "queued" || "$_ci_status" == "waiting" ]]; then add_seg "${FG_ACCENT}${IC_CI_RUN} ${FG_TEXT}queued"
+    if   [[ "$_ci_key" == "completed/success"   ]]; then add_seg "${FG_ACCENT}CI ${FG_TEXT}passed ${IC_CI_PASS}"
+    elif [[ "$_ci_key" == "completed/failure"   ]]; then add_seg "${FG_ACCENT}CI ${FG_TEXT}failed ${FG_WARN}${IC_CI_FAIL}"
+    elif [[ "$_ci_key" == "completed/timed_out" ]]; then add_seg "${FG_ACCENT}CI ${FG_TEXT}timed out ${FG_WARN}${IC_CI_FAIL}"
+    elif [[ "$_ci_status" == "in_progress"      ]]; then add_seg "${FG_ACCENT}CI ${FG_TEXT}running ${IC_CI_RUN}"
+    elif [[ "$_ci_status" == "queued" || "$_ci_status" == "waiting" ]]; then add_seg "${FG_ACCENT}CI ${FG_TEXT}queued ${IC_CI_RUN}"
     fi
 
     # PR state — open PR for this branch
