@@ -18,10 +18,10 @@ teardown() { teardown_fake_proj; }
 
 @test "cache: bar invalidates when watched file content changes within TTL" {
   printf 'module example.com/app\n\ngo 1.22\n' > "$FAKE_PROJ/go.mod"
+  touch -t 202001010000 "$FAKE_PROJ/go.mod"
   bar_run go "$FAKE_PROJ" 60
   [[ "$BAR_OUTPUT" == *"1.22"* ]]
   # Overwrite go.mod — new content and new mtime
-  sleep 1.1  # Ensure mtime differs (macOS rounds to the second)
   printf 'module example.com/app\n\ngo 1.23\n' > "$FAKE_PROJ/go.mod"
   bar_run go "$FAKE_PROJ" 60
   [[ "$BAR_OUTPUT" == *"1.23"* ]]
