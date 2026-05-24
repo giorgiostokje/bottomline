@@ -1,6 +1,6 @@
 {
   "name": "bottomline",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "description": "An extensible status line for Claude Code, pre-packed with themes, statistics and skills.",
   "author": {
     "name": "Giorgio Stokje",
