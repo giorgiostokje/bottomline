@@ -157,6 +157,43 @@ _count_review=$(printf '%s' "$_issues" | jq \
 
 _count_assigned=$(printf '%s' "$_issues" | jq 'length')
 
+# Counts for opt-in segments
+_count_priority=$(printf '%s' "$_issues" | jq \
+  '[.[] | select(.priority == 1 or .priority == 2)] | length')
+
+_count_overdue=$(printf '%s' "$_issues" | jq \
+  --arg today "$_today" \
+  '[.[] | select(.dueDate != null and .dueDate < $today)] | length')
+
+_due_soon_days=$(printf '%s' "$_params" | jq -r '.due_soon_days // 3')
+_future=$(date -d "+${_due_soon_days} days" +%Y-%m-%d 2>/dev/null \
+          || date -v "+${_due_soon_days}d" +%Y-%m-%d 2>/dev/null)
+_count_due_soon=$(printf '%s' "$_issues" | jq \
+  --arg today "$_today" --arg future "$_future" \
+  '[.[] | select(.dueDate != null and .dueDate >= $today and .dueDate <= $future)] | length')
+
+_count_blocked=$(printf '%s' "$_issues" | jq \
+  '[.[] | select(
+    .relations.nodes | any(
+      .type == "blocked_by" and
+      .relatedIssue.state.type != "completed" and
+      .relatedIssue.state.type != "cancelled"
+    )
+  )] | length')
+
+_cycle_days_left=0
+if [[ -n "$_cycle_id" ]]; then
+  _cycle_ends=$(printf '%s' "$_response" \
+    | jq -r '.data.teams.nodes[0].activeCycle.endsAt // empty')
+  if [[ -n "$_cycle_ends" ]]; then
+    _end_secs=$(date -d "$_cycle_ends" +%s 2>/dev/null \
+                || date -j -f "%Y-%m-%dT%H:%M:%S.000Z" "${_cycle_ends%%.*}.000Z" +%s 2>/dev/null)
+    _now_secs=$(date +%s)
+    _cycle_days_left=$(( (_end_secs - _now_secs) / 86400 ))
+    (( _cycle_days_left < 0 )) && _cycle_days_left=0
+  fi
+fi
+
 # ── Segment list ──────────────────────────────────────────────────────────────
 _default_segs='["cycle","in_progress","review","assigned"]'
 _seg_list="${BOTTOMLINE_BAR_SEGMENTS:-$_default_segs}"
@@ -180,6 +217,32 @@ while IFS= read -r _seg_name; do
       (( _count_assigned > 0 )) && \
         add_seg "${FG_ACCENT}${_IC_ASSIGNED}${_IC_ASSIGNED:+ }${FG_TEXT}${_count_assigned}"
       ;;
+    priority)
+      (( _count_priority > 0 )) && \
+        add_seg "${FG_WARN}${_IC_PRIORITY}${_IC_PRIORITY:+ }${FG_TEXT}${_count_priority}"
+      ;;
+    overdue)
+      (( _count_overdue > 0 )) && \
+        add_seg "${FG_CRIT}${_IC_OVERDUE}${_IC_OVERDUE:+ }${FG_TEXT}${_count_overdue}"
+      ;;
+    due_soon)
+      (( _count_due_soon > 0 )) && \
+        add_seg "${FG_WARN}${_IC_DUE}${_IC_DUE:+ }${FG_TEXT}${_count_due_soon}"
+      ;;
+    cycle_days)
+      [[ -n "$_cycle_id" ]] && \
+        add_seg "${FG_ACCENT}${_IC_DAYS}${_IC_DAYS:+ }${FG_TEXT}${_cycle_days_left}d left"
+      ;;
+    blocked)
+      (( _count_blocked > 0 )) && \
+        add_seg "${FG_WARN}${_IC_BLOCKED}${_IC_BLOCKED:+ }${FG_TEXT}${_count_blocked}"
+      ;;
+    mentions)
+      (( _notif_count > 0 )) && \
+        add_seg "${FG_ACCENT}${_IC_MENTIONS}${_IC_MENTIONS:+ }${FG_TEXT}${_notif_count}"
+      ;;
+    *)
+      ;; # unknown segment: silently skip
   esac
 done < <(printf '%s' "$_seg_list" | jq -r '.[]')
 

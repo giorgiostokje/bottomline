@@ -157,3 +157,59 @@ SCRIPT
   bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}'
   [[ "$BAR_OUTPUT" == *"offline"* ]]
 }
+
+# ── Opt-in segments ────────────────────────────────────────────────────────────
+
+@test "linear: priority segment shows count of urgent/high issues (4)" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' \
+    '["priority"]'
+  [[ "$BAR_OUTPUT" == *" 4 "* ]] || [[ "$BAR_OUTPUT" == *" 4|"* ]]
+}
+
+@test "linear: overdue segment shows count of past-due issues (1)" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' \
+    '["overdue"]'
+  [[ "$BAR_OUTPUT" == *" 1 "* ]] || [[ "$BAR_OUTPUT" == *" 1|"* ]]
+}
+
+@test "linear: due_soon segment shows nothing when no issues due soon" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' \
+    '["due_soon"]'
+  # Fixture has one issue with dueDate "2020-01-01" (overdue, not due soon)
+  # No issue is due in the next 3 days — output should be empty
+  [[ -z "$BAR_OUTPUT" ]]
+}
+
+@test "linear: cycle_days segment shows days remaining in cycle" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' \
+    '["cycle_days"]'
+  # Fixture endsAt is 2030-12-31 — far future, many days remaining
+  [[ "$BAR_OUTPUT" == *"left"* ]]
+}
+
+@test "linear: blocked segment shows count of blocked issues (1)" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' \
+    '["blocked"]'
+  [[ "$BAR_OUTPUT" == *" 1 "* ]] || [[ "$BAR_OUTPUT" == *" 1|"* ]]
+}
+
+@test "linear: mentions segment shows unread notification count (5)" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' \
+    '["mentions"]'
+  [[ "$BAR_OUTPUT" == *" 5 "* ]] || [[ "$BAR_OUTPUT" == *" 5|"* ]]
+}
+
+@test "linear: unknown segment names in BOTTOMLINE_BAR_SEGMENTS are silently skipped" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' \
+    '["cycle","unknown_segment_xyz","assigned"]'
+  [[ "$BAR_OUTPUT" == *"Sprint 42"* ]]
+  [[ "$BAR_OUTPUT" == *"11"* ]]
+  [[ "$BAR_OUTPUT" != *"unknown_segment_xyz"* ]]
+}
