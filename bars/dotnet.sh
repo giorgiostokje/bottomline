@@ -10,7 +10,8 @@ source "$BOTTOMLINE_LIB/helpers.sh"
 
 _bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
 if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "dotnet" "$_bl_ttl" "$PROJ")
+  _bl_cache=$(bl_cache_path "dotnet" "$_bl_ttl" "$PROJ" \
+    "$PROJ/global.json" "$PROJ/Directory.Build.props" "$PROJ/Directory.Build.targets")
   [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
 fi
 

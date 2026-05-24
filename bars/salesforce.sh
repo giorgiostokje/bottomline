@@ -10,7 +10,8 @@ source "$BOTTOMLINE_LIB/helpers.sh"
 
 _bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
 if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "salesforce" "$_bl_ttl" "$PROJ")
+  _bl_cache=$(bl_cache_path "salesforce" "$_bl_ttl" "$PROJ" \
+    "$PROJ/sfdx-project.json" "$PROJ/.sf/config.json")
   [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
 fi
 

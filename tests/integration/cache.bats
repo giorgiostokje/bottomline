@@ -36,11 +36,11 @@ teardown() {
 
 # ── Cache hit ─────────────────────────────────────────────────────────────────
 
-@test "cache hit: go bar serves cached output after signal file is removed" {
+@test "cache hit: go bar invalidates cache when watched file is removed" {
   bar_run go "$FAKE_PROJ" 60   # populates cache
-  rm "$FAKE_PROJ/go.mod"       # without cache, next run would exit silently
-  bar_run go "$FAKE_PROJ" 60   # must serve from cache
-  [[ "$BAR_OUTPUT" == *"Go"* ]]
+  rm "$FAKE_PROJ/go.mod"       # remove the watched file
+  bar_run go "$FAKE_PROJ" 60   # cache is invalidated due to mtime fingerprint change
+  [[ "$BAR_OUTPUT" == "" ]]    # bar exits silently when signal file is gone
 }
 
 @test "cache hit: go bar output is identical on cache hit" {
