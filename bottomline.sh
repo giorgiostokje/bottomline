@@ -330,6 +330,27 @@ resolve_bar_color() {
   esac
 }
 
+# Resolve a single params value for a script bar:
+#   $VAR_NAME     → expand environment variable (empty if unset)
+#   file:~/path   → read from $HOME/path (tilde expanded, absolute only)
+#   file:/abs     → read from /abs path
+#   anything else → return as literal
+_bl_resolve_param_val() {
+  local v="$1"
+  if [[ "$v" == \$* ]]; then
+    local _var_name="${v:1}"
+    printf '%s' "${!_var_name}"
+  elif [[ "$v" == "file:~/"* ]]; then
+    local _fpath="${HOME}/${v:7}"
+    [[ -f "$_fpath" ]] && tr -d '\n' < "$_fpath" || printf ''
+  elif [[ "$v" == "file:/"* ]]; then
+    local _fpath="${v:5}"
+    [[ -f "$_fpath" ]] && tr -d '\n' < "$_fpath" || printf ''
+  else
+    printf '%s' "$v"
+  fi
+}
+
 # ── Segment engine ────────────────────────────────────────────────────────────
 # seg stores content only. flush expands the gradient to exactly N stops at
 # render time, so the first and last keyframe colors always land on the first
@@ -712,6 +733,37 @@ if (( bar_count > 0 )); then
         else
           unset BOTTOMLINE_BAR_REFRESH_MINUTES
         fi
+        # ── params resolution ──────────────────────────────────────────────
+        _params_raw=$(printf '%s' "$bar" | jq -c '.params // empty' 2>/dev/null)
+        if [[ -n "$_params_raw" && "$_params_raw" != 'null' ]]; then
+          _params_resolved='{}'
+          while IFS= read -r _pk; do
+            _pt=$(printf '%s' "$_params_raw" | jq -r --arg k "$_pk" '.[$k] | type')
+            if [[ "$_pt" == "string" ]]; then
+              _pv=$(printf '%s' "$_params_raw" | jq -r --arg k "$_pk" '.[$k]')
+              _rv=$(_bl_resolve_param_val "$_pv")
+              _params_resolved=$(printf '%s' "$_params_resolved" \
+                | jq -c --arg k "$_pk" --arg v "$_rv" '.[$k] = $v')
+            else
+              _rv=$(printf '%s' "$_params_raw" | jq -c --arg k "$_pk" '.[$k]')
+              _params_resolved=$(printf '%s' "$_params_resolved" \
+                | jq -c --arg k "$_pk" --argjson v "$_rv" '.[$k] = $v')
+            fi
+          done < <(printf '%s' "$_params_raw" | jq -r 'keys[]')
+          export BOTTOMLINE_BAR_PARAMS="$_params_resolved"
+        else
+          unset BOTTOMLINE_BAR_PARAMS
+        fi
+
+        # ── segments export ────────────────────────────────────────────────
+        _bar_segs=$(printf '%s' "$bar" | jq -c '.segments // empty' 2>/dev/null)
+        if [[ -n "$_bar_segs" \
+              && "$(printf '%s' "$_bar_segs" | jq -r 'type' 2>/dev/null)" == "array" ]]; then
+          export BOTTOMLINE_BAR_SEGMENTS="$_bar_segs"
+        else
+          unset BOTTOMLINE_BAR_SEGMENTS
+        fi
+
         bash "$script_path"
       )
       continue
