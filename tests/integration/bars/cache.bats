@@ -41,12 +41,14 @@ teardown() { teardown_fake_proj; }
   # First run: renders and writes cache
   bar_run go "$FAKE_PROJ" 60
   [[ "$BAR_OUTPUT" == *"1.22"* ]]
-  # Locate the cache file using the same projhash bl_cache_path computes
-  local projhash
-  projhash=$(printf '%s' "$FAKE_PROJ" | (md5sum 2>/dev/null || md5) | cut -c1-8)
+  # Compute the exact cache path using the same helper the bar uses.
+  # Sourcing helpers.sh here guarantees we use identical stat/md5 logic
+  # rather than an approximation that can diverge on Linux.
+  # shellcheck source=lib/helpers.sh
+  source "$BOTTOMLINE_ROOT/lib/helpers.sh"
   local cache_file
-  cache_file=$(find -L /tmp -maxdepth 1 -name "bl_go_${projhash}_*.txt" 2>/dev/null | head -1)
-  [[ -n "$cache_file" ]]
+  cache_file=$(bl_cache_path "go" 60 "$FAKE_PROJ" "$FAKE_PROJ/go.mod" "$FAKE_PROJ/go.work")
+  [[ -n "$cache_file" && -f "$cache_file" ]]
   printf 'CACHED_SENTINEL' > "$cache_file"
   # Second run: should serve from cache
   bar_run go "$FAKE_PROJ" 60
