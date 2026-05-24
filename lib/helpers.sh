@@ -124,6 +124,21 @@ bl_cache_write() {
     ! -name "$(basename "$cache_file")" -print0 2>/dev/null | xargs -0 rm -f 2>/dev/null
 }
 
+# Compute an 8-char hex fingerprint from the mtimes of the given files.
+# Missing or non-file paths contribute "0" so their creation triggers a miss.
+# Usage: bl_mtime_fingerprint [file1 file2 ...]
+bl_mtime_fingerprint() {
+  local mtimes=''
+  for f in "$@"; do
+    if [[ -f "$f" ]]; then
+      mtimes+=$(stat -f '%m' "$f" 2>/dev/null || stat -c '%Y' "$f" 2>/dev/null || printf '0')
+    else
+      mtimes+='0'
+    fi
+  done
+  printf '%s' "$mtimes" | (md5sum 2>/dev/null || md5) | cut -c1-8
+}
+
 # ── Convenience variables from BOTTOMLINE_* env vars ─────────────────────────
 R="$BOTTOMLINE_RESET"
 B="$BOTTOMLINE_BOLD"

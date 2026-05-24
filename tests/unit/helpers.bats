@@ -56,3 +56,58 @@ setup() {
   [ ! -f "$stale" ]
   rm -f "$cache_file"
 }
+
+# ── bl_mtime_fingerprint ──────────────────────────────────────────────────────
+
+@test "bl_mtime_fingerprint: returns 8-char hex string with no args" {
+  result=$(bl_mtime_fingerprint)
+  [[ "$result" =~ ^[0-9a-f]{8}$ ]]
+}
+
+@test "bl_mtime_fingerprint: stable across calls with no files" {
+  r1=$(bl_mtime_fingerprint)
+  r2=$(bl_mtime_fingerprint)
+  [ "$r1" = "$r2" ]
+}
+
+@test "bl_mtime_fingerprint: stable when watched file is unchanged" {
+  local f; f=$(mktemp)
+  r1=$(bl_mtime_fingerprint "$f")
+  r2=$(bl_mtime_fingerprint "$f")
+  [ "$r1" = "$r2" ]
+  rm -f "$f"
+}
+
+@test "bl_mtime_fingerprint: changes when file mtime changes" {
+  local f; f=$(mktemp)
+  touch -t 202001010000 "$f"
+  r1=$(bl_mtime_fingerprint "$f")
+  touch "$f"
+  r2=$(bl_mtime_fingerprint "$f")
+  [ "$r1" != "$r2" ]
+  rm -f "$f"
+}
+
+@test "bl_mtime_fingerprint: changes when file is created" {
+  local f; f=$(mktemp); rm -f "$f"
+  r1=$(bl_mtime_fingerprint "$f")
+  touch "$f"
+  r2=$(bl_mtime_fingerprint "$f")
+  [ "$r1" != "$r2" ]
+  rm -f "$f"
+}
+
+@test "bl_mtime_fingerprint: changes when file is deleted" {
+  local f; f=$(mktemp)
+  r1=$(bl_mtime_fingerprint "$f")
+  rm -f "$f"
+  r2=$(bl_mtime_fingerprint "$f")
+  [ "$r1" != "$r2" ]
+}
+
+@test "bl_mtime_fingerprint: two missing files produce same fingerprint as one missing file of same name" {
+  r1=$(bl_mtime_fingerprint "/nonexistent/a.txt")
+  r2=$(bl_mtime_fingerprint "/nonexistent/b.txt")
+  # Both absent → both contribute "0" → same fingerprint
+  [ "$r1" = "$r2" ]
+}
