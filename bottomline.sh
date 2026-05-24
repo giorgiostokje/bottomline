@@ -614,7 +614,7 @@ if [[ "$_auto_bars_enabled" != "false" && -n "$cdir" ]]; then
     _matched=false
     while IFS= read -r _sig; do
       [[ -z "$_sig" ]] && continue
-      if [[ -e "$cdir/$_sig" ]]; then _matched=true; break; fi
+      for _f in "$cdir"/$_sig; do [[ -e "$_f" ]] && { _matched=true; break 2; }; done
     done < <(printf '%s' "$_auto_bars_cfg" | jq -r ".[$_ei].signals[]? // empty" 2>/dev/null)
 
     if "$_matched"; then

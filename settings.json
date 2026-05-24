@@ -30,6 +30,7 @@
     "enabled": false,
     "refresh_minutes": 5,
     "scripts": [
+      { "script": "c-cpp", "signals": ["CMakeLists.txt", "meson.build", "configure.ac"] },
       { "script": "rust", "signals": ["Cargo.toml"] },
       { "script": "go", "signals": ["go.mod"] },
       { "script": "shell", "signals": [".shellcheckrc"] },
@@ -43,12 +44,14 @@
         "script": "java",
         "signals": ["pom.xml", "build.gradle", "build.gradle.kts"]
       },
+      { "script": "kotlin", "signals": ["build.gradle.kts"] },
       {
         "script": "python",
         "signals": ["pyproject.toml", "requirements.txt", "Pipfile", "setup.py"]
       },
       { "script": "ruby", "signals": ["Gemfile"] },
       { "script": "javascript", "signals": ["package.json"] },
+      { "script": "lua", "signals": [".luarc.json", ".luarc.jsonc", ".lua-version", "*.rockspec"] },
       { "script": "dart", "signals": ["pubspec.yaml"] },
       { "script": "php", "signals": ["composer.json"] },
       {

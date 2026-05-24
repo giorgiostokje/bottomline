@@ -10,8 +10,11 @@ source "$BOTTOMLINE_LIB/helpers.sh"
 
 _bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
 if [[ "$_bl_ttl" -gt 0 ]]; then
+  _bl_rockspec=''
+  for _f in "$PROJ"/*.rockspec; do [[ -f "$_f" ]] && { _bl_rockspec=$_f; break; }; done
   _bl_cache=$(bl_cache_path "lua" "$_bl_ttl" "$PROJ" \
-    "$PROJ/.luarc.json" "$PROJ/.luarc.jsonc" "$PROJ/.lua-version")
+    "$PROJ/.luarc.json" "$PROJ/.luarc.jsonc" "$PROJ/.lua-version" \
+    ${_bl_rockspec:+"$_bl_rockspec"})
   [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
 fi
 

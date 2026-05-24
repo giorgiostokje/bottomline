@@ -179,14 +179,17 @@
   <a href="#detection">Detection</a>
   <a href="#env-vars">Env vars</a>
   <a href="#bars">Bars</a>
+  <a href="#bar-c-cpp">C/C++</a>
   <a href="#bar-go">Go</a>
   <a href="#bar-rust">Rust</a>
   <a href="#bar-python">Python</a>
   <a href="#bar-javascript">JS</a>
+  <a href="#bar-lua">Lua</a>
   <a href="#bar-ruby">Ruby</a>
   <a href="#bar-php">PHP</a>
   <a href="#bar-swift">Swift</a>
   <a href="#bar-java">Java</a>
+  <a href="#bar-kotlin">Kotlin</a>
   <a href="#bar-dotnet">.NET</a>
   <a href="#bar-elixir">Elixir</a>
   <a href="#bar-dart">Dart</a>
@@ -607,6 +610,78 @@ flush "$_bar_gradient"</code></pre>
   <code>refresh_minutes</code> on any explicit <code>bars[]</code> entry.
 </p>
 
+<!-- ───────────────────────────────────────────────────────── C/C++ -->
+<div class="bar-card" id="bar-c-cpp">
+<h3>C/C++ <code>bars/c-cpp.sh</code></h3>
+<p>Renders for projects with <code>CMakeLists.txt</code>, <code>meson.build</code>, or <code>configure.ac</code>. Language (C, C++, or C/C++) is inferred from <code>CMakeLists.txt</code> project declarations or source file extensions.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#dce8f0"></span><span>text #dce8f0</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#4a8db7"></span><span>accent #4a8db7</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#0a1520"></span><span>bg start #0a1520</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#0f2535"></span><span>bg end #0f2535</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>C / C++ / C/C++ [standard]</td><td><code>CMakeLists.txt</code> <code>project()</code> languages + <code>CMAKE_CXX_STANDARD</code>; falls back to source file extensions.</td></tr>
+    <tr><td>2 Build system</td><td>CMake vX / Meson / Autotools</td><td>Presence of <code>CMakeLists.txt</code>, <code>meson.build</code>, <code>configure.ac</code>. CMake takes precedence. Version from <code>cmake_minimum_required</code>.</td></tr>
+    <tr><td>4 Add-ons</td><td>Conan / vcpkg</td><td><code>conanfile.txt</code>, <code>conanfile.py</code>, or <code>vcpkg.json</code>. Both shown when present.</td></tr>
+    <tr><td>5 Testing</td><td>GoogleTest / Catch2 / doctest / Boost.Test / CTest</td><td>Grep <code>CMakeLists.txt</code> or <code>meson.build</code>. CTest shown only as fallback when no higher-level framework found.</td></tr>
+    <tr><td>6 Tooling</td><td>clang-tidy / cppcheck / clang-format</td><td><code>.clang-tidy</code>, <code>find_program(CLANG_TIDY</code> in CMake, <code>cppcheck</code> reference in CMake, <code>.clang-format</code> file.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-service</span><span>CMakeLists.txt detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#0a1520","#0f2535"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#4a8db7">&#xF121;</span>
+          <span style="color:#dce8f0">&nbsp;C++</span>
+          <span style="color:#4a8db7">&nbsp;C++20</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#4a8db7">&#xF013;</span>
+          <span style="color:#dce8f0">&nbsp;CMake</span>
+          <span style="color:#4a8db7">&nbsp;v3.28</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#4a8db7">&#xF040;</span>
+          <span style="color:#dce8f0">&nbsp;GoogleTest</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#4a8db7">&#xF00C;</span>
+          <span style="color:#dce8f0">&nbsp;clang-tidy</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#4a8db7">&#xF00C;</span>
+          <span style="color:#dce8f0">&nbsp;clang-format</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
 <!-- ───────────────────────────────────────────────────────── GO -->
 <div class="bar-card" id="bar-go">
 <h3>Go <code>bars/go.sh</code></h3>
@@ -920,6 +995,78 @@ flush "$_bar_gradient"</code></pre>
 </div>
 </div>
 
+<!-- ───────────────────────────────────────────────────────── LUA -->
+<div class="bar-card" id="bar-lua">
+<h3>Lua <code>bars/lua.sh</code></h3>
+<p>Renders for projects with <code>.luarc.json</code>, <code>.luarc.jsonc</code>, <code>.lua-version</code>, or a <code>*.rockspec</code> file at the root. Detects LÖVE, OpenResty, and Lapis frameworks.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#c8d8e8"></span><span>text #c8d8e8</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#5b9bd5"></span><span>accent #5b9bd5</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#000820"></span><span>bg start #000820</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#001840"></span><span>bg end #001840</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>Lua vX.Y</td><td><code>.lua-version</code> file → <code>runtime.version</code> in <code>.luarc.json</code> → <code>lua</code> binary.</td></tr>
+    <tr><td>2 Package manager</td><td>LuaRocks vX.Y</td><td><code>luarocks</code> binary or <code>*.rockspec</code> at root. Version shown when binary available.</td></tr>
+    <tr><td>3 Framework</td><td>LÖVE / OpenResty / Lapis</td><td><code>conf.lua</code> → <code>nginx.conf</code> with Lua directives → <code>config.moon</code>/<code>config.lua</code> with <code>lapis</code>. First match wins.</td></tr>
+    <tr><td>5 Testing</td><td>Busted / LuaUnit</td><td><code>busted</code> binary or rockspec dep. Busted suppresses LuaUnit.</td></tr>
+    <tr><td>6 Tooling</td><td>Luacheck / StyLua</td><td>Binary on PATH, <code>.luacheckrc</code>, or rockspec dep (Luacheck); binary or <code>.stylua.toml</code> (StyLua).</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-lua-app</span><span>.luarc.json detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#000820","#001840"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#5b9bd5">&#xE72E;</span>
+          <span style="color:#c8d8e8">&nbsp;Lua&nbsp;</span>
+          <span style="color:#5b9bd5">v5.4</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#5b9bd5">&#xF0BC;</span>
+          <span style="color:#c8d8e8">&nbsp;LuaRocks</span>
+          <span style="color:#5b9bd5">&nbsp;v3.9</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#5b9bd5">&#xF040;</span>
+          <span style="color:#c8d8e8">&nbsp;Busted</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#5b9bd5">&#xF00C;</span>
+          <span style="color:#c8d8e8">&nbsp;Luacheck</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#5b9bd5">&#xF00C;</span>
+          <span style="color:#c8d8e8">&nbsp;StyLua</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
 <!-- ───────────────────────────────────────────────────────── RUBY -->
 <div class="bar-card" id="bar-ruby">
 <h3>Ruby <code>bars/ruby.sh</code></h3>
@@ -1018,7 +1165,7 @@ flush "$_bar_gradient"</code></pre>
   <tbody>
     <tr><td>1 Runtime</td><td>PHP X.Y</td><td><code>php -r 'echo PHP_MAJOR_VERSION…'</code> binary call.</td></tr>
     <tr><td>3 Framework</td><td>Laravel vX / Lumen vX / Symfony vX / CakePHP vX / Slim vX</td><td>composer.lock package names.</td></tr>
-    <tr><td>4 Add-ons</td><td>Octane / Boost / Reverb / Livewire / Flux [Pro] / Inertia [Vue/React/Svelte] / Filament</td><td>composer.lock. Flux Pro shows a trophy icon. Inertia detects frontend adapter from package.json. Boost shows a warning when <code>boost.json</code> exists but <code>claude_code</code> agent is absent.</td></tr>
+    <tr><td>4 Add-ons</td><td>Octane / Boost / Reverb / Livewire / Flux [Pro] / Inertia / Filament</td><td>composer.lock. Flux Pro shows a trophy icon. Boost shows a warning when <code>boost.json</code> exists but <code>claude_code</code> agent is absent.</td></tr>
     <tr><td>5 Testing</td><td>Pest vX / PHPUnit vX</td><td>composer.lock. Pest suppresses PHPUnit.</td></tr>
     <tr><td>6 Tooling</td><td>Larastan vX / PHPStan vX</td><td>composer.lock or <code>phpstan.{neon,dist.neon}</code>. Larastan (<code>nunomaduro/larastan</code>) suppresses PHPStan when both are present.</td></tr>
     <tr><td>6 Tooling</td><td>Pint vX / PHP CS Fixer vX</td><td>composer.lock or <code>.php-cs-fixer.{php,dist.php}</code>. Pint (<code>laravel/pint</code>) suppresses PHP CS Fixer when both are present.</td></tr>
@@ -1233,6 +1380,79 @@ flush "$_bar_gradient"</code></pre>
         <span class="seg-inner">
           <span style="color:#ed8b00">&#xF085;</span>
           <span style="color:#f5e4c0">&nbsp;Lombok</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── KOTLIN -->
+<div class="bar-card" id="bar-kotlin">
+<h3>Kotlin <code>bars/kotlin.sh</code></h3>
+<p>Renders for projects with a <code>build.gradle.kts</code> that contains a Kotlin plugin declaration (<code>kotlin(</code> or <code>org.jetbrains.kotlin</code>). Pure Java projects using Kotlin DSL for Gradle config are not triggered.</p>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#e8dff5"></span><span>text #e8dff5</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#7f52ff"></span><span>accent #7f52ff</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#1a0a3d"></span><span>bg start #1a0a3d</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#2d1b6e"></span><span>bg end #2d1b6e</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
+  <tbody>
+    <tr><td>1 Runtime</td><td>Kotlin vX.Y</td><td>Grep <code>build.gradle.kts</code> for <code>kotlin("jvm") version</code>, <code>org.jetbrains.kotlin.jvm</code> version, or <code>kotlin_version</code> variable.</td></tr>
+    <tr><td>2 Build tool</td><td>Gradle vX.Y</td><td>Always shown (bar requires <code>build.gradle.kts</code>). Version from <code>gradle/wrapper/gradle-wrapper.properties</code>.</td></tr>
+    <tr><td>3 Framework</td><td>Ktor vX / Spring Boot vX</td><td>Grep <code>build.gradle.kts</code> for <code>io.ktor</code> or <code>org.springframework.boot</code>. Ktor takes precedence.</td></tr>
+    <tr><td>5 Testing</td><td>Kotest / JUnit 5 / MockK</td><td>Grep <code>build.gradle.kts</code>. Kotest suppresses JUnit 5. MockK shown alongside (different purpose).</td></tr>
+    <tr><td>6 Tooling</td><td>Detekt / ktlint</td><td>Grep <code>build.gradle.kts</code> for plugin references, or <code>.detekt.yml</code> / <code>detekt.yml</code> config file.</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>my-kotlin-app</span><span>build.gradle.kts + kotlin("jvm") detected</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#1a0a3d","#2d1b6e"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#7f52ff">&#xE732;</span>
+          <span style="color:#e8dff5">&nbsp;Kotlin&nbsp;</span>
+          <span style="color:#7f52ff">v1.9.22</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#7f52ff">&#xF013;</span>
+          <span style="color:#e8dff5">&nbsp;Gradle&nbsp;</span>
+          <span style="color:#7f52ff">v8.5</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#7f52ff">&#xF0EC;</span>
+          <span style="color:#e8dff5">&nbsp;Ktor&nbsp;</span>
+          <span style="color:#7f52ff">v2.3.7</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#7f52ff">&#xF040;</span>
+          <span style="color:#e8dff5">&nbsp;Kotest</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#7f52ff">&#xF00C;</span>
+          <span style="color:#e8dff5">&nbsp;Detekt</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
