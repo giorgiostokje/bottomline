@@ -10,7 +10,9 @@ source "$BOTTOMLINE_LIB/helpers.sh"
 
 _bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
 if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "python" "$_bl_ttl" "$PROJ")
+  _bl_cache=$(bl_cache_path "python" "$_bl_ttl" "$PROJ" \
+    "$PROJ/pyproject.toml" "$PROJ/requirements.txt" \
+    "$PROJ/Pipfile" "$PROJ/Pipfile.lock" "$PROJ/poetry.lock")
   [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
 fi
 

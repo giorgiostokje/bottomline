@@ -10,7 +10,10 @@ source "$BOTTOMLINE_LIB/helpers.sh"
 
 _bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
 if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "javascript" "$_bl_ttl" "$PROJ")
+  _bl_cache=$(bl_cache_path "javascript" "$_bl_ttl" "$PROJ" \
+    "$PROJ/package.json" "$PROJ/package-lock.json" \
+    "$PROJ/pnpm-lock.yaml" "$PROJ/yarn.lock" \
+    "$PROJ/bun.lockb" "$PROJ/bun.lock")
   [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
 fi
 

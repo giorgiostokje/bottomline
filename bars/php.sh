@@ -10,7 +10,7 @@ source "$BOTTOMLINE_LIB/helpers.sh"
 
 _bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
 if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "php" "$_bl_ttl" "$PROJ")
+  _bl_cache=$(bl_cache_path "php" "$_bl_ttl" "$PROJ" "$PROJ/composer.json" "$PROJ/composer.lock")
   [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
 fi
 
@@ -129,18 +129,6 @@ if [[ -f "$lock" ]]; then
   done < <(jq -r '(.packages + (.["packages-dev"] // [])) | .[] | [.name, .version] | @tsv' "$lock" 2>/dev/null)
 fi
 
-# Detect Inertia frontend framework from package.json.
-inertia_framework=''
-if [[ -n "$inertia_version" && -f "$PROJ/package.json" ]]; then
-  inertia_framework=$(jq -r '
-    ((.dependencies // {}) + (.devDependencies // {})) as $d |
-    if   ($d | has("@inertiajs/vue3")) or ($d | has("@inertiajs/vue2")) then "Vue"
-    elif  $d | has("@inertiajs/react")   then "React"
-    elif  $d | has("@inertiajs/svelte")  then "Svelte"
-    else ""
-    end
-  ' "$PROJ/package.json" 2>/dev/null)
-fi
 
 # Check boost.json for agents.claude_code.
 # Warning is shown only when boost.json exists but claude_code is absent.
@@ -211,9 +199,7 @@ fi
 
 # ── Inertia ───────────────────────────────────────────────────────────────────
 if [[ -n "$inertia_version" ]]; then
-  local_framework=''
-  [[ -n "$inertia_framework" ]] && local_framework=" ${FG_ACCENT}[${FG_TEXT}${inertia_framework}${FG_ACCENT}]"
-  add_seg "${FG_ACCENT}${IC_INERTIA} ${FG_TEXT}Inertia ${FG_ACCENT}v${inertia_version}${local_framework}"
+  add_seg "${FG_ACCENT}${IC_INERTIA} ${FG_TEXT}Inertia ${FG_ACCENT}v${inertia_version}"
 fi
 
 # ── Admin panels ──────────────────────────────────────────────────────────────
