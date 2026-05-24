@@ -97,7 +97,9 @@ inertia_version=''
 filament_version=''
 pest_version=''
 phpunit_version=''
+larastan_version=''
 phpstan_version=''
+pint_version=''
 csfixer_version=''
 
 if [[ -f "$lock" ]]; then
@@ -119,7 +121,9 @@ if [[ -f "$lock" ]]; then
       filament/filament)         filament_version="${version#v}" ;;
       pestphp/pest)              pest_version="${version#v}"     ;;
       phpunit/phpunit)           phpunit_version="${version#v}"  ;;
+      nunomaduro/larastan)       larastan_version="${version#v}" ;;
       phpstan/phpstan)           phpstan_version="${version#v}"  ;;
+      laravel/pint)              pint_version="${version#v}"     ;;
       friendsofphp/php-cs-fixer) csfixer_version="${version#v}"  ;;
     esac
   done < <(jq -r '(.packages + (.["packages-dev"] // [])) | .[] | [.name, .version] | @tsv' "$lock" 2>/dev/null)
@@ -224,14 +228,20 @@ elif [[ -n "$phpunit_version" ]]; then
 fi
 
 # ── Static analysis (slot 6) ──────────────────────────────────────────────
-if [[ -n "$phpstan_version" ]]; then
+# Larastan wraps PHPStan for Laravel — show Larastan only when present.
+if [[ -n "$larastan_version" ]]; then
+  add_seg "${FG_ACCENT}${IC_PHPSTAN} ${FG_TEXT}Larastan ${FG_ACCENT}v${larastan_version}"
+elif [[ -n "$phpstan_version" ]]; then
   if [[ "$phpstan_version" == 'present' ]]; then
     add_seg "${FG_ACCENT}${IC_PHPSTAN} ${FG_TEXT}PHPStan"
   else
     add_seg "${FG_ACCENT}${IC_PHPSTAN} ${FG_TEXT}PHPStan ${FG_ACCENT}v${phpstan_version}"
   fi
 fi
-if [[ -n "$csfixer_version" ]]; then
+# Pint wraps PHP-CS-Fixer for Laravel — show Pint only when present.
+if [[ -n "$pint_version" ]]; then
+  add_seg "${FG_ACCENT}${IC_CSFIXER} ${FG_TEXT}Pint ${FG_ACCENT}v${pint_version}"
+elif [[ -n "$csfixer_version" ]]; then
   if [[ "$csfixer_version" == 'present' ]]; then
     add_seg "${FG_ACCENT}${IC_CSFIXER} ${FG_TEXT}PHP CS Fixer"
   else

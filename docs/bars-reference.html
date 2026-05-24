@@ -1020,8 +1020,8 @@ flush "$_bar_gradient"</code></pre>
     <tr><td>3 Framework</td><td>Laravel vX / Lumen vX / Symfony vX / CakePHP vX / Slim vX</td><td>composer.lock package names.</td></tr>
     <tr><td>4 Add-ons</td><td>Octane / Boost / Reverb / Livewire / Flux [Pro] / Inertia [Vue/React/Svelte] / Filament</td><td>composer.lock. Flux Pro shows a trophy icon. Inertia detects frontend adapter from package.json. Boost shows a warning when <code>boost.json</code> exists but <code>claude_code</code> agent is absent.</td></tr>
     <tr><td>5 Testing</td><td>Pest vX / PHPUnit vX</td><td>composer.lock. Pest suppresses PHPUnit.</td></tr>
-    <tr><td>6 Tooling</td><td>PHPStan vX</td><td>composer.lock or <code>phpstan.{neon,dist.neon}</code>.</td></tr>
-    <tr><td>6 Tooling</td><td>PHP CS Fixer vX</td><td>composer.lock or <code>.php-cs-fixer.{php,dist.php}</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>Larastan vX / PHPStan vX</td><td>composer.lock or <code>phpstan.{neon,dist.neon}</code>. Larastan (<code>nunomaduro/larastan</code>) suppresses PHPStan when both are present.</td></tr>
+    <tr><td>6 Tooling</td><td>Pint vX / PHP CS Fixer vX</td><td>composer.lock or <code>.php-cs-fixer.{php,dist.php}</code>. Pint (<code>laravel/pint</code>) suppresses PHP CS Fixer when both are present.</td></tr>
     <tr><td>6 Tooling</td><td>Herd URL (site.test)</td><td><code>herd</code> binary on PATH → derives URL from project dirname.</td></tr>
   </tbody>
 </table>
@@ -1068,16 +1068,16 @@ flush "$_bar_gradient"</code></pre>
       <div class="seg">
         <span class="seg-inner">
           <span style="color:#9898e0">&#xF00C;</span>
-          <span style="color:#ddd6f3">&nbsp;PHPStan&nbsp;</span>
-          <span style="color:#9898e0">v1.11</span>
+          <span style="color:#ddd6f3">&nbsp;Larastan&nbsp;</span>
+          <span style="color:#9898e0">v2.9</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
       <div class="seg">
         <span class="seg-inner">
           <span style="color:#9898e0">&#xF031;</span>
-          <span style="color:#ddd6f3">&nbsp;PHP CS Fixer&nbsp;</span>
-          <span style="color:#9898e0">v3.52</span>
+          <span style="color:#ddd6f3">&nbsp;Pint&nbsp;</span>
+          <span style="color:#9898e0">v1.18</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>

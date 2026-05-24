@@ -127,6 +127,13 @@ Every language/ecosystem bar in `bars/` follows this canonical 6-slot order. Slo
 | Go     | go test (stdlib)    | Ginkgo               | Ginkgo present → show Ginkgo, suppress testify |
 | Java   | JUnit 4             | JUnit 5              | Both present → show JUnit 5 only           |
 
+**Static analysis / formatter layering** — same rule applies to analysis and formatting tools:
+
+| Stack | Base         | Layer     | Rule                                        |
+|-------|--------------|-----------|---------------------------------------------|
+| PHP   | PHPStan      | Larastan  | Larastan detected → show Larastan only      |
+| PHP   | PHP-CS-Fixer | Pint      | Pint detected → show Pint only              |
+
 Frameworks that serve **different jobs** (unit vs E2E, linting vs formatting, test vs type-check) are *not* suppressed — show all present.
 
 ### Icon representation
