@@ -120,7 +120,7 @@ _cycle_done=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].activeCycle
 _cycle_total=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].activeCycle.issueCount // 0')
 _issues=$(printf '%s' "$_response" | jq -c '.data.viewer.assignedIssues.nodes // []')
 _notif_count=$(printf '%s' "$_response" | jq '.data.viewer.notifications.nodes | length')
-_today=$(date +%Y-%m-%d)
+_today=$(date +%Y-%m-%d)   # used by overdue/due_soon opt-in segments
 
 _count_in_progress=$(printf '%s' "$_issues" | jq \
   --arg cid "$_cycle_id" '[.[] | select(
