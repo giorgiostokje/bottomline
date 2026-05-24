@@ -11,7 +11,8 @@ source "$BOTTOMLINE_LIB/helpers.sh"
 _bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
 if [[ "$_bl_ttl" -gt 0 ]]; then
   _bl_cache=$(bl_cache_path "c-cpp" "$_bl_ttl" "$PROJ" \
-    "$PROJ/CMakeLists.txt" "$PROJ/meson.build" "$PROJ/configure.ac")
+    "$PROJ/CMakeLists.txt" "$PROJ/meson.build" "$PROJ/configure.ac" \
+    "$PROJ/conanfile.txt" "$PROJ/conanfile.py" "$PROJ/vcpkg.json")
   [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
 fi
 
