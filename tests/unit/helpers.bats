@@ -84,6 +84,18 @@ setup() {
   rm -f "$cache_file"
 }
 
+@test "bl_cache_write: removes stale file with different fingerprint same project" {
+  local projhash; projhash=$(printf '%s' "/some/project" | (md5sum 2>/dev/null || md5) | cut -c1-8)
+  local bucket; bucket=$(( $(date +%s) / (5 * 60) ))
+  local stale="/tmp/bl_go_${projhash}_00000000_${bucket}.txt"
+  printf 'stale' > "$stale"
+  local f; f=$(mktemp)
+  local cache_file; cache_file=$(bl_cache_path "go" 5 "/some/project" "$f")
+  bl_cache_write "$cache_file" "fresh"
+  [ ! -f "$stale" ]
+  rm -f "$cache_file" "$f"
+}
+
 # ── bl_mtime_fingerprint ──────────────────────────────────────────────────────
 
 @test "bl_mtime_fingerprint: returns 8-char hex string with no args" {
