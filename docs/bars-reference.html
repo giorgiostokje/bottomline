@@ -197,6 +197,7 @@
   <a href="#bar-git">Git</a>
   <a href="#bar-salesforce">Salesforce</a>
   <a href="#bar-random-facts">random-facts</a>
+  <a href="#bar-linear">Linear</a>
 </nav>
 
 <h1>Bottomline Bar &amp; Segment Reference
@@ -2053,6 +2054,98 @@ flush "$_bar_gradient"</code></pre>
         <span class="seg-inner">
           <span style="color:#da7756">&#xF0EB;</span>
           <span style="color:#e2d5c3">&nbsp;Sharks are older than trees.</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────── LINEAR -->
+<div class="bar-card" id="bar-linear">
+<h3>Linear <code>bars/linear.sh</code></h3>
+<p>Linear project management — cycle progress and issue counts. Not auto-detected; must be explicitly configured with an API key and team identifier. Calls the Linear GraphQL API and caches the result.</p>
+
+<div class="callout">
+  Requires a <strong>Personal API key</strong> (Linear → Settings → API → Personal API keys) and the short <strong>team key</strong> visible in your workspace URL (e.g. <code>ENG</code>, <code>MOBILE</code>). Set <code>refresh_minutes</code> to control how often the API is called (recommended: 15).
+</div>
+
+<div class="palette">
+  <div class="swatch-row"><span class="swatch" style="background:#e2e2f0"></span><span>text #e2e2f0</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#5E6AD2"></span><span>accent #5E6AD2</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#1a1a2e"></span><span>bg start #1a1a2e</span></div>
+  <div class="swatch-row"><span class="swatch" style="background:#16162a"></span><span>bg end #16162a</span></div>
+</div>
+
+<table>
+  <thead><tr><th>Segment</th><th>Default?</th><th>Content</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><code>cycle</code></td><td>Yes</td><td>Cycle name · done/total</td><td>Hidden when no active cycle.</td></tr>
+    <tr><td><code>in_progress</code></td><td>Yes</td><td>Count of in-progress issues in the active cycle</td><td>Hidden when count is zero.</td></tr>
+    <tr><td><code>review</code></td><td>Yes</td><td>Count of issues in review in the active cycle</td><td>Hidden when count is zero.</td></tr>
+    <tr><td><code>assigned</code></td><td>Yes</td><td>Total open issues assigned to you</td><td>Hidden when count is zero.</td></tr>
+    <tr><td><code>priority</code></td><td>No (opt-in)</td><td>Count of urgent/high-priority assigned issues</td><td>Warning color. Hidden when count is zero.</td></tr>
+    <tr><td><code>overdue</code></td><td>No (opt-in)</td><td>Count of overdue assigned issues</td><td>Danger color. Hidden when count is zero.</td></tr>
+    <tr><td><code>due_soon</code></td><td>No (opt-in)</td><td>Count of issues due within N days (default 3)</td><td>Warning color. Configure window via <code>params.due_soon_days</code>.</td></tr>
+    <tr><td><code>cycle_days</code></td><td>No (opt-in)</td><td>Days remaining in the active cycle</td><td>Hidden when no active cycle or zero days left.</td></tr>
+    <tr><td><code>blocked</code></td><td>No (opt-in)</td><td>Count of assigned issues blocked by an open issue</td><td>Warning color. Hidden when count is zero.</td></tr>
+    <tr><td><code>mentions</code></td><td>No (opt-in)</td><td>Count of unread notifications</td><td>Hidden when count is zero.</td></tr>
+  </tbody>
+</table>
+
+<h4>Example configuration</h4>
+<pre><code>{
+  "script": "linear",
+  "refresh_minutes": 15,
+  "params": {
+    "api_key": "$LINEAR_API_KEY",
+    "team": "ENG"
+  }
+}</code></pre>
+
+<p>The <code>segments</code> array controls which segments appear and in what order. For example, to show only cycle progress and priority issues:</p>
+<pre><code>{
+  "script": "linear",
+  "refresh_minutes": 15,
+  "params": { "api_key": "$LINEAR_API_KEY", "team": "ENG" },
+  "segments": ["cycle", "priority", "overdue"]
+}</code></pre>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+    <span>any project</span><span>explicitly configured</span>
+  </div>
+  <div class="term-body">
+    <div class="statusline" data-gradient='["#1a1a2e","#16162a"]'>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#5E6AD2">&#xF301;</span>
+          <span style="color:#e2e2f0">&nbsp;Sprint 42&nbsp;</span>
+          <span style="color:#5E6AD2">·</span>
+          <span style="color:#e2e2f0">&nbsp;18/24</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#5E6AD2">&#xF1D9;</span>
+          <span style="color:#e2e2f0">&nbsp;3</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#5E6AD2">&#xF06E;</span>
+          <span style="color:#e2e2f0">&nbsp;1</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#5E6AD2">&#xF0AE;</span>
+          <span style="color:#e2e2f0">&nbsp;7</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
