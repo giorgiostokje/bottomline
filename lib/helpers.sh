@@ -139,10 +139,11 @@ bl_mtime_fingerprint() {
   local mtimes=''
   for f in "$@"; do
     if [[ -f "$f" ]]; then
-      # stat -f '%m' works on macOS/BSD; stat -c '%Y' is the GNU/Linux equivalent.
-      # The inactive branch on any given platform is untested by CI; changing these flags
-      # silently breaks the other platform.
-      mtimes+=$(stat -f '%m' "$f" 2>/dev/null || stat -c '%Y' "$f" 2>/dev/null || printf '0')
+      # Try GNU stat first (-c '%Y'), then BSD/macOS stat (-f '%m').
+      # Order matters: GNU stat accepts -f but interprets it as "filesystem status",
+      # causing -f '%m' to print the mount point (not mtime) and exit 0, which
+      # would make the BSD branch unreachable on Linux.
+      mtimes+=$(stat -c '%Y' "$f" 2>/dev/null || stat -f '%m' "$f" 2>/dev/null || printf '0')
       mtimes+=$'\n'
     else
       mtimes+=$'0\n'
