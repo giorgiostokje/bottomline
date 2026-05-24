@@ -61,6 +61,21 @@ if [[ -z "$_team" ]]; then
   exit 0
 fi
 
+# ── Caching setup ─────────────────────────────────────────────────────────────
+_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-0}"
+_cache_file=$(bl_cache_path "linear" "$(( _bl_ttl > 0 ? _bl_ttl : 1 ))" "${_team}:${_api_key}")
+_cache_dir=$(dirname "$_cache_file")
+
+# Stale-cache glob: same name+projhash+fingerprint, any bucket
+_cache_stem="${_cache_file%_*_*.txt}"
+_stale_cache=$(find -L "$_cache_dir" -maxdepth 1 \
+  -name "${_cache_stem##*/}_*.txt" 2>/dev/null | head -1)
+
+if [[ "$_bl_ttl" -gt 0 && -f "$_cache_file" ]]; then
+  cat "$_cache_file"
+  exit 0
+fi
+
 # ── API call ──────────────────────────────────────────────────────────────────
 _gql='query BottomlineLinear($team: String!) {
   teams(filter: { key: { eq: $team } }) {
@@ -101,6 +116,10 @@ _response=$(curl -s -X POST "https://api.linear.app/graphql" \
 
 # ── Error handling ────────────────────────────────────────────────────────────
 if [[ -z "$_response" ]]; then
+  if [[ -n "$_stale_cache" ]]; then
+    cat "$_stale_cache"
+    exit 0
+  fi
   add_seg "${FG_WARN}${_IC_WARN} Linear: offline"
   flush "$_bar_gradient"
   exit 0
@@ -165,4 +184,8 @@ while IFS= read -r _seg_name; do
 done < <(printf '%s' "$_seg_list" | jq -r '.[]')
 
 (( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
+_bl_out=$(flush "$_bar_gradient")
+if [[ "$_bl_ttl" -gt 0 ]]; then
+  bl_cache_write "$_cache_file" "$_bl_out"
+fi
+printf '%s' "$_bl_out"

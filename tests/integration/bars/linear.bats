@@ -108,3 +108,52 @@ SCRIPT
   [[ -n "$pos_assigned" && -n "$pos_cycle" ]]
   (( pos_assigned < pos_cycle ))
 }
+
+# ── Caching ────────────────────────────────────────────────────────────────────
+
+@test "linear: writes cache file on successful response" {
+  local proj; proj=$(mktemp -d)
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "$proj" 60 '{"api_key":"lin_test","team":"ENG"}'
+  local count
+  count=$(find -L "$proj/.bl_cache" -maxdepth 1 -name "bl_linear_*.txt" 2>/dev/null | wc -l | tr -d ' ')
+  rm -rf "$proj"
+  (( count >= 1 ))
+}
+
+@test "linear: returns cached output on second call (curl not invoked)" {
+  local proj; proj=$(mktemp -d)
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "$proj" 60 '{"api_key":"lin_test","team":"ENG"}'
+  local first_output="$BAR_OUTPUT"
+  # Replace mock curl with one that outputs nothing — cache should be used
+  cat > "$_mock_bin/curl" << 'SCRIPT'
+#!/usr/bin/env bash
+printf ''
+SCRIPT
+  chmod +x "$_mock_bin/curl"
+  bar_run linear "$proj" 60 '{"api_key":"lin_test","team":"ENG"}'
+  rm -rf "$proj"
+  [[ "$BAR_OUTPUT" == "$first_output" ]]
+}
+
+@test "linear: shows stale cache on network failure instead of offline segment" {
+  local proj; proj=$(mktemp -d)
+  # Prime cache
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "$proj" 60 '{"api_key":"lin_test","team":"ENG"}'
+  local cached_output="$BAR_OUTPUT"
+  # Now fail the network — TTL=0 forces cache bypass so we test stale fallback
+  _mock_curl_fail
+  bar_run linear "$proj" 0 '{"api_key":"lin_test","team":"ENG"}'
+  rm -rf "$proj"
+  # Stale cache content shown instead of "offline"
+  [[ "$BAR_OUTPUT" == "$cached_output" ]]
+  [[ "$BAR_OUTPUT" != *"offline"* ]]
+}
+
+@test "linear: shows offline segment when network fails and no stale cache exists" {
+  _mock_curl_fail
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}'
+  [[ "$BAR_OUTPUT" == *"offline"* ]]
+}
