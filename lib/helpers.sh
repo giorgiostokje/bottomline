@@ -101,7 +101,10 @@ flush() {
 # ── Cache helpers ─────────────────────────────────────────────────────────────
 
 # Compute the cache file path for a bar.
-# Usage: bl_cache_path <bar_name> <ttl_mins> <proj_dir> [file1 file2 ...]
+# Usage: bl_cache_path <bar_name> <ttl_mins> <discriminator> [file1 file2 ...]
+# <discriminator> is any opaque string that uniquely identifies this bar instance
+# (e.g. a project dir path, or a "team:api_key" compound key). It is MD5-hashed
+# and never appears in the filename.
 # Trailing file paths are hashed by mtime; a changed or created/deleted file
 # produces a different path (cache miss) even within the same TTL bucket.
 # BOTTOMLINE_CACHE_DIR overrides the cache directory (default: /tmp).

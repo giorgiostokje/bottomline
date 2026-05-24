@@ -247,7 +247,7 @@ while IFS= read -r _seg_name; do
     *)
       ;; # unknown segment: silently skip
   esac
-done < <(printf '%s' "$_seg_list" | jq -r '.[]')
+done < <(printf '%s' "$_seg_list" | jq -r '.[]' 2>/dev/null)
 
 (( ${#_sc[@]} == 0 )) && exit 0
 _bl_out=$(flush "$_bar_gradient")
