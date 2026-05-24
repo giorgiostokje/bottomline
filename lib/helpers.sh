@@ -131,9 +131,13 @@ bl_mtime_fingerprint() {
   local mtimes=''
   for f in "$@"; do
     if [[ -f "$f" ]]; then
+      # stat -f '%m' works on macOS/BSD; stat -c '%Y' is the GNU/Linux equivalent.
+      # The inactive branch on any given platform is untested by CI; changing these flags
+      # silently breaks the other platform.
       mtimes+=$(stat -f '%m' "$f" 2>/dev/null || stat -c '%Y' "$f" 2>/dev/null || printf '0')
+      mtimes+=$'\n'
     else
-      mtimes+='0'
+      mtimes+=$'0\n'
     fi
   done
   printf '%s' "$mtimes" | (md5sum 2>/dev/null || md5) | cut -c1-8

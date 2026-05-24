@@ -105,9 +105,9 @@ setup() {
   [ "$r1" != "$r2" ]
 }
 
-@test "bl_mtime_fingerprint: two missing files produce same fingerprint as one missing file of same name" {
-  r1=$(bl_mtime_fingerprint "/nonexistent/a.txt")
-  r2=$(bl_mtime_fingerprint "/nonexistent/b.txt")
-  # Both absent → both contribute "0" → same fingerprint
+@test "bl_mtime_fingerprint: absent files all contribute 0 so multiple absent paths hash equally" {
+  r1=$(bl_mtime_fingerprint "/nonexistent/a.txt" "/nonexistent/b.txt")
+  r2=$(bl_mtime_fingerprint "/nonexistent/c.txt" "/nonexistent/d.txt")
+  # All absent paths contribute "0"; the fingerprint only reflects count+order of absent paths
   [ "$r1" = "$r2" ]
 }
