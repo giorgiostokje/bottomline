@@ -46,7 +46,7 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_NODE=$'\xee\x9c\x98'       # U+E718  nf-seti-nodejs
     IC_PKG=$'\xef\x92\xae'        # U+F4AE  nf-mdi-package
     IC_TEST=$'\xef\x81\x80'       # U+F040  nf-fa-pencil
-    IC_CSS=$'\xee\x9b\xa9'        # U+E6A9  nf-seti-css
+    IC_CSS=$'\xee\x9d\x89'        # U+E749  nf-dev-css3
     IC_LINT=$'\xef\x80\x8c'       # U+F00C  nf-fa-check
     IC_FMT=$'\xef\x80\xb1'        # U+F031  nf-fa-font
     ;;
