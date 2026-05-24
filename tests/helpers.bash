@@ -117,10 +117,15 @@ bar_run() {
   local bar_name="$1"
   local proj_dir="${2:-}"
   local ttl="${3:-0}"
+  # Use a project-specific cache dir so cache files persist between bar_run calls
+  # and are isolated between tests.  Default to /tmp when proj_dir is absent.
+  local cache_dir="${proj_dir:+$proj_dir/.bl_cache}"
+  if [[ -n "$cache_dir" ]]; then mkdir -p "$cache_dir"; fi
 
   BAR_OUTPUT_RAW=$(
     BOTTOMLINE_BAR_REFRESH_MINUTES="$ttl" \
     BOTTOMLINE_PROJECT_DIR="$proj_dir" \
+    BOTTOMLINE_CACHE_DIR="${cache_dir:-/tmp}" \
     BOTTOMLINE_LIB="$BOTTOMLINE_ROOT/lib" \
     BOTTOMLINE_ICON_TYPE=none \
     BOTTOMLINE_GRADIENT='"#1a1a1a"' \

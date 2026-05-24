@@ -100,18 +100,20 @@ flush() {
 
 # ── Cache helpers ─────────────────────────────────────────────────────────────
 
-# Compute the /tmp cache file path for a bar.
+# Compute the cache file path for a bar.
 # Usage: bl_cache_path <bar_name> <ttl_mins> <proj_dir> [file1 file2 ...]
 # Trailing file paths are hashed by mtime; a changed or created/deleted file
 # produces a different path (cache miss) even within the same TTL bucket.
+# BOTTOMLINE_CACHE_DIR overrides the cache directory (default: /tmp).
 bl_cache_path() {
   local name="$1" ttl="${2:-5}" proj="$3"
   shift 3
-  local bucket projhash fingerprint
+  local bucket projhash fingerprint cache_dir
+  cache_dir="${BOTTOMLINE_CACHE_DIR:-/tmp}"
   bucket=$(( $(date +%s) / (ttl * 60) ))
   projhash=$(printf '%s' "$proj" | (md5sum 2>/dev/null || md5) | cut -c1-8)
   fingerprint=$(bl_mtime_fingerprint "$@")
-  printf '/tmp/bl_%s_%s_%s_%s.txt' "$name" "$projhash" "$fingerprint" "$bucket"
+  printf '%s/bl_%s_%s_%s_%s.txt' "$cache_dir" "$name" "$projhash" "$fingerprint" "$bucket"
 }
 
 # Write rendered output to cache and clean up stale entries for this bar+project.
@@ -123,8 +125,10 @@ bl_cache_write() {
   printf '%s' "$output" > "$cache_file"
   # Remove from the last two underscores to strip both fingerprint and bucket
   local stem; stem="${cache_file%_*_*.txt}"
+  # Derive the cache directory from the file path so this works with any BOTTOMLINE_CACHE_DIR.
   # -L is required on macOS where /tmp is a symlink to /private/tmp.
-  find -L /tmp -maxdepth 1 -name "${stem##*/}_*_*.txt" \
+  local cache_dir; cache_dir=$(dirname "$cache_file")
+  find -L "$cache_dir" -maxdepth 1 -name "${stem##*/}_*_*.txt" \
     ! -name "$(basename "$cache_file")" -print0 2>/dev/null | xargs -0 rm -f 2>/dev/null
 }
 
