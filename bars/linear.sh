@@ -166,6 +166,7 @@ _count_overdue=$(printf '%s' "$_issues" | jq \
   '[.[] | select(.dueDate != null and .dueDate < $today)] | length')
 
 _due_soon_days=$(printf '%s' "$_params" | jq -r '.due_soon_days // 3')
+[[ "$_due_soon_days" =~ ^[0-9]+$ ]] || _due_soon_days=3
 _future=$(date -d "+${_due_soon_days} days" +%Y-%m-%d 2>/dev/null \
           || date -v "+${_due_soon_days}d" +%Y-%m-%d 2>/dev/null)
 _count_due_soon=$(printf '%s' "$_issues" | jq \
@@ -188,9 +189,11 @@ if [[ -n "$_cycle_id" ]]; then
   if [[ -n "$_cycle_ends" ]]; then
     _end_secs=$(date -d "$_cycle_ends" +%s 2>/dev/null \
                 || date -j -f "%Y-%m-%dT%H:%M:%S.000Z" "${_cycle_ends%%.*}.000Z" +%s 2>/dev/null)
-    _now_secs=$(date +%s)
-    _cycle_days_left=$(( (_end_secs - _now_secs) / 86400 ))
-    (( _cycle_days_left < 0 )) && _cycle_days_left=0
+    if [[ -n "$_end_secs" ]]; then
+      _now_secs=$(date +%s)
+      _cycle_days_left=$(( (_end_secs - _now_secs) / 86400 ))
+      (( _cycle_days_left < 0 )) && _cycle_days_left=0
+    fi
   fi
 fi
 
@@ -230,7 +233,7 @@ while IFS= read -r _seg_name; do
         add_seg "${FG_WARN}${_IC_DUE}${_IC_DUE:+ }${FG_TEXT}${_count_due_soon}"
       ;;
     cycle_days)
-      [[ -n "$_cycle_id" ]] && \
+      [[ -n "$_cycle_id" && "$_cycle_days_left" -gt 0 ]] && \
         add_seg "${FG_ACCENT}${_IC_DAYS}${_IC_DAYS:+ }${FG_TEXT}${_cycle_days_left}d left"
       ;;
     blocked)
