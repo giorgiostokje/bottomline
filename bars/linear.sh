@@ -61,14 +61,45 @@ if [[ -z "$_team" ]]; then
   exit 0
 fi
 
-# ── API call stub (will be expanded in Task 3) ────────────────────────────────
+# ── API call ──────────────────────────────────────────────────────────────────
+_gql='query BottomlineLinear($team: String!) {
+  teams(filter: { key: { eq: $team } }) {
+    nodes {
+      activeCycle {
+        id name completedIssueCount issueCount endsAt
+      }
+    }
+  }
+  viewer {
+    id
+    assignedIssues(
+      filter: { state: { type: { nin: ["completed","cancelled"] } } }
+    ) {
+      nodes {
+        state { type name }
+        priority
+        dueDate
+        cycle { id }
+        relations { nodes { type relatedIssue { state { type } } } }
+      }
+    }
+    notifications(filter: { readAt: { null: true } }) {
+      nodes { id }
+    }
+  }
+}'
+
+_body=$(jq -n --arg q "$_gql" --arg t "$_team" \
+  '{"query":$q,"variables":{"team":$t}}')
+
 _response=$(curl -s -X POST "https://api.linear.app/graphql" \
   -H "Authorization: $_api_key" \
   -H "Content-Type: application/json" \
   --connect-timeout 5 \
   --max-time 10 \
-  --data '{}' 2>/dev/null)
+  --data "$_body" 2>/dev/null)
 
+# ── Error handling ────────────────────────────────────────────────────────────
 if [[ -z "$_response" ]]; then
   add_seg "${FG_WARN}${_IC_WARN} Linear: offline"
   flush "$_bar_gradient"
@@ -81,3 +112,57 @@ if [[ -n "$_errors" ]]; then
   flush "$_bar_gradient"
   exit 0
 fi
+
+# ── Data extraction ───────────────────────────────────────────────────────────
+_cycle_id=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].activeCycle.id // empty')
+_cycle_name=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].activeCycle.name // empty')
+_cycle_done=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].activeCycle.completedIssueCount // 0')
+_cycle_total=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].activeCycle.issueCount // 0')
+_issues=$(printf '%s' "$_response" | jq -c '.data.viewer.assignedIssues.nodes // []')
+_notif_count=$(printf '%s' "$_response" | jq '.data.viewer.notifications.nodes | length')
+_today=$(date +%Y-%m-%d)
+
+_count_in_progress=$(printf '%s' "$_issues" | jq \
+  --arg cid "$_cycle_id" '[.[] | select(
+    .state.type == "started" and
+    (.state.name | ascii_downcase | contains("review") | not) and
+    (if $cid != "" then .cycle.id == $cid else true end)
+  )] | length')
+
+_count_review=$(printf '%s' "$_issues" | jq \
+  --arg cid "$_cycle_id" '[.[] | select(
+    .state.type == "started" and
+    (.state.name | ascii_downcase | contains("review")) and
+    (if $cid != "" then .cycle.id == $cid else true end)
+  )] | length')
+
+_count_assigned=$(printf '%s' "$_issues" | jq 'length')
+
+# ── Segment list ──────────────────────────────────────────────────────────────
+_default_segs='["cycle","in_progress","review","assigned"]'
+_seg_list="${BOTTOMLINE_BAR_SEGMENTS:-$_default_segs}"
+
+# ── Render ────────────────────────────────────────────────────────────────────
+while IFS= read -r _seg_name; do
+  case "$_seg_name" in
+    cycle)
+      [[ -n "$_cycle_name" ]] && \
+        add_seg "${FG_ACCENT}${_IC_CYCLE}${_IC_CYCLE:+ }${FG_TEXT}${_cycle_name} ${FG_ACCENT}·${FG_TEXT} ${_cycle_done}/${_cycle_total}"
+      ;;
+    in_progress)
+      (( _count_in_progress > 0 )) && \
+        add_seg "${FG_ACCENT}${_IC_PROGRESS}${_IC_PROGRESS:+ }${FG_TEXT}${_count_in_progress}"
+      ;;
+    review)
+      (( _count_review > 0 )) && \
+        add_seg "${FG_ACCENT}${_IC_REVIEW}${_IC_REVIEW:+ }${FG_TEXT}${_count_review}"
+      ;;
+    assigned)
+      (( _count_assigned > 0 )) && \
+        add_seg "${FG_ACCENT}${_IC_ASSIGNED}${_IC_ASSIGNED:+ }${FG_TEXT}${_count_assigned}"
+      ;;
+  esac
+done < <(printf '%s' "$_seg_list" | jq -r '.[]')
+
+(( ${#_sc[@]} == 0 )) && exit 0
+flush "$_bar_gradient"
