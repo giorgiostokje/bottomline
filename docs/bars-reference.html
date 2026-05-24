@@ -2082,8 +2082,8 @@ flush "$_bar_gradient"</code></pre>
   <thead><tr><th>Segment</th><th>Default?</th><th>Content</th><th>Notes</th></tr></thead>
   <tbody>
     <tr><td><code>cycle</code></td><td>Yes</td><td>Cycle name · done/total</td><td>Hidden when no active cycle.</td></tr>
-    <tr><td><code>in_progress</code></td><td>Yes</td><td>Count of in-progress issues in the active cycle</td><td>Hidden when count is zero.</td></tr>
-    <tr><td><code>review</code></td><td>Yes</td><td>Count of issues in review in the active cycle</td><td>Hidden when count is zero.</td></tr>
+    <tr><td><code>in_progress</code></td><td>Yes</td><td>Count of in-progress issues in the active cycle</td><td>Hidden when count is zero. Falls back to all in-progress issues when no active cycle exists.</td></tr>
+    <tr><td><code>review</code></td><td>Yes</td><td>Count of issues in review in the active cycle</td><td>Hidden when count is zero. Falls back to all in-review issues when no active cycle exists.</td></tr>
     <tr><td><code>assigned</code></td><td>Yes</td><td>Total open issues assigned to you</td><td>Hidden when count is zero.</td></tr>
     <tr><td><code>priority</code></td><td>No (opt-in)</td><td>Count of urgent/high-priority assigned issues</td><td>Warning color. Hidden when count is zero.</td></tr>
     <tr><td><code>overdue</code></td><td>No (opt-in)</td><td>Count of overdue assigned issues</td><td>Danger color. Hidden when count is zero.</td></tr>
