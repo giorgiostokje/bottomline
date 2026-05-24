@@ -1,7 +1,7 @@
 {
   "name": "bottomline",
-  "version": "0.9.5",
-  "description": "Gradient status line for Claude Code with themes and language bars for C/C++, Go, Rust, Python, JS, Lua, Ruby, PHP, Swift, Java, Kotlin, Elixir, .NET, Dart, Salesforce, Shell, and Git.",
+  "version": "0.10.1",
+  "description": "An extensible status line for Claude Code, pre-packed with themes, statistics and skills.",
   "author": {
     "name": "Giorgio Stokje",
     "url": "https://github.com/giorgiostokje"
@@ -10,6 +10,7 @@
   "repository": "https://github.com/giorgiostokje/bottomline",
   "license": "MIT",
   "keywords": [
+    "bottomline",
     "status-line",
     "statusline",
     "statusbar",
