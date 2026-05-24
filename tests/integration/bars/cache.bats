@@ -21,6 +21,7 @@ teardown() { teardown_fake_proj; }
   bar_run go "$FAKE_PROJ" 60
   [[ "$BAR_OUTPUT" == *"1.22"* ]]
   # Overwrite go.mod — new content and new mtime
+  sleep 1.1  # Ensure mtime differs (macOS rounds to the second)
   printf 'module example.com/app\n\ngo 1.23\n' > "$FAKE_PROJ/go.mod"
   bar_run go "$FAKE_PROJ" 60
   [[ "$BAR_OUTPUT" == *"1.23"* ]]
@@ -44,7 +45,7 @@ teardown() { teardown_fake_proj; }
   local projhash
   projhash=$(printf '%s' "$FAKE_PROJ" | (md5sum 2>/dev/null || md5) | cut -c1-8)
   local cache_file
-  cache_file=$(find /tmp -maxdepth 1 -name "bl_go_${projhash}_*.txt" 2>/dev/null | head -1)
+  cache_file=$(find -L /tmp -maxdepth 1 -name "bl_go_${projhash}_*.txt" 2>/dev/null | head -1)
   [[ -n "$cache_file" ]]
   printf 'CACHED_SENTINEL' > "$cache_file"
   # Second run: should serve from cache
