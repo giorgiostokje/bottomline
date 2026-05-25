@@ -161,6 +161,13 @@ jq -n \
     if b == null then a
     elif (a | type) == "object" and (b | type) == "object"
     then reduce (b | keys_unsorted[]) as $k (a; .[$k] = dmerge(a[$k]; b[$k]))
+    elif (a | type) == "array" and (b | type) == "array"
+         and (a | length > 0 and (.[0] | type == "object" and has("script")))
+         and (b | length > 0 and (.[0] | type == "object" and has("script")))
+    then
+      (b | map({(.script): .}) | add // {}) as $bi |
+      (a | map(. as $ae | dmerge($ae; $bi[$ae.script]))) +
+      (b | map(select(.script as $s | (a | map(.script) | index($s)) == null)))
     else b end;
   dmerge(dmerge($s; $u); $p)'
 ```
