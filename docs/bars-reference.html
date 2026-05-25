@@ -1186,7 +1186,7 @@ flush "$_bar_gradient"</code></pre>
         <span class="seg-inner">
           <span style="color:#9898e0">&#xE765;</span>
           <span style="color:#ddd6f3">&nbsp;PHP&nbsp;</span>
-          <span style="color:#9898e0">8.3</span>
+          <span style="color:#9898e0">v8.3</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
@@ -2082,8 +2082,7 @@ flush "$_bar_gradient"</code></pre>
 <table>
   <thead><tr><th>Segment</th><th>Default?</th><th>Content</th><th>Notes</th></tr></thead>
   <tbody>
-    <tr><td><code>label</code></td><td>Yes</td><td>Bar identity — "&#x25C8; Linear"</td><td>Always rendered; no data dependency.</td></tr>
-    <tr><td><code>team_id</code></td><td>Yes</td><td>Team key from config (e.g. <code>ENG</code>)</td><td>No icon; accent colour only.</td></tr>
+    <tr><td><code>label</code></td><td>Yes</td><td>Bar identity — "&#x25C8; Linear · ENG" (icon + label + team key with bullet separator)</td><td>Always rendered; shows team key from config inline.</td></tr>
     <tr><td><code>team</code></td><td>No (opt-in)</td><td>Team display name from API (e.g. Bottomline Engineering)</td><td>Hidden when API returns no name.</td></tr>
     <tr><td><code>cycle</code></td><td>Yes</td><td>Cycle name · done/total</td><td>Hidden when no active cycle.</td></tr>
     <tr><td><code>in_progress</code></td><td>Yes</td><td>Count of in-progress issues in the active cycle, labelled "wip"</td><td>Hidden when count is zero. Falls back to all in-progress issues when no active cycle exists.</td></tr>
@@ -2125,11 +2124,7 @@ flush "$_bar_gradient"</code></pre>
         <span class="seg-inner">
           <span style="color:#5E6AD2">&#xF7A2;</span>
           <span style="color:#e2e2f0">&nbsp;Linear</span>
-        </span>
-        <span class="seg-sep">&#xE0B4;</span>
-      </div>
-      <div class="seg">
-        <span class="seg-inner">
+          <span style="color:#5E6AD2">&nbsp;·&nbsp;</span>
           <span style="color:#5E6AD2">ENG</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
