@@ -222,27 +222,27 @@ while IFS= read -r _seg_name; do
       ;;
     in_progress)
       (( _count_in_progress > 0 )) && \
-        add_seg "${FG_ACCENT}${IC_PROGRESS}${IC_PROGRESS:+ }${FG_TEXT}${_count_in_progress}"
+        add_seg "${FG_ACCENT}${IC_PROGRESS}${IC_PROGRESS:+ }${FG_TEXT}${_count_in_progress} wip"
       ;;
     review)
       (( _count_review > 0 )) && \
-        add_seg "${FG_ACCENT}${IC_REVIEW}${IC_REVIEW:+ }${FG_TEXT}${_count_review}"
+        add_seg "${FG_ACCENT}${IC_REVIEW}${IC_REVIEW:+ }${FG_TEXT}${_count_review} review"
       ;;
     assigned)
       (( _count_assigned > 0 )) && \
-        add_seg "${FG_ACCENT}${IC_ASSIGNED}${IC_ASSIGNED:+ }${FG_TEXT}${_count_assigned}"
+        add_seg "${FG_ACCENT}${IC_ASSIGNED}${IC_ASSIGNED:+ }${FG_TEXT}${_count_assigned} open"
       ;;
     priority)
       (( _count_priority > 0 )) && \
-        add_seg "${FG_WARN}${IC_PRIORITY}${IC_PRIORITY:+ }${FG_TEXT}${_count_priority}"
+        add_seg "${FG_WARN}${IC_PRIORITY}${IC_PRIORITY:+ }${FG_TEXT}${_count_priority} urgent"
       ;;
     overdue)
       (( _count_overdue > 0 )) && \
-        add_seg "${FG_CRIT}${IC_OVERDUE}${IC_OVERDUE:+ }${FG_TEXT}${_count_overdue}"
+        add_seg "${FG_CRIT}${IC_OVERDUE}${IC_OVERDUE:+ }${FG_TEXT}${_count_overdue} overdue"
       ;;
     due_soon)
       (( _count_due_soon > 0 )) && \
-        add_seg "${FG_WARN}${IC_DUE}${IC_DUE:+ }${FG_TEXT}${_count_due_soon}"
+        add_seg "${FG_WARN}${IC_DUE}${IC_DUE:+ }${FG_TEXT}${_count_due_soon} due soon"
       ;;
     cycle_days)
       [[ -n "$_cycle_id" && "$_cycle_days_left" -gt 0 ]] && \
@@ -250,11 +250,11 @@ while IFS= read -r _seg_name; do
       ;;
     blocked)
       (( _count_blocked > 0 )) && \
-        add_seg "${FG_WARN}${IC_BLOCKED}${IC_BLOCKED:+ }${FG_TEXT}${_count_blocked}"
+        add_seg "${FG_WARN}${IC_BLOCKED}${IC_BLOCKED:+ }${FG_TEXT}${_count_blocked} blocked"
       ;;
     mentions)
       (( _notif_count > 0 )) && \
-        add_seg "${FG_ACCENT}${IC_MENTIONS}${IC_MENTIONS:+ }${FG_TEXT}${_notif_count}"
+        add_seg "${FG_ACCENT}${IC_MENTIONS}${IC_MENTIONS:+ }${FG_TEXT}${_notif_count} unread"
       ;;
     *)
       ;; # unknown segment: silently skip

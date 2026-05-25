@@ -1,0 +1,37 @@
+{
+  "data": {
+    "teams": {
+      "nodes": [
+        {
+          "name": "Bottomline Engineering",
+          "activeCycle": {
+            "id": "cycle-abc",
+            "name": "Cycle 42",
+            "completedIssueCountHistory": [12, 14, 15],
+            "issueCountHistory": [22, 23, 23],
+            "endsAt": "2030-12-31T00:00:00.000Z"
+          }
+        }
+      ]
+    },
+    "viewer": {
+      "id": "viewer-abc",
+      "assignedIssues": {
+        "nodes": [
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 2, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 3, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 3, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 3, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 3, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 3, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 3, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Review"   }, "priority": 1, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Review"   }, "priority": 1, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Review"   }, "priority": 1, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "backlog",  "name": "Backlog"     }, "priority": 4, "dueDate": "2199-12-31", "cycle": null, "relations": { "nodes": [] } }
+        ]
+      }
+    },
+    "notificationsUnreadCount": 5
+  }
+}

@@ -74,19 +74,19 @@ SCRIPT
 @test "linear: renders in_progress count (7)" {
   _mock_curl_fixture "linear_success.json"
   bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}'
-  [[ "$BAR_OUTPUT" == *" 7 "* ]] || [[ "$BAR_OUTPUT" == *" 7|"* ]]
+  [[ "$BAR_OUTPUT" == *"7 wip"* ]]
 }
 
 @test "linear: renders review count (3)" {
   _mock_curl_fixture "linear_success.json"
   bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}'
-  [[ "$BAR_OUTPUT" == *" 3 "* ]] || [[ "$BAR_OUTPUT" == *" 3|"* ]]
+  [[ "$BAR_OUTPUT" == *"3 review"* ]]
 }
 
 @test "linear: renders assigned count (11)" {
   _mock_curl_fixture "linear_success.json"
   bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}'
-  [[ "$BAR_OUTPUT" == *" 11 "* ]] || [[ "$BAR_OUTPUT" == *" 11|"* ]]
+  [[ "$BAR_OUTPUT" == *"11 open"* ]]
 }
 
 @test "linear: label segment renders 'Linear'" {
@@ -181,14 +181,14 @@ SCRIPT
   _mock_curl_fixture "linear_success.json"
   bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' \
     '["priority"]'
-  [[ "$BAR_OUTPUT" == *" 4 "* ]] || [[ "$BAR_OUTPUT" == *" 4|"* ]]
+  [[ "$BAR_OUTPUT" == *"4 urgent"* ]]
 }
 
 @test "linear: overdue segment shows count of past-due issues (1)" {
   _mock_curl_fixture "linear_success.json"
   bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' \
     '["overdue"]'
-  [[ "$BAR_OUTPUT" == *" 1 "* ]] || [[ "$BAR_OUTPUT" == *" 1|"* ]]
+  [[ "$BAR_OUTPUT" == *"1 overdue"* ]]
 }
 
 @test "linear: due_soon segment shows nothing when no issues due soon" {
@@ -212,14 +212,14 @@ SCRIPT
   _mock_curl_fixture "linear_success.json"
   bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' \
     '["blocked"]'
-  [[ "$BAR_OUTPUT" == *" 1 "* ]] || [[ "$BAR_OUTPUT" == *" 1|"* ]]
+  [[ "$BAR_OUTPUT" == *"1 blocked"* ]]
 }
 
 @test "linear: mentions segment shows unread notification count (5)" {
   _mock_curl_fixture "linear_success.json"
   bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' \
     '["mentions"]'
-  [[ "$BAR_OUTPUT" == *" 5 "* ]] || [[ "$BAR_OUTPUT" == *" 5|"* ]]
+  [[ "$BAR_OUTPUT" == *"5 unread"* ]]
 }
 
 @test "linear: unknown segment names in BOTTOMLINE_BAR_SEGMENTS are silently skipped" {
@@ -229,4 +229,54 @@ SCRIPT
   [[ "$BAR_OUTPUT" == *"Cycle 42"* ]]
   [[ "$BAR_OUTPUT" == *"11"* ]]
   [[ "$BAR_OUTPUT" != *"unknown_segment_xyz"* ]]
+}
+
+# ── Segment labels ─────────────────────────────────────────────────────────────
+
+@test "linear: in_progress segment includes 'wip' label" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' '["in_progress"]'
+  [[ "$BAR_OUTPUT" == *"wip"* ]]
+}
+
+@test "linear: review segment includes 'review' label" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' '["review"]'
+  [[ "$BAR_OUTPUT" == *"review"* ]]
+}
+
+@test "linear: assigned segment includes 'open' label" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' '["assigned"]'
+  [[ "$BAR_OUTPUT" == *"open"* ]]
+}
+
+@test "linear: priority segment includes 'urgent' label" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' '["priority"]'
+  [[ "$BAR_OUTPUT" == *"urgent"* ]]
+}
+
+@test "linear: overdue segment includes 'overdue' label" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' '["overdue"]'
+  [[ "$BAR_OUTPUT" == *"overdue"* ]]
+}
+
+@test "linear: due_soon segment includes 'due soon' label" {
+  _mock_curl_fixture "linear_due_soon.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG","due_soon_days":99999}' '["due_soon"]'
+  [[ "$BAR_OUTPUT" == *"due soon"* ]]
+}
+
+@test "linear: blocked segment includes 'blocked' label" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' '["blocked"]'
+  [[ "$BAR_OUTPUT" == *"blocked"* ]]
+}
+
+@test "linear: mentions segment includes 'unread' label" {
+  _mock_curl_fixture "linear_success.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' '["mentions"]'
+  [[ "$BAR_OUTPUT" == *"unread"* ]]
 }
