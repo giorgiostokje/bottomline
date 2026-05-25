@@ -36,6 +36,8 @@ if [[ -f "$PROJ/.ruby-version" ]]; then
   ruby_version=$(tr -d '[:space:]' < "$PROJ/.ruby-version" | sed 's/^ruby-//')
 elif command -v ruby > /dev/null 2>&1; then
   ruby_version=$(ruby -e 'print RUBY_VERSION' 2>/dev/null)
+  _ruby_exit=$?
+  (( _ruby_exit != 0 )) && bl_log debug ruby "ruby -e 'print RUBY_VERSION' exit=${_ruby_exit}"
 fi
 
 # ── Detect framework ──────────────────────────────────────────────────────────

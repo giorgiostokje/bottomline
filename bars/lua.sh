@@ -39,7 +39,10 @@ if [[ -z "$lua_version" && -f "$PROJ/.luarc.json" ]]; then
 fi
 # Priority 3: lua binary on PATH
 if [[ -z "$lua_version" ]]; then
-  lua_version=$(lua -v 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  _lua_raw=$(lua -v 2>&1)
+  _lua_exit=$?
+  (( _lua_exit != 0 )) && bl_log debug lua "lua -v exit=${_lua_exit}"
+  lua_version=$(printf '%s' "$_lua_raw" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 fi
 
 # ── Slot 2: Package manager — LuaRocks ────────────────────────────────────────
@@ -49,7 +52,10 @@ _has_rockspec=false
 ls "$PROJ"/*.rockspec > /dev/null 2>&1 && _has_rockspec=true
 if command -v luarocks > /dev/null 2>&1; then
   has_luarocks=true
-  luarocks_version=$(luarocks --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  _luarocks_raw=$(luarocks --version 2>/dev/null)
+  _luarocks_exit=$?
+  (( _luarocks_exit != 0 )) && bl_log debug lua "luarocks --version exit=${_luarocks_exit}"
+  luarocks_version=$(printf '%s' "$_luarocks_raw" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 elif $_has_rockspec; then
   has_luarocks=true
 fi

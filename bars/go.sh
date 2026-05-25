@@ -69,7 +69,10 @@ has_golangci=false
 golangci_version=''
 if command -v golangci-lint > /dev/null 2>&1; then
   has_golangci=true
-  golangci_version=$(golangci-lint --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  _golangci_raw=$(golangci-lint --version 2>/dev/null)
+  _golangci_exit=$?
+  (( _golangci_exit != 0 )) && bl_log debug go "golangci-lint --version exit=${_golangci_exit}"
+  golangci_version=$(printf '%s' "$_golangci_raw" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 elif [[ -f "$PROJ/.golangci.yml" || -f "$PROJ/.golangci.yaml" || -f "$PROJ/.golangci.toml" ]]; then
   has_golangci=true
 fi

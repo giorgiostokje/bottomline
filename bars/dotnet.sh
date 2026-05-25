@@ -40,7 +40,10 @@ if [[ -f "$PROJ/global.json" ]]; then
   sdk_version=$(jq -r '.sdk.version // empty' "$PROJ/global.json" 2>/dev/null)
 fi
 if [[ -z "$sdk_version" ]] && command -v dotnet &>/dev/null; then
-  sdk_version=$(dotnet --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  _dotnet_raw=$(dotnet --version 2>/dev/null)
+  _dotnet_exit=$?
+  (( _dotnet_exit != 0 )) && bl_log debug dotnet "dotnet --version exit=${_dotnet_exit}"
+  sdk_version=$(printf '%s' "$_dotnet_raw" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 fi
 
 # ── Target framework from first .csproj ───────────────────────────────────────

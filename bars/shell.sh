@@ -39,13 +39,19 @@ bash_version="${BASH_VERSION%%(*}"
 # ── ShellCheck ────────────────────────────────────────────────────────────────
 sc_version=''
 if command -v shellcheck > /dev/null 2>&1; then
-  sc_version=$(shellcheck --version 2>/dev/null | awk '/^version:/{print $2; exit}')
+  _sc_raw=$(shellcheck --version 2>/dev/null)
+  _sc_exit=$?
+  (( _sc_exit != 0 )) && bl_log debug shell "shellcheck --version exit=${_sc_exit}"
+  sc_version=$(printf '%s' "$_sc_raw" | awk '/^version:/{print $2; exit}')
 fi
 
 # ── bats ──────────────────────────────────────────────────────────────────────
 bats_version=''
 if command -v bats > /dev/null 2>&1; then
-  bats_version=$(bats --version 2>/dev/null | awk '{print $2; exit}')
+  _bats_raw=$(bats --version 2>/dev/null)
+  _bats_exit=$?
+  (( _bats_exit != 0 )) && bl_log debug shell "bats --version exit=${_bats_exit}"
+  bats_version=$(printf '%s' "$_bats_raw" | awk '{print $2; exit}')
 fi
 has_bats=false
 [[ -n "$bats_version" ]] && has_bats=true
