@@ -607,7 +607,8 @@ flush "$_bar_gradient"</code></pre>
 </p>
 <p>
   Configure the TTL via <code>auto_bars.refresh_minutes</code> (global default: 5 minutes),
-  per-bar via <code>auto_bars.overrides.&lt;name&gt;.refresh_minutes</code>, or via
+  per bar by adding a matching entry to <code>auto_bars.scripts</code> at user or project level
+  (e.g. <code>{"script":"git","refresh_minutes":1}</code>), or via
   <code>refresh_minutes</code> on any explicit <code>bars[]</code> entry.
 </p>
 
@@ -2095,20 +2096,18 @@ flush "$_bar_gradient"</code></pre>
 </table>
 
 <h4>Example configuration</h4>
-<pre><code>{
-  "script": "linear",
-  "refresh_minutes": 15,
-  "params": {
-    "api_key": "file:~/.linear_token",
-    "team": "ENG"
-  }
-}</code></pre>
+<p>Config splits across two levels — <code>api_key</code> at user level, <code>team</code> at project level:</p>
+<pre><code>// ~/.claude/bottomline.json (user level)
+{ "bars": [{ "script": "linear", "params": { "api_key": "file:~/.linear_api_key" } }] }
+
+// .claude/bottomline.json (project level)
+{ "bars": [{ "script": "linear", "refresh_minutes": 15, "params": { "team": "ENG" } }] }</code></pre>
 
 <p>The <code>segments</code> array controls which segments appear and in what order. For example, to show only cycle progress and priority issues:</p>
 <pre><code>{
   "script": "linear",
   "refresh_minutes": 15,
-  "params": { "api_key": "file:~/.linear_token", "team": "ENG" },
+  "params": { "api_key": "file:~/.linear_api_key", "team": "ENG" },
   "segments": ["cycle", "priority", "overdue"]
 }</code></pre>
 
