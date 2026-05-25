@@ -126,7 +126,7 @@ if [[ -z "$_response" ]]; then
     exit 0
   fi
   bl_log error linear "no response (curl exit=${_curl_exit}) and no stale cache"
-  add_seg "${FG_WARN}${IC_WARN} Linear: offline"
+  bl_data_seg "$IC_LINEAR" Linear offline warn 1
   flush "$_bar_gradient"
   exit 0
 fi
@@ -135,7 +135,7 @@ _errors=$(printf '%s' "$_response" | jq -r 'if ((.errors // []) | length) > 0 th
 if [[ -n "$_errors" ]]; then
   _error_msgs=$(printf '%s' "$_response" | jq -r '[.errors[].message] | join("; ")' 2>/dev/null)
   bl_log warn linear "API errors: ${_error_msgs}"
-  add_seg "${FG_WARN}${IC_WARN} Linear: API error"
+  bl_data_seg "$IC_LINEAR" Linear "API error" crit 1
   flush "$_bar_gradient"
   exit 0
 fi
@@ -214,7 +214,7 @@ _seg_list="${BOTTOMLINE_BAR_SEGMENTS:-$_default_segs}"
 while IFS= read -r _seg_name; do
   case "$_seg_name" in
     label)
-      add_seg "${FG_ACCENT}${IC_LINEAR}${IC_LINEAR:+ }${FG_TEXT}Linear ${_team}"
+      bl_data_seg "$IC_LINEAR" Linear "$_team" "" "1"
       ;;
     team)
       [[ -n "$_team_name" ]] && \
@@ -225,40 +225,31 @@ while IFS= read -r _seg_name; do
         add_seg "${FG_ACCENT}${IC_CYCLE}${IC_CYCLE:+ }${FG_TEXT}${_cycle_name} ${FG_ACCENT}·${FG_TEXT} ${_cycle_done}/${_cycle_total}"
       ;;
     in_progress)
-      (( _count_in_progress > 0 )) && \
-        add_seg "${FG_ACCENT}${IC_PROGRESS}${IC_PROGRESS:+ }${FG_TEXT}${_count_in_progress} wip"
+      (( _count_in_progress > 0 )) && bl_seg "$IC_PROGRESS" "${_count_in_progress} wip"
       ;;
     review)
-      (( _count_review > 0 )) && \
-        add_seg "${FG_ACCENT}${IC_REVIEW}${IC_REVIEW:+ }${FG_TEXT}${_count_review} review"
+      (( _count_review > 0 )) && bl_seg "$IC_REVIEW" "${_count_review} review"
       ;;
     assigned)
-      (( _count_assigned > 0 )) && \
-        add_seg "${FG_ACCENT}${IC_ASSIGNED}${IC_ASSIGNED:+ }${FG_TEXT}${_count_assigned} open"
+      (( _count_assigned > 0 )) && bl_seg "$IC_ASSIGNED" "${_count_assigned} open"
       ;;
     priority)
-      (( _count_priority > 0 )) && \
-        add_seg "${FG_WARN}${IC_PRIORITY}${IC_PRIORITY:+ }${FG_TEXT}${_count_priority} urgent"
+      (( _count_priority > 0 )) && bl_seg "$IC_PRIORITY" "${_count_priority} urgent" "" warn
       ;;
     overdue)
-      (( _count_overdue > 0 )) && \
-        add_seg "${FG_CRIT}${IC_OVERDUE}${IC_OVERDUE:+ }${FG_TEXT}${_count_overdue} overdue"
+      (( _count_overdue > 0 )) && bl_seg "$IC_OVERDUE" "${_count_overdue} overdue" "" crit
       ;;
     due_soon)
-      (( _count_due_soon > 0 )) && \
-        add_seg "${FG_WARN}${IC_DUE}${IC_DUE:+ }${FG_TEXT}${_count_due_soon} due soon"
+      (( _count_due_soon > 0 )) && bl_seg "$IC_DUE" "${_count_due_soon} due soon" "" warn
       ;;
     cycle_days)
-      [[ -n "$_cycle_id" && "$_cycle_days_left" -gt 0 ]] && \
-        add_seg "${FG_ACCENT}${IC_DAYS}${IC_DAYS:+ }${FG_TEXT}${_cycle_days_left}d left"
+      [[ -n "$_cycle_id" && "$_cycle_days_left" -gt 0 ]] && bl_seg "$IC_DAYS" "${_cycle_days_left}d left"
       ;;
     blocked)
-      (( _count_blocked > 0 )) && \
-        add_seg "${FG_WARN}${IC_BLOCKED}${IC_BLOCKED:+ }${FG_TEXT}${_count_blocked} blocked"
+      (( _count_blocked > 0 )) && bl_seg "$IC_BLOCKED" "${_count_blocked} blocked" "" warn
       ;;
     mentions)
-      (( _notif_count > 0 )) && \
-        add_seg "${FG_ACCENT}${IC_MENTIONS}${IC_MENTIONS:+ }${FG_TEXT}${_notif_count} unread"
+      (( _notif_count > 0 )) && bl_seg "$IC_MENTIONS" "${_notif_count} unread"
       ;;
     *)
       ;; # unknown segment: silently skip
