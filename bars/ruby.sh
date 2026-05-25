@@ -93,11 +93,9 @@ $has_minitest && bl_version_seg "$IC_TEST" Minitest
 
 # Slot 6: Tooling (order: RuboCop → Sidekiq → Devise)
 if [[ -n "$rubocop_version" ]]; then
-  if [[ "$rubocop_version" == "present" ]]; then
-    add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop"
-  else
-    add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop ${N}${FG_ACCENT}v${rubocop_version}"
-  fi
+  local _rcv="$rubocop_version"
+  [[ "$_rcv" == "present" ]] && _rcv=""
+  bl_seg "$IC_LINT" RuboCop "$_rcv"
 fi
 $has_sidekiq && bl_version_seg "$IC_QUEUE" Sidekiq "$sidekiq_version"
 $has_devise  && bl_version_seg "$IC_AUTH" Devise "$devise_version"
