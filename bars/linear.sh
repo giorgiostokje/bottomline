@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Bottomline bar: Linear project management
-# Segments (default order): cycle, in_progress, review, assigned
-# Opt-in segments: priority, overdue, due_soon, cycle_days, blocked, mentions
+# Segments (default order): label, team_id, cycle, in_progress, review, assigned
+# Opt-in segments: team, priority, overdue, due_soon, cycle_days, blocked, mentions
 #
 # Cache deviation: this bar does NOT use bl_bar_init because (1) refresh
 # defaults to 0 (no caching unless explicitly opted in via refresh_minutes),
@@ -45,7 +45,7 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_DAYS='⌛'; IC_BLOCKED='🚫'; IC_MENTIONS='@'; IC_WARN='⚠️'
     ;;
   *)
-    IC_LINEAR='◈'
+    IC_LINEAR=''
     IC_CYCLE=''; IC_PROGRESS=''; IC_REVIEW=''
     IC_ASSIGNED=''; IC_PRIORITY='!'; IC_OVERDUE=''; IC_DUE=''
     IC_DAYS=''; IC_BLOCKED=''; IC_MENTIONS='@'; IC_WARN='!'

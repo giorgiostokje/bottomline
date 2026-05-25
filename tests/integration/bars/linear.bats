@@ -107,6 +107,12 @@ SCRIPT
   [[ "$BAR_OUTPUT" == *"Bottomline Engineering"* ]]
 }
 
+@test "linear: team segment produces no output when API returns no team name" {
+  _mock_curl_fixture "linear_no_team_name.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' '["team"]'
+  [[ -z "$BAR_OUTPUT" ]]
+}
+
 @test "linear: BOTTOMLINE_BAR_SEGMENTS filters to listed segments only" {
   _mock_curl_fixture "linear_success.json"
   bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' '["cycle","assigned"]'

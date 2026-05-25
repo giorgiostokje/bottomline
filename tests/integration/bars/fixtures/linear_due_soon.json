@@ -28,7 +28,7 @@
           { "state": { "type": "started", "name": "In Review"   }, "priority": 1, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
           { "state": { "type": "started", "name": "In Review"   }, "priority": 1, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
           { "state": { "type": "started", "name": "In Review"   }, "priority": 1, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
-          { "state": { "type": "backlog",  "name": "Backlog"     }, "priority": 4, "dueDate": "2199-12-31", "cycle": null, "relations": { "nodes": [] } }
+          { "state": { "type": "backlog",  "name": "Backlog"     }, "priority": 4, "dueDate": "2199-12-31", "cycle": null, "relations": { "nodes": [{ "type": "blocked_by", "relatedIssue": { "state": { "type": "started" } } }] } }
         ]
       }
     },
