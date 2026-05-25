@@ -50,7 +50,8 @@ case "$BOTTOMLINE_ICON_TYPE" in
 esac
 
 # ── Params ────────────────────────────────────────────────────────────────────
-_params="${BOTTOMLINE_BAR_PARAMS:-{}}"
+_params="$BOTTOMLINE_BAR_PARAMS"
+if [[ -z "$_params" ]]; then _params='{}'; fi
 _api_key=$(printf '%s' "$_params" | jq -r '.api_key // empty')
 _team=$(printf '%s' "$_params" | jq -r '.team // empty')
 

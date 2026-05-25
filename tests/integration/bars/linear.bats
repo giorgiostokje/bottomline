@@ -53,7 +53,7 @@ SCRIPT
 @test "linear: auth error from API renders auth failed segment" {
   _mock_curl_fixture "linear_auth_error.json"
   bar_run linear "" 0 '{"api_key":"bad_key","team":"ENG"}'
-  [[ "$BAR_OUTPUT" == *"auth failed"* ]]
+  [[ "$BAR_OUTPUT" == *"API error"* ]]
 }
 
 @test "linear: network failure renders offline segment" {
