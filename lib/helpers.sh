@@ -133,3 +133,18 @@ bl_version_seg() {
   [[ -n "$version" ]] && seg+=" ${N}${FG_ACCENT}v${version}"
   add_seg "$seg"
 }
+
+# bl_log <level> <script> <message>
+# Appends a timestamped entry to the log file when BOTTOMLINE_LOG_LEVEL is set
+# to a value at or above <level> in severity (error > warn > debug).
+# No-op when BOTTOMLINE_LOG_LEVEL is "off" or unset.
+bl_log() {
+  local level="$1" script="$2" msg="$3"
+  [[ "${BOTTOMLINE_LOG_LEVEL:-off}" == "off" ]] && return 0
+  local lvl min
+  case "$level"                   in error) lvl=3;; warn) lvl=2;; debug) lvl=1;; *) return 0;; esac
+  case "${BOTTOMLINE_LOG_LEVEL}" in error) min=3;; warn) min=2;; debug) min=1;; *) return 0;; esac
+  (( lvl < min )) && return 0
+  printf '[%s] [%-5s] [%s] %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$level" "$script" "$msg" \
+    >> "${BOTTOMLINE_CACHE_DIR:-/tmp}/bottomline.log" 2>/dev/null
+}
