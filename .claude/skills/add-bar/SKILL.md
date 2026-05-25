@@ -51,24 +51,31 @@ fi
 # ... read files, run commands, build segment strings ...
 
 _bl_out=$(
-  # ── Segments (canonical slot order) ───────────────────────────────────────────
+  # ── Segments ──────────────────────────────────────────────────────────────
+  # Use bl_seg for standard icon/label/[version] segments (recommended).
+  # Use bl_data_seg for two-element segments with optional bullet separator.
+  # Use add_seg directly only when the format cannot fit these helpers.
+  #
+  # For language/ecosystem bars, follow canonical slot order (required):
+  # Runtime → Package manager → Framework → Add-ons → Testing → Tooling
+
   # Slot 1: Runtime
-  [[ -n "$lang_version" ]] && add_seg "${FG_ACCENT}${IC_LANG} ${FG_TEXT}<Name> ${FG_ACCENT}v${lang_version}"
+  # [[ -n "$lang_version" ]] && bl_seg "$IC_LANG" "<Name>" "$lang_version"
 
   # Slot 2: Package manager (when not implicit)
-  # [[ -n "$pm_name" ]] && add_seg "${FG_ACCENT}${IC_PM} ${FG_TEXT}${pm_name}"
+  # [[ -n "$pm_name" ]] && bl_seg "$IC_PM" "$pm_name"
 
   # Slot 3: Framework
-  # [[ -n "$framework_version" ]] && add_seg "${FG_ACCENT}${IC_FRAMEWORK} ${FG_TEXT}<Framework> ${FG_ACCENT}v${framework_version}"
+  # [[ -n "$framework_version" ]] && bl_seg "$IC_FRAMEWORK" "<Framework>" "$framework_version"
 
   # Slot 4: Framework add-ons
-  # [[ -n "$addon_version" ]] && add_seg "${FG_ACCENT}${IC_ADDON} ${FG_TEXT}<Addon> ${FG_ACCENT}v${addon_version}"
+  # [[ -n "$addon_version" ]] && bl_seg "$IC_ADDON" "<Addon>" "$addon_version"
 
-  # Slot 5: Testing (REQUIRED — see CLAUDE.md "Language bar segment ordering")
-  # [[ -n "$test_framework" ]] && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}${test_framework}"
+  # Slot 5: Testing (REQUIRED — see CLAUDE.md)
+  # [[ -n "$test_framework" ]] && bl_seg "$IC_TEST" "$test_framework"
 
-  # Slot 6: Tooling (REQUIRED — at least one; sub-order: static analysis → service pkgs → ORM/DB → styling → other)
-  # [[ -n "$linter_version" ]] && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}<Linter> ${FG_ACCENT}v${linter_version}"
+  # Slot 6: Tooling (REQUIRED — sub-order: static analysis → service pkgs → ORM/DB → styling → other)
+  # [[ -n "$linter_version" ]] && bl_seg "$IC_LINT" "<Linter>" "$linter_version"
 
   (( ${#_sc[@]} == 0 )) && exit 0
   flush "$_bar_gradient"
@@ -83,6 +90,21 @@ Key rules:
 - Exit silently (`exit 0`) when the bar doesn't apply — never produce output for an irrelevant project.
 - Always check `(( ${#_sc[@]} == 0 )) && exit 0` before `flush` to avoid emitting an empty line.
 - Pass `"$_bar_gradient"` (not `"$BOTTOMLINE_GRADIENT"`) to `flush` — the palette block sets this correctly for both the brand and inherit cases.
+
+
+## Segment helpers (from helpers.sh)
+
+Use these instead of constructing `add_seg` strings manually:
+
+| Helper | Signature | Use for |
+|--------|-----------|---------|
+| `bl_seg` | `bl_seg icon label [version] [state]` | Language/tool segments with optional version |
+| `bl_data_seg` | `bl_data_seg icon primary [qualifier] [state] [bullet]` | Two-element segments (e.g., status + count, app + team) |
+
+`state` can be `"warn"` or `"crit"`: recolors the accent part and appends ⚠ or 🛑.
+`bullet="1"` inserts `·` between primary and qualifier (use when the two parts are logically independent).
+
+Using `add_seg` directly is fine when the segment format genuinely can't fit these helpers.
 
 ---
 
@@ -148,7 +170,8 @@ Cover at minimum:
 - [ ] signal-file hard guard placed AFTER the cache block (not before `source`)
 - [ ] `(( ${#_sc[@]} == 0 )) && exit 0` before `flush`
 - [ ] `_bar_gradient` used, not `$BOTTOMLINE_GRADIENT` directly
-- [ ] Segments emitted in canonical slot order (Runtime → PM → Framework → Add-ons → Testing → Tooling)
+- [ ] Segments use bl_seg / bl_data_seg where format fits (recommended)
+- [ ] Language/ecosystem bars: segments in canonical slot order (Runtime → PM → Framework → Add-ons → Testing → Tooling) — required for language bars
 - [ ] At least one **testing segment** (slot 5) — see "Language bar segment ordering" in CLAUDE.md
 - [ ] At least one **static analysis segment** (slot 6) — linter, type checker, or formatter
 - [ ] Slot 6 items ordered: static analysis → service pkgs → ORM/DB → styling → other
