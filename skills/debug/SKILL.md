@@ -21,7 +21,38 @@ Store the output as `BL_DIR`. If the result is `NOT_FOUND`, use the base directo
 
 Work through this checklist in order — each step rules out a class of failure.
 
-## 1. Manual script test
+## 1. Check the log
+
+Determine the effective log level (highest-priority non-null value across the
+three config files — project wins over user wins over settings):
+
+```bash
+jq -r '.debug.log_level // empty' "$BL_DIR/settings.json" 2>/dev/null
+jq -r '.debug.log_level // empty' "$HOME/.claude/bottomline.json" 2>/dev/null
+jq -r '.debug.log_level // empty' "$(pwd)/.claude/bottomline.json" 2>/dev/null
+```
+
+**Logging is enabled** (any non-`off` value appears) — read the most recent
+entries:
+
+```bash
+logfile="${BOTTOMLINE_CACHE_DIR:-/tmp}/bottomline.log"
+[[ -f "$logfile" ]] && tail -50 "$logfile" || echo "LOG NOT FOUND"
+```
+
+Look for `[error]` or `[warn]` lines near the time the problem started — they
+often name the bar script and the exact failure.
+
+**Logging is off** — you can enable it temporarily to capture more detail:
+
+```json
+{ "debug": { "log_level": "debug" } }
+```
+
+Save to `$HOME/.claude/bottomline.json`, trigger a status-line refresh, then
+re-read the log as above. Remove the setting once you have what you need.
+
+## 2. Manual script test
 
 ```bash
 echo '{}' | bash "$BL_DIR/bottomline.sh"
@@ -30,9 +61,9 @@ echo '{}' | bash "$BL_DIR/bottomline.sh"
 - **Output appears:** the script works. For Marketplace installs, also confirm
   the shim works (step 2). Otherwise the issue is in hook wiring (step 3).
 - **No output / errors:** the issue is in the script or its dependencies. Check
-  steps 4–10.
+  steps 5–11.
 
-## 2. Shim test (Marketplace installs only)
+## 3. Shim test (Marketplace installs only)
 
 Skip this step if `settings.json` points directly to a path inside
 `/plugins/cache/` — that is a manual install and needs no shim.
@@ -93,7 +124,7 @@ echo "resolved: ${_bl_dir:-NONE}"
 If `resolved: NONE`, no complete version was found in the cache.
 Try reinstalling Bottomline from the Marketplace.
 
-## 3. Hook wiring
+## 4. Hook wiring
 
 Confirm `statusLine.command` points to `bottomline.sh`:
 
@@ -108,7 +139,7 @@ for manual installs).
 If it is `"not configured"` or points elsewhere, run the **setup** skill to
 wire it correctly.
 
-## 4. jq on PATH
+## 5. jq on PATH
 
 ```bash
 command -v jq || echo "MISSING"
@@ -133,7 +164,7 @@ to do it themselves, then use the appropriate command:
 All config loading silently produces no output when jq is absent — this is the
 most common cause of a blank status line.
 
-## 5. Icon boxes
+## 6. Icon boxes
 
 Boxes (□ or ▯) instead of icons mean the terminal font doesn't include Nerd
 Font glyphs.
@@ -148,7 +179,7 @@ Fix option B — switch to emoji icons immediately:
 
 Save to `$HOME/.claude/bottomline.json`.
 
-## 6. Inspect the merged config
+## 7. Inspect the merged config
 
 Check what config is actually active after the three-layer merge:
 
@@ -175,7 +206,7 @@ jq -n \
 Look for unexpected `null` values, missing keys, or an overridden `appearance.theme` that
 is pulling in colours you didn't expect.
 
-## 7. Invalid settings.json (all defaults silently lost)
+## 8. Invalid settings.json (all defaults silently lost)
 
 If colours, segments, or `project_aware` behave as though system-level defaults
 don't exist — especially when a user- or project-level config file is present —
@@ -195,7 +226,7 @@ If invalid, open `settings.json` and look for trailing commas (the most common
 cause — a comma after the last item in an object or array). Fix the JSON, then
 re-run the step 1 manual test.
 
-## 8. Config value validation
+## 9. Config value validation
 
 Run the block below against each config file you have edited. No output from
 the jq script means that file passed all checks.
@@ -291,7 +322,7 @@ for _f in "$HOME/.claude/bottomline.json" "$(pwd)/.claude/bottomline.json"; do
 done
 ```
 
-## 9. Bar not appearing
+## 10. Bar not appearing
 
 A bar that should auto-detect is missing. Check in order:
 
@@ -329,7 +360,7 @@ If this produces output but the full stack doesn't: `project_aware` may be
 `false` in a config file, or the signal file check is failing on a symlinked
 path.
 
-## 10. Bash version
+## 11. Bash version
 
 ```bash
 bash --version | head -1
