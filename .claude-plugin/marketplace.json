@@ -1,14 +1,14 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "bottomline",
-  "description": "An extensible status line for Claude Code, pre-packed with themes, statistics and skills.",
+  "description": "A modular status line for Claude Code, pre-packed with themes, statistics and skills.",
   "owner": {
     "name": "Giorgio Stokje"
   },
   "plugins": [
     {
       "name": "bottomline",
-      "description": "An extensible status line for Claude Code, pre-packed with themes, statistics and skills.",
+      "description": "A modular status line for Claude Code, pre-packed with themes, statistics and skills.",
       "author": {
         "name": "Giorgio Stokje"
       },

@@ -31,9 +31,13 @@ Three new segments handled in the `case` dispatch in `bars/linear.sh`:
 
 ### Icon for `label`
 
-- **nerd mode:** nerd-font icon for Linear (U+F7A2 or closest available); fallback to `◈` if no suitable glyph
+- **nerd mode:** `nf-mdi-rhombus` U+F7A2 (`\xef\x9e\xa2`) — matches Linear's diamond logo
 - **emoji mode:** `◈`
 - **none mode:** `◈`
+
+### `team_id` rendering
+
+No icon — the key is compact and self-identifying. Rendered in accent colour only (e.g. `ENG`).
 
 ### Default segment list
 
