@@ -61,5 +61,8 @@
       },
       { "script": "git", "signals": [".git"], "refresh_minutes": 0 }
     ]
+  },
+  "debug": {
+    "log_level": "off"
   }
 }

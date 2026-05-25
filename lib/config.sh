@@ -61,6 +61,7 @@ bl_load_config() {
   CFG_ICON_OVR=$(cfg_json  '.appearance.icons.overrides')
   CFG_BARS=$(cfg_json    '.bars')
   CFG_SEP_RAW=$(cfg_str  '.segments.separator')
+  CFG_LOG_LEVEL=$(cfg_str  '.debug.log_level')
 
   # When a theme is set in any config file (project > user > settings), its
   # colors take priority over all per-file color settings.

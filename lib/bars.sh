@@ -4,7 +4,7 @@
 # inline bars (rendered at parent scope from .segments JSON).
 #
 # Inputs : CFG_BARS, CFG_TEXT_HEX, CFG_ACCENT_HEX, CFG_WARN_HEX, CFG_CRIT_HEX,
-#          CFG_BG, CFG_ICON_TYPE, SEP, B, R,
+#          CFG_BG, CFG_ICON_TYPE, CFG_LOG_LEVEL, SEP, B, R,
 #          C_R[0], C_G[0], C_B[0],
 #          IC_DANGER, cdir, _BL_DIR,
 #          FG_TEXT, FG_ACCENT, FG_WARN, FG_CRIT (set by lib/colors.sh)
@@ -65,6 +65,7 @@ _bl_export_bar_env() {
   export BOTTOMLINE_PROJECT_DIR="$cdir"
   export BOTTOMLINE_GRADIENT="$CFG_BG"
   export BOTTOMLINE_LIB="$_BL_DIR/lib"
+  export BOTTOMLINE_LOG_LEVEL="${CFG_LOG_LEVEL:-off}"
 }
 
 _bl_resolve_bar_colors() {
