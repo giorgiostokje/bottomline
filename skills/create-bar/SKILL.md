@@ -36,9 +36,11 @@ case "$BOTTOMLINE_ICON_TYPE" in
 esac
 
 # ── Your segments ─────────────────────────────────────────────────────────────
+# bl_seg icon label [version] [state] — standard icon/label/version segments
+# bl_data_seg icon primary [qualifier] [state] [bullet] — two-element segments
+# add_seg directly — only when the format can't fit the helpers above
 my_value="hello"
-[[ -n "$my_value" ]] \
-  && add_seg "${FG_ACCENT}${IC_EXAMPLE} ${FG_TEXT}${my_value}"
+[[ -n "$my_value" ]] && bl_seg "$IC_EXAMPLE" "$my_value"
 
 # ── Flush ─────────────────────────────────────────────────────────────────────
 (( ${#_sc[@]} == 0 )) && exit 0
@@ -78,6 +80,27 @@ After `source "$BOTTOMLINE_LIB/helpers.sh"` these are ready to use:
 | `R` | ANSI reset |
 | `B` | ANSI bold |
 | `SEP` | Separator glyph |
+
+## Segment helpers
+
+Use `bl_seg` and `bl_data_seg` (from helpers.sh) instead of constructing `add_seg` strings manually:
+
+```bash
+# Standard segment: icon + label + optional version
+bl_seg "$IC_EXAMPLE" "My Tool" "$version"
+
+# With state (recolors accent part, appends trailing icon):
+bl_seg "$IC_EXAMPLE" "My Tool" "$version" warn   # ⚠ appended
+bl_seg "$IC_EXAMPLE" "My Tool" "$version" crit   # 🛑 appended
+
+# Two-element segment with bullet separator:
+bl_data_seg "$IC_EXAMPLE" "Primary" "qualifier" "" "1"  # → icon Primary · qualifier
+
+# Two-element segment with state:
+bl_data_seg "$IC_EXAMPLE" "App" "offline" warn "1"   # → icon App · offline ⚠
+```
+
+Using `add_seg` directly is fine when the format genuinely can't fit these helpers.
 
 ## Available Env Vars (from bottomline.sh)
 
