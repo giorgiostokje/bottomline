@@ -3,9 +3,10 @@
     "teams": {
       "nodes": [
         {
+          "name": "Bottomline Engineering",
           "activeCycle": {
             "id": "cycle-abc",
-            "name": "Sprint 42",
+            "name": "Cycle 42",
             "completedIssueCountHistory": [12, 14, 15],
             "issueCountHistory": [22, 23, 23],
             "endsAt": "2030-12-31T00:00:00.000Z"
