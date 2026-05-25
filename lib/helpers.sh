@@ -125,14 +125,17 @@ bl_cache_path() {
 bl_cache_write() {
   local cache_file="$1" output="$2"
   if [[ -z "$output" ]]; then return; fi
-  printf '%s' "$output" > "$cache_file"
-  # Remove from the last two underscores to strip both fingerprint and bucket
+  # Use bash noclobber (set -C) so the redirect uses O_CREAT|O_EXCL — the kernel
+  # guarantees only one concurrent render creates the file, preventing multiple
+  # renders from each fetching fresh data and displaying different results.
+  # Language-bar output is deterministic, so losers can safely display their own
+  # computed output without re-reading; only the winner runs cleanup.
   local stem; stem="${cache_file%_*_*.txt}"
-  # Derive the cache directory from the file path so this works with any BOTTOMLINE_CACHE_DIR.
-  # -L is required on macOS where /tmp is a symlink to /private/tmp.
   local cache_dir; cache_dir=$(dirname "$cache_file")
-  find -L "$cache_dir" -maxdepth 1 -name "${stem##*/}_*_*.txt" \
-    ! -name "$(basename "$cache_file")" -print0 2>/dev/null | xargs -0 rm -f 2>/dev/null
+  if (set -C; printf '%s' "$output" > "$cache_file") 2>/dev/null; then
+    find -L "$cache_dir" -maxdepth 1 -name "${stem##*/}_*_*.txt" \
+      ! -name "$(basename "$cache_file")" -print0 2>/dev/null | xargs -0 rm -f 2>/dev/null
+  fi
 }
 
 # Compute an 8-char hex fingerprint from the mtimes of the given files.
