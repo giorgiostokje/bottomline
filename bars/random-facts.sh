@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Bottomline bar: random fact bar
 # Colors are fully dictated by the bar's config — no hardcoded fallbacks.
+#
+# Cache deviation: this bar does NOT use bl_bar_init because its cache key
+# is purely time-bucketed (no project component) — the same random fact is
+# shown across all projects within a refresh window. Cache is written
+# manually with `set -C` for atomic creation.
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"

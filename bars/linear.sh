@@ -2,6 +2,13 @@
 # Bottomline bar: Linear project management
 # Segments (default order): cycle, in_progress, review, assigned
 # Opt-in segments: priority, overdue, due_soon, cycle_days, blocked, mentions
+#
+# Cache deviation: this bar does NOT use bl_bar_init because (1) refresh
+# defaults to 0 (no caching unless explicitly opted in via refresh_minutes),
+# (2) it uses "team:api_key" as the cache discriminator instead of the
+# project dir, and (3) on API failure it falls back to a stale cache file
+# (any bucket) rather than re-running the request. Manages its own cache
+# lifecycle below.
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
@@ -18,28 +25,28 @@ fi
 # ── Icons ─────────────────────────────────────────────────────────────────────
 case "$BOTTOMLINE_ICON_TYPE" in
   nerd)
-    _IC_LINEAR=$'\xee\x9c\xb7'    # U+E737  nf-dev-linear
-    _IC_CYCLE=$'\xef\x8c\x81'     # U+F301  nf-mdi-sync
-    _IC_PROGRESS=$'\xef\x87\x99'  # U+F1D9  nf-fa-circle_o_notch
-    _IC_REVIEW=$'\xef\x81\xae'    # U+F06E  nf-fa-eye
-    _IC_ASSIGNED=$'\xef\x82\xae'  # U+F0AE  nf-fa-tasks
-    _IC_PRIORITY=$'\xef\x81\xaa'  # U+F06A  nf-fa-exclamation_circle
-    _IC_OVERDUE=$'\xef\x81\xb3'   # U+F073  nf-fa-calendar
-    _IC_DUE=$'\xef\x81\xb3'      # U+F073  nf-fa-calendar
-    _IC_DAYS=$'\xef\x89\x92'      # U+F252  nf-fa-hourglass_half
-    _IC_BLOCKED=$'\xef\x81\x9e'   # U+F05E  nf-fa-ban
-    _IC_MENTIONS=$'\xef\x87\xba'  # U+F1FA  nf-fa-at
-    _IC_WARN=$'\xef\x81\xb1'      # U+F071  nf-fa-warning
+    IC_LINEAR=$'\xee\x9c\xb7'    # U+E737  nf-dev-linear
+    IC_CYCLE=$'\xef\x8c\x81'     # U+F301  nf-mdi-sync
+    IC_PROGRESS=$'\xef\x87\x99'  # U+F1D9  nf-fa-circle_o_notch
+    IC_REVIEW=$'\xef\x81\xae'    # U+F06E  nf-fa-eye
+    IC_ASSIGNED=$'\xef\x82\xae'  # U+F0AE  nf-fa-tasks
+    IC_PRIORITY=$'\xef\x81\xaa'  # U+F06A  nf-fa-exclamation_circle
+    IC_OVERDUE=$'\xef\x81\xb3'   # U+F073  nf-fa-calendar
+    IC_DUE=$'\xef\x81\xb3'      # U+F073  nf-fa-calendar
+    IC_DAYS=$'\xef\x89\x92'      # U+F252  nf-fa-hourglass_half
+    IC_BLOCKED=$'\xef\x81\x9e'   # U+F05E  nf-fa-ban
+    IC_MENTIONS=$'\xef\x87\xba'  # U+F1FA  nf-fa-at
+    IC_WARN=$'\xef\x81\xb1'      # U+F071  nf-fa-warning
     ;;
   emoji)
-    _IC_LINEAR='🔷'; _IC_CYCLE='🔄'; _IC_PROGRESS='⏳'; _IC_REVIEW='👁'
-    _IC_ASSIGNED='📋'; _IC_PRIORITY='❗'; _IC_OVERDUE='📅'; _IC_DUE='📅'
-    _IC_DAYS='⌛'; _IC_BLOCKED='🚫'; _IC_MENTIONS='@'; _IC_WARN='⚠️'
+    IC_LINEAR='🔷'; IC_CYCLE='🔄'; IC_PROGRESS='⏳'; IC_REVIEW='👁'
+    IC_ASSIGNED='📋'; IC_PRIORITY='❗'; IC_OVERDUE='📅'; IC_DUE='📅'
+    IC_DAYS='⌛'; IC_BLOCKED='🚫'; IC_MENTIONS='@'; IC_WARN='⚠️'
     ;;
   *)
-    _IC_LINEAR=''; _IC_CYCLE=''; _IC_PROGRESS=''; _IC_REVIEW=''
-    _IC_ASSIGNED=''; _IC_PRIORITY='!'; _IC_OVERDUE=''; _IC_DUE=''
-    _IC_DAYS=''; _IC_BLOCKED=''; _IC_MENTIONS='@'; _IC_WARN='!'
+    IC_LINEAR=''; IC_CYCLE=''; IC_PROGRESS=''; IC_REVIEW=''
+    IC_ASSIGNED=''; IC_PRIORITY='!'; IC_OVERDUE=''; IC_DUE=''
+    IC_DAYS=''; IC_BLOCKED=''; IC_MENTIONS='@'; IC_WARN='!'
     ;;
 esac
 
@@ -50,13 +57,13 @@ _team=$(printf '%s' "$_params" | jq -r '.team // empty')
 
 # ── Validation (short-circuit: first failure exits) ───────────────────────────
 if [[ -z "$_api_key" ]]; then
-  add_seg "${FG_WARN}${_IC_WARN} Linear: missing api_key"
+  add_seg "${FG_WARN}${IC_WARN} Linear: missing api_key"
   flush "$_bar_gradient"
   exit 0
 fi
 
 if [[ -z "$_team" ]]; then
-  add_seg "${FG_WARN}${_IC_WARN} Linear: missing team"
+  add_seg "${FG_WARN}${IC_WARN} Linear: missing team"
   flush "$_bar_gradient"
   exit 0
 fi
@@ -121,14 +128,14 @@ if [[ -z "$_response" ]]; then
     cat "$_stale_cache"
     exit 0
   fi
-  add_seg "${FG_WARN}${_IC_WARN} Linear: offline"
+  add_seg "${FG_WARN}${IC_WARN} Linear: offline"
   flush "$_bar_gradient"
   exit 0
 fi
 
 _errors=$(printf '%s' "$_response" | jq -r 'if ((.errors // []) | length) > 0 then "yes" else "" end' 2>/dev/null)
 if [[ -n "$_errors" ]]; then
-  add_seg "${FG_WARN}${_IC_WARN} Linear: auth failed"
+  add_seg "${FG_WARN}${IC_WARN} Linear: auth failed"
   flush "$_bar_gradient"
   exit 0
 fi
@@ -207,43 +214,43 @@ while IFS= read -r _seg_name; do
   case "$_seg_name" in
     cycle)
       [[ -n "$_cycle_name" ]] && \
-        add_seg "${FG_ACCENT}${_IC_CYCLE}${_IC_CYCLE:+ }${FG_TEXT}${_cycle_name} ${FG_ACCENT}·${FG_TEXT} ${_cycle_done}/${_cycle_total}"
+        add_seg "${FG_ACCENT}${IC_CYCLE}${IC_CYCLE:+ }${FG_TEXT}${_cycle_name} ${FG_ACCENT}·${FG_TEXT} ${_cycle_done}/${_cycle_total}"
       ;;
     in_progress)
       (( _count_in_progress > 0 )) && \
-        add_seg "${FG_ACCENT}${_IC_PROGRESS}${_IC_PROGRESS:+ }${FG_TEXT}${_count_in_progress}"
+        add_seg "${FG_ACCENT}${IC_PROGRESS}${IC_PROGRESS:+ }${FG_TEXT}${_count_in_progress}"
       ;;
     review)
       (( _count_review > 0 )) && \
-        add_seg "${FG_ACCENT}${_IC_REVIEW}${_IC_REVIEW:+ }${FG_TEXT}${_count_review}"
+        add_seg "${FG_ACCENT}${IC_REVIEW}${IC_REVIEW:+ }${FG_TEXT}${_count_review}"
       ;;
     assigned)
       (( _count_assigned > 0 )) && \
-        add_seg "${FG_ACCENT}${_IC_ASSIGNED}${_IC_ASSIGNED:+ }${FG_TEXT}${_count_assigned}"
+        add_seg "${FG_ACCENT}${IC_ASSIGNED}${IC_ASSIGNED:+ }${FG_TEXT}${_count_assigned}"
       ;;
     priority)
       (( _count_priority > 0 )) && \
-        add_seg "${FG_WARN}${_IC_PRIORITY}${_IC_PRIORITY:+ }${FG_TEXT}${_count_priority}"
+        add_seg "${FG_WARN}${IC_PRIORITY}${IC_PRIORITY:+ }${FG_TEXT}${_count_priority}"
       ;;
     overdue)
       (( _count_overdue > 0 )) && \
-        add_seg "${FG_CRIT}${_IC_OVERDUE}${_IC_OVERDUE:+ }${FG_TEXT}${_count_overdue}"
+        add_seg "${FG_CRIT}${IC_OVERDUE}${IC_OVERDUE:+ }${FG_TEXT}${_count_overdue}"
       ;;
     due_soon)
       (( _count_due_soon > 0 )) && \
-        add_seg "${FG_WARN}${_IC_DUE}${_IC_DUE:+ }${FG_TEXT}${_count_due_soon}"
+        add_seg "${FG_WARN}${IC_DUE}${IC_DUE:+ }${FG_TEXT}${_count_due_soon}"
       ;;
     cycle_days)
       [[ -n "$_cycle_id" && "$_cycle_days_left" -gt 0 ]] && \
-        add_seg "${FG_ACCENT}${_IC_DAYS}${_IC_DAYS:+ }${FG_TEXT}${_cycle_days_left}d left"
+        add_seg "${FG_ACCENT}${IC_DAYS}${IC_DAYS:+ }${FG_TEXT}${_cycle_days_left}d left"
       ;;
     blocked)
       (( _count_blocked > 0 )) && \
-        add_seg "${FG_WARN}${_IC_BLOCKED}${_IC_BLOCKED:+ }${FG_TEXT}${_count_blocked}"
+        add_seg "${FG_WARN}${IC_BLOCKED}${IC_BLOCKED:+ }${FG_TEXT}${_count_blocked}"
       ;;
     mentions)
       (( _notif_count > 0 )) && \
-        add_seg "${FG_ACCENT}${_IC_MENTIONS}${_IC_MENTIONS:+ }${FG_TEXT}${_notif_count}"
+        add_seg "${FG_ACCENT}${IC_MENTIONS}${IC_MENTIONS:+ }${FG_TEXT}${_notif_count}"
       ;;
     *)
       ;; # unknown segment: silently skip

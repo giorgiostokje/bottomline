@@ -27,6 +27,7 @@ secs_until_reset() {
 }
 
 bl_read_state() {
+  local hint five_raw week_raw remote_url host path
   input=$(cat)
 
   cdir=$(j '.workspace.current_dir'); [[ -z "$cdir" ]] && cdir=$(j '.cwd')

@@ -177,3 +177,7 @@ Any time a bar is **added** or its **segments change**, update every applicable 
 ### `dmerge/2` is duplicated
 
 The `dmerge/2` jq function is copy-pasted verbatim into both `lib/config.sh` (config loading) and `skills/debug/SKILL.md` (the merged-config inspection snippet). If the algorithm changes, update both.
+
+### Bar script style conventions
+
+Both `[[ -n "$v" ]] && add_seg "..."` and `if; then; add_seg; fi` styles are acceptable in bar scripts. They are not mechanically retrofitted — touching ~100 call sites for zero functional change is not worth the typo risk. New bars may use either style.
