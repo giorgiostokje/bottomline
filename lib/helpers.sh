@@ -145,6 +145,8 @@ bl_log() {
   case "$level"                   in error) lvl=3;; warn) lvl=2;; debug) lvl=1;; *) return 0;; esac
   case "${BOTTOMLINE_LOG_LEVEL}" in error) min=3;; warn) min=2;; debug) min=1;; *) return 0;; esac
   (( lvl < min )) && return 0
+  local logfile="${BOTTOMLINE_CACHE_DIR:-/tmp}/bottomline.log"
+  [[ ! -e "$logfile" ]] && (umask 177 && touch "$logfile" 2>/dev/null)
   printf '[%s] [%-5s] [%s] %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$level" "$script" "$msg" \
-    >> "${BOTTOMLINE_CACHE_DIR:-/tmp}/bottomline.log" 2>/dev/null
+    >> "$logfile" 2>/dev/null
 }
