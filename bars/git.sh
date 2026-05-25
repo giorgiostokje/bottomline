@@ -188,8 +188,26 @@ if ! $is_detached && command -v gh > /dev/null 2>&1; then
   if [[ "$_remote_url" == *"github.com"* ]]; then
 
     # CI status — most recent run for this branch
-    _ci_json=$(cd "$PROJ" && gh run list --branch "$branch" --limit 1 \
-               --json status,conclusion 2>/dev/null)
+    _gh_stderr=''
+    if [[ "${BOTTOMLINE_LOG_LEVEL:-off}" != "off" ]]; then
+      _gh_tmp=$(mktemp 2>/dev/null) || _gh_tmp="/tmp/bl_gh_stderr_$$"
+      _ci_json=$(cd "$PROJ" && gh run list --branch "$branch" --limit 1 \
+                 --json status,conclusion 2>"$_gh_tmp")
+      _gh_exit=$?
+      _gh_stderr=$(cat "$_gh_tmp" 2>/dev/null); rm -f "$_gh_tmp"
+    else
+      _ci_json=$(cd "$PROJ" && gh run list --branch "$branch" --limit 1 \
+                 --json status,conclusion 2>/dev/null)
+      _gh_exit=$?
+    fi
+    bl_log debug git "gh run list exit=${_gh_exit} len=${#_ci_json}"
+    if (( _gh_exit != 0 )); then
+      if [[ -n "$_gh_stderr" ]]; then
+        bl_log warn git "gh run list failed (exit=${_gh_exit}): ${_gh_stderr:0:200}"
+      else
+        bl_log error git "gh run list failed (exit=${_gh_exit})"
+      fi
+    fi
     _ci_status=$(printf '%s' "$_ci_json" | jq -r '.[0].status // empty' 2>/dev/null)
     _ci_conclusion=$(printf '%s' "$_ci_json" | jq -r '.[0].conclusion // empty' 2>/dev/null)
 
@@ -202,8 +220,26 @@ if ! $is_detached && command -v gh > /dev/null 2>&1; then
     fi
 
     # PR state — open PR for this branch
-    _pr_json=$(cd "$PROJ" && gh pr view \
-               --json number,isDraft,reviewDecision,state 2>/dev/null)
+    _gh_stderr=''
+    if [[ "${BOTTOMLINE_LOG_LEVEL:-off}" != "off" ]]; then
+      _gh_tmp=$(mktemp 2>/dev/null) || _gh_tmp="/tmp/bl_gh_stderr_$$"
+      _pr_json=$(cd "$PROJ" && gh pr view \
+                 --json number,isDraft,reviewDecision,state 2>"$_gh_tmp")
+      _gh_exit=$?
+      _gh_stderr=$(cat "$_gh_tmp" 2>/dev/null); rm -f "$_gh_tmp"
+    else
+      _pr_json=$(cd "$PROJ" && gh pr view \
+                 --json number,isDraft,reviewDecision,state 2>/dev/null)
+      _gh_exit=$?
+    fi
+    bl_log debug git "gh pr view exit=${_gh_exit} len=${#_pr_json}"
+    if (( _gh_exit != 0 )); then
+      if [[ -n "$_gh_stderr" ]]; then
+        bl_log warn git "gh pr view failed (exit=${_gh_exit}): ${_gh_stderr:0:200}"
+      else
+        bl_log error git "gh pr view failed (exit=${_gh_exit})"
+      fi
+    fi
     _pr_state=$(printf '%s' "$_pr_json" | jq -r '.state // empty' 2>/dev/null)
     _pr_number=$(printf '%s' "$_pr_json" | jq -r '.number // empty' 2>/dev/null)
     _pr_is_draft=$(printf '%s' "$_pr_json" | jq -r '.isDraft // empty' 2>/dev/null)
