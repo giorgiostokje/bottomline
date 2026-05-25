@@ -1,5 +1,7 @@
 # Bottomline
 
+![Bottomline](bottomline.png)
+
 [![Tests](https://github.com/giorgiostokje/bottomline/actions/workflows/tests.yml/badge.svg)](https://github.com/giorgiostokje/bottomline/actions/workflows/tests.yml)
 
 Gradient status line for Claude Code. Renders a bar of ANSI segments below every response, plus optional extra bars with language ecosystem info, git details, or anything you write yourself.
