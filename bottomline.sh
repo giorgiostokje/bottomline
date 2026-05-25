@@ -331,16 +331,12 @@ resolve_bar_color() {
 }
 
 # Resolve a single params value for a script bar:
-#   $VAR_NAME     → expand environment variable (empty if unset)
 #   file:~/path   → read from $HOME/path (tilde expanded, absolute only)
 #   file:/abs     → read from /abs path
 #   anything else → return as literal
 _bl_resolve_param_val() {
   local v="$1"
-  if [[ "$v" == \$* ]]; then
-    local _var_name="${v:1}"
-    printf '%s' "${!_var_name}"
-  elif [[ "$v" == "file:~/"* ]]; then
+  if [[ "$v" == "file:~/"* ]]; then
     local _fpath="${HOME}/${v:7}"
     [[ -f "$_fpath" ]] && tr -d '\n' < "$_fpath" || printf ''
   elif [[ "$v" == "file:/"* ]]; then

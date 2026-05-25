@@ -455,10 +455,10 @@ Kotlin version, Gradle wrapper version, framework (Ktor or Spring Boot), testing
 
 #### `linear` — Linear project management
 
-No auto-detection signal — add explicitly with `params.api_key` (literal, `$ENV_VAR`, or `file:~/.token`) and `params.team` (team key from your Linear workspace URL). Obtain a key from Linear → Settings → API → Personal API keys.
+No auto-detection signal — add explicitly with `params.api_key` (literal or `file:~/.token`) and `params.team` (team key from your Linear workspace URL). Obtain a key from Linear → Settings → API → Personal API keys.
 
 ```json
-{ "script": "linear", "refresh_minutes": 15, "params": { "api_key": "$LINEAR_API_KEY", "team": "ENG" } }
+{ "script": "linear", "refresh_minutes": 15, "params": { "api_key": "file:~/.linear_token", "team": "ENG" } }
 ```
 
 Default segments: `cycle` (sprint name and progress), `in_progress`, `review`, `assigned`. Opt-in via `params.segments`: `priority`, `overdue`, `due_soon` (configurable via `params.due_soon_days`, default 3), `cycle_days`, `blocked`, `mentions`. Falls back to stale cached data when offline.

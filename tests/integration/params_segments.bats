@@ -15,27 +15,6 @@ teardown() {
   rm -f "$_FAKE_BAR"
 }
 
-# ── params: env var resolution ─────────────────────────────────────────────────
-
-@test "params: \$VAR reference is resolved to env var value" {
-  printf '#!/usr/bin/env bash\nprintf "%%s" "${BOTTOMLINE_BAR_PARAMS:-{}}"\n' > "$_FAKE_BAR"
-  local cfg
-  cfg=$(jq -n --arg s "$_FAKE_BAR" '{"bars":[{"script":$s,"params":{"token":"$_BL_TEST_TOKEN"}}]}')
-  export _BL_TEST_TOKEN="resolved_secret"
-  bl_run '{}' "$cfg"
-  unset _BL_TEST_TOKEN
-  [[ "$BL_OUTPUT" == *'resolved_secret'* ]]
-}
-
-@test "params: unset \$VAR resolves to empty string" {
-  printf '#!/usr/bin/env bash\nprintf "%%s" "${BOTTOMLINE_BAR_PARAMS:-{}}"\n' > "$_FAKE_BAR"
-  local cfg
-  cfg=$(jq -n --arg s "$_FAKE_BAR" '{"bars":[{"script":$s,"params":{"token":"$_BL_UNSET_VAR_XYZ"}}]}')
-  unset _BL_UNSET_VAR_XYZ
-  bl_run '{}' "$cfg"
-  [[ "$BL_OUTPUT" == *'"token":""'* ]]
-}
-
 @test "params: literal string passes through unchanged" {
   printf '#!/usr/bin/env bash\nprintf "%%s" "${BOTTOMLINE_BAR_PARAMS:-{}}"\n' > "$_FAKE_BAR"
   local cfg

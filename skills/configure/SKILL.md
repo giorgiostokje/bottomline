@@ -313,10 +313,22 @@ is already present.
 **`linear` — required params and refresh interval**
 
 `linear` calls the Linear GraphQL API and requires two params before it can render.
+Write the `linear` bar config to the **project-level** config (`.claude/bottomline.json`), not the user-level config — the `team` key is project-specific.
+
 Before adding it, ask the user for:
 
 1. **API key** — from Linear → Settings → API → Personal API keys. Prompt:
-   > "What is your Linear personal API key? You can store it as a literal value, or reference an environment variable (e.g. `$LINEAR_API_KEY`) or a file path (e.g. `file:~/.linear_token`)."
+   > "What is your Linear personal API key? You can store it as a literal value in the config, or in a key file (e.g. `file:~/.linear_token`) to keep it out of the JSON."
+
+   **Recommended — key file:**
+
+   ```bash
+   printf 'lin_api_YOUR_KEY_HERE' > "$HOME/.linear_token"
+   chmod 600 "$HOME/.linear_token"
+   ```
+
+   Then set `"api_key": "file:~/.linear_token"` in the params. The file is read at render
+   time; no restart needed after rotating the key.
 
 2. **Team key** — the short identifier for the team (e.g. `ENG`, `MOBILE`). Prompt:
    > "What is your Linear team key? This is the short uppercase identifier visible in your Linear workspace URL."
@@ -331,8 +343,8 @@ Then add the bar with the chosen values:
 tmp=$(mktemp) \
   && jq --arg key "API_KEY_VALUE" --arg team "TEAM_KEY" --argjson rm MINUTES \
        '.bars += [{"script":"linear","refresh_minutes":$rm,"params":{"api_key":$key,"team":$team}}]' \
-       "$HOME/.claude/bottomline.json" > "$tmp" \
-  && mv "$tmp" "$HOME/.claude/bottomline.json"
+       ".claude/bottomline.json" > "$tmp" \
+  && mv "$tmp" ".claude/bottomline.json"
 ```
 
 Replace `API_KEY_VALUE`, `TEAM_KEY`, and `MINUTES` with the user's choices.
@@ -342,8 +354,8 @@ Replace `API_KEY_VALUE`, `TEAM_KEY`, and `MINUTES` with the user's choices.
 tmp=$(mktemp) \
   && jq --argjson rm MINUTES \
        '.bars |= map(if .script == "linear" then .refresh_minutes = $rm else . end)' \
-       "$HOME/.claude/bottomline.json" > "$tmp" \
-  && mv "$tmp" "$HOME/.claude/bottomline.json"
+       ".claude/bottomline.json" > "$tmp" \
+  && mv "$tmp" ".claude/bottomline.json"
 ```
 
 ## Going Further
