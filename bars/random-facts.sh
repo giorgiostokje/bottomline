@@ -22,33 +22,40 @@ if [[ -f "$_cache_file" ]]; then
   fact=$(cat "$_cache_file")
 fi
 
+offline_suffix=''
 if [[ -z "$fact" ]]; then
   fact=$(curl -sf --max-time 3 \
     'https://uselessfacts.jsph.pl/api/v2/facts/random?language=en' \
     2>/dev/null | jq -r '.text // empty' 2>/dev/null)
-  if [[ -n "$fact" ]]; then
-    printf '%s' "$fact" > "$_cache_file"
-    find -L /tmp -maxdepth 1 -name 'bl_random-fact_*.txt' \
-      ! -name "bl_random-fact_${_bucket}.txt" -print0 2>/dev/null | xargs -0 rm -f 2>/dev/null
-  fi
-fi
 
-offline_suffix=''
-if [[ -z "$fact" ]]; then
-  offline_suffix=" ${FG_ACCENT}(offline)"
-  offline_facts=(
-    "Cleopatra lived closer in time to the Moon landing than to the Great Pyramid."
-    "Oxford University is older than the Aztec Empire."
-    "A day on Venus is longer than a year on Venus."
-    "Sharks are older than trees."
-    "The fax machine was invented before the telephone."
-    "Nintendo was founded in 1889 as a playing-card company."
-    "Bats are the only mammals capable of sustained, powered flight."
-    "A jiffy is a real unit of time: 1/100th of a second."
-    "There are more trees on Earth than stars in the Milky Way."
-    "Every atom in your body was forged inside a star."
-  )
-  fact="${offline_facts[$((RANDOM % ${#offline_facts[@]}))]}"
+  if [[ -z "$fact" ]]; then
+    offline_suffix=" ${FG_ACCENT}(offline)"
+    offline_facts=(
+      "Cleopatra lived closer in time to the Moon landing than to the Great Pyramid."
+      "Oxford University is older than the Aztec Empire."
+      "A day on Venus is longer than a year on Venus."
+      "Sharks are older than trees."
+      "The fax machine was invented before the telephone."
+      "Nintendo was founded in 1889 as a playing-card company."
+      "Bats are the only mammals capable of sustained, powered flight."
+      "A jiffy is a real unit of time: 1/100th of a second."
+      "There are more trees on Earth than stars in the Milky Way."
+      "Every atom in your body was forged inside a star."
+    )
+    fact="${offline_facts[$((RANDOM % ${#offline_facts[@]}))]}"
+  fi
+
+  if [[ -n "$fact" ]]; then
+    if (set -C; printf '%s' "$fact" > "$_cache_file") 2>/dev/null; then
+      find -L /tmp -maxdepth 1 -name 'bl_random-fact_*.txt' \
+        ! -name "bl_random-fact_${_bucket}.txt" -print0 2>/dev/null | xargs -0 rm -f 2>/dev/null
+    else
+      _cached=$(cat "$_cache_file" 2>/dev/null)
+      if [[ -n "$_cached" ]]; then
+        fact="$_cached"
+      fi
+    fi
+  fi
 fi
 
 fact="${fact%"${fact##*[^[:space:]]}"}"
