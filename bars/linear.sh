@@ -36,19 +36,18 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_DAYS=$'\xef\x89\x92'       # U+F252  nf-fa-hourglass_half
     IC_BLOCKED=$'\xef\x81\x9e'    # U+F05E  nf-fa-ban
     IC_MENTIONS=$'\xef\x87\xba'   # U+F1FA  nf-fa-at
-    IC_WARN=$'\xef\x81\xb1'       # U+F071  nf-fa-warning
     ;;
   emoji)
     IC_LINEAR='◈'
     IC_CYCLE='🔄'; IC_PROGRESS='⏳'; IC_REVIEW='👁'
     IC_ASSIGNED='📋'; IC_PRIORITY='❗'; IC_OVERDUE='📅'; IC_DUE='📅'
-    IC_DAYS='⌛'; IC_BLOCKED='🚫'; IC_MENTIONS='@'; IC_WARN='⚠️'
+    IC_DAYS='⌛'; IC_BLOCKED='🚫'; IC_MENTIONS='@'
     ;;
   *)
     IC_LINEAR=''
     IC_CYCLE=''; IC_PROGRESS=''; IC_REVIEW=''
     IC_ASSIGNED=''; IC_PRIORITY='!'; IC_OVERDUE=''; IC_DUE=''
-    IC_DAYS=''; IC_BLOCKED=''; IC_MENTIONS='@'; IC_WARN='!'
+    IC_DAYS=''; IC_BLOCKED=''; IC_MENTIONS='@'
     ;;
 esac
 

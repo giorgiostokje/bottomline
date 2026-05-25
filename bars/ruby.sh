@@ -93,7 +93,7 @@ $has_minitest && bl_version_seg "$IC_TEST" Minitest
 
 # Slot 6: Tooling (order: RuboCop → Sidekiq → Devise)
 if [[ -n "$rubocop_version" ]]; then
-  local _rcv="$rubocop_version"
+  _rcv="$rubocop_version"
   [[ "$_rcv" == "present" ]] && _rcv=""
   bl_seg "$IC_LINT" RuboCop "$_rcv"
 fi
