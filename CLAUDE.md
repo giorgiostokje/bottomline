@@ -48,7 +48,7 @@ settings.json (shipped defaults)
     ↑ project overrides: <project>/.claude/bottomline.json
 ```
 
-Objects are merged recursively (partial overrides fill only the keys they define). Arrays and scalars: highest-priority non-null value wins entirely. Implemented as a single `jq -n` call with a recursive `dmerge/2` function in `bottomline.sh`.
+Objects are merged recursively (partial overrides fill only the keys they define). Arrays and scalars: highest-priority non-null value wins entirely. **Exception:** non-empty arrays whose elements are objects with a `script` field are merged by `script` key — lower-priority order preserved, matched entries deep-merged, higher-priority-only entries appended; an empty array still wins outright. Implemented as a single `jq -n` call with a recursive `dmerge/2` function in `bottomline.sh`.
 
 **Exception — accumulating keys:** `segments.disabled` and `auto_bars.disabled` are *unioned* across all three config files rather than won by the highest-priority layer. This is implemented with explicit three-file reads outside `dmerge`. Any new config key that should accumulate (not override) needs the same treatment — wiring it through `dmerge` like everything else will silently break the expected behaviour.
 
