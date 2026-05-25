@@ -8,13 +8,9 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "python" "$_bl_ttl" "$PROJ" \
-    "$PROJ/pyproject.toml" "$PROJ/requirements.txt" \
-    "$PROJ/Pipfile" "$PROJ/Pipfile.lock" "$PROJ/poetry.lock")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+bl_bar_init python "#c8dff0" "#ffd740" '["#0c1e30","#183352"]' \
+  "$PROJ/pyproject.toml" "$PROJ/requirements.txt" \
+  "$PROJ/Pipfile" "$PROJ/Pipfile.lock" "$PROJ/poetry.lock"
 
 has_pyproject=false has_requirements=false has_pipfile=false has_setup=false
 [[ -f "$PROJ/pyproject.toml" ]]   && has_pyproject=true
@@ -23,42 +19,17 @@ has_pyproject=false has_requirements=false has_pipfile=false has_setup=false
 [[ -f "$PROJ/setup.py" ]]         && has_setup=true
 $has_pyproject || $has_requirements || $has_pipfile || $has_setup || exit 0
 
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg "$(hex_to_rgb "#c8dff0")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#ffd740")")
-  _bar_gradient='["#0c1e30","#183352"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
-
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)
-    IC_PYTHON=$'\xee\x98\x86'   # U+E606  nf-seti-python
-    IC_DJANGO=$'\xef\x81\xac'   # U+F06C  nf-fa-leaf  (Django's green leaf logo)
-    IC_FLASK=$'\xef\x83\x83'    # U+F0C3  nf-fa-flask
-    IC_FASTAPI=$'\xef\x83\xa7'  # U+F0E7  nf-fa-bolt
-    IC_POETRY=$'\xef\x83\x90'   # U+F0D0  nf-fa-diamond
-    IC_PIPENV=$'\xef\x84\xa1'   # U+F121  nf-fa-code
-    IC_TEST=$'\xef\x81\x80'      # U+F040  nf-fa-pencil
-    IC_QUEUE=$'\xef\x83\xa2'     # U+F0E2  nf-fa-history
-    IC_DB=$'\xef\x87\x80'        # U+F1C0  nf-fa-database
-    IC_LINT=$'\xef\x80\x8c'      # U+F00C  nf-fa-check
-    IC_TYPE=$'\xef\x80\xae'      # U+F02E  nf-fa-bookmark
-    ;;
-  emoji)
-    IC_PYTHON='🐍'
-    IC_DJANGO='🌿'
-    IC_FLASK='🍶'
-    IC_FASTAPI='⚡'
-    IC_POETRY='📦'
-    IC_PIPENV='📦'
-    IC_TEST='🧪' IC_QUEUE='📨' IC_DB='🗄' IC_LINT='✓' IC_TYPE='🔎'
-    ;;
-  *)
-    IC_PYTHON='' IC_DJANGO='' IC_FLASK='' IC_FASTAPI='' IC_POETRY='' IC_PIPENV=''
-    IC_TEST='' IC_QUEUE='' IC_DB='' IC_LINT='' IC_TYPE=''
-    ;;
-esac
+bl_icon_set IC_PYTHON  $'\xee\x98\x86' '🐍'  # U+E606  nf-seti-python
+bl_icon_set IC_DJANGO  $'\xef\x81\xac' '🌿'  # U+F06C  nf-fa-leaf  (Django's green leaf logo)
+bl_icon_set IC_FLASK   $'\xef\x83\x83' '🍶'  # U+F0C3  nf-fa-flask
+bl_icon_set IC_FASTAPI $'\xef\x83\xa7' '⚡'  # U+F0E7  nf-fa-bolt
+bl_icon_set IC_POETRY  $'\xef\x83\x90' '📦'  # U+F0D0  nf-fa-diamond
+bl_icon_set IC_PIPENV  $'\xef\x84\xa1' '📦'  # U+F121  nf-fa-code
+bl_icon_set IC_TEST    $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
+bl_icon_set IC_QUEUE   $'\xef\x83\xa2' '📨'  # U+F0E2  nf-fa-history
+bl_icon_set IC_DB      $'\xef\x87\x80' '🗄'  # U+F1C0  nf-fa-database
+bl_icon_set IC_LINT    $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check
+bl_icon_set IC_TYPE    $'\xef\x80\xae' '🔎'  # U+F02E  nf-fa-bookmark
 
 # ── Python version detection (priority: .python-version → pyproject.toml → .tool-versions) ──
 py_version=''
@@ -176,61 +147,24 @@ $has_sqlalchemy && sqlalchemy_version=$(pkg_version "sqlalchemy")
 $has_ruff       && ruff_version=$(pkg_version "ruff")
 $has_mypy       && mypy_version=$(pkg_version "mypy")
 
-_bl_out=$(
-  # ── Python runtime ────────────────────────────────────────────────────────────
-  python_seg="${FG_ACCENT}${IC_PYTHON} ${FG_TEXT}Python"
-  [[ -n "$py_version" ]] && python_seg+=" ${FG_ACCENT}v${py_version}"
-  [[ -n "$tool_label" ]] && python_seg+=" ${FG_ACCENT}[${FG_TEXT}${tool_icon}${tool_label}${FG_ACCENT}]"
-  add_seg "$python_seg"
+# ── Python runtime ────────────────────────────────────────────────────────────
+python_seg="${FG_ACCENT}${IC_PYTHON} ${FG_TEXT}Python"
+[[ -n "$py_version" ]] && python_seg+=" ${FG_ACCENT}v${py_version}"
+[[ -n "$tool_label" ]] && python_seg+=" ${FG_ACCENT}[${FG_TEXT}${tool_icon}${tool_label}${FG_ACCENT}]"
+add_seg "$python_seg"
 
-  # ── Framework ─────────────────────────────────────────────────────────────────
-  if $has_django; then
-    fw_seg="${FG_ACCENT}${IC_DJANGO} ${FG_TEXT}Django"
-    [[ -n "$django_version" ]] && fw_seg+=" ${FG_ACCENT}v${django_version}"
-    add_seg "$fw_seg"
-  elif $has_fastapi; then
-    fw_seg="${FG_ACCENT}${IC_FASTAPI} ${FG_TEXT}FastAPI"
-    [[ -n "$fastapi_version" ]] && fw_seg+=" ${FG_ACCENT}v${fastapi_version}"
-    add_seg "$fw_seg"
-  elif $has_flask; then
-    fw_seg="${FG_ACCENT}${IC_FLASK} ${FG_TEXT}Flask"
-    [[ -n "$flask_version" ]] && fw_seg+=" ${FG_ACCENT}v${flask_version}"
-    add_seg "$fw_seg"
-  fi
+# ── Framework ─────────────────────────────────────────────────────────────────
+$has_django  && bl_version_seg "$IC_DJANGO"  Django  "$django_version"
+$has_fastapi && bl_version_seg "$IC_FASTAPI" FastAPI "$fastapi_version"
+$has_flask   && bl_version_seg "$IC_FLASK"   Flask   "$flask_version"
 
-  # Slot 5: Testing
-  if $has_pytest; then
-    pt_seg="${FG_ACCENT}${IC_TEST} ${FG_TEXT}pytest"
-    [[ -n "$pytest_version" ]] && pt_seg+=" ${FG_ACCENT}v${pytest_version}"
-    add_seg "$pt_seg"
-  fi
+# Slot 5: Testing
+$has_pytest && bl_version_seg "$IC_TEST" pytest "$pytest_version"
 
-  # Slot 6: Tooling (order: ruff → mypy → Celery → SQLAlchemy)
-  if $has_ruff; then
-    r_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}ruff"
-    [[ -n "$ruff_version" ]] && r_seg+=" ${FG_ACCENT}v${ruff_version}"
-    add_seg "$r_seg"
-  fi
-  if $has_mypy; then
-    m_seg="${FG_ACCENT}${IC_TYPE} ${FG_TEXT}mypy"
-    [[ -n "$mypy_version" ]] && m_seg+=" ${FG_ACCENT}v${mypy_version}"
-    add_seg "$m_seg"
-  fi
-  if $has_celery; then
-    c_seg="${FG_ACCENT}${IC_QUEUE} ${FG_TEXT}Celery"
-    [[ -n "$celery_version" ]] && c_seg+=" ${FG_ACCENT}v${celery_version}"
-    add_seg "$c_seg"
-  fi
-  if $has_sqlalchemy; then
-    s_seg="${FG_ACCENT}${IC_DB} ${FG_TEXT}SQLAlchemy"
-    [[ -n "$sqlalchemy_version" ]] && s_seg+=" ${FG_ACCENT}v${sqlalchemy_version}"
-    add_seg "$s_seg"
-  fi
+# Slot 6: Tooling (order: ruff → mypy → Celery → SQLAlchemy)
+$has_ruff       && bl_version_seg "$IC_LINT" ruff        "$ruff_version"
+$has_mypy       && bl_version_seg "$IC_TYPE" mypy        "$mypy_version"
+$has_celery     && bl_version_seg "$IC_QUEUE" Celery     "$celery_version"
+$has_sqlalchemy && bl_version_seg "$IC_DB"   SQLAlchemy  "$sqlalchemy_version"
 
-  (( ${#_sc[@]} == 0 )) && exit 0
-  flush "$_bar_gradient"
-)
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  bl_cache_write "$_bl_cache" "$_bl_out"
-fi
-printf '%s' "$_bl_out"
+bl_bar_finish "$_bar_gradient"

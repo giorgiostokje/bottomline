@@ -8,12 +8,7 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "java" "$_bl_ttl" "$PROJ" \
-    "$PROJ/pom.xml" "$PROJ/build.gradle" "$PROJ/build.gradle.kts")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+bl_bar_init java "#f5e4c0" "#ed8b00" '["#1c1000","#2e1e00"]' "$PROJ/pom.xml" "$PROJ/build.gradle" "$PROJ/build.gradle.kts"
 
 has_maven=false has_gradle=false
 [[ -f "$PROJ/pom.xml" ]]             && has_maven=true
@@ -43,39 +38,15 @@ _gradle_dep_version() {
     | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1
 }
 
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg "$(hex_to_rgb "#f5e4c0")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#ed8b00")")
-  _bar_gradient='["#1c1000","#2e1e00"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
-
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)
-    IC_MAVEN=$'\xee\x9c\xb8'     # U+E738  nf-dev-java
-    IC_GRADLE=$'\xef\x80\x93'    # U+F013  nf-fa-cog
-    IC_SPRING=$'\xef\x81\xac'    # U+F06C  nf-fa-leaf  (Spring's leaf logo)
-    IC_QUARKUS=$'\xef\x84\xb5'   # U+F135  nf-fa-rocket
-    IC_MICRONAUT=$'\xef\x83\xa7' # U+F0E7  nf-fa-bolt
-    IC_TEST=$'\xef\x81\x80'      # U+F040  nf-fa-pencil
-    IC_GEAR=$'\xef\x82\x85'      # U+F085  nf-fa-cogs (codegen)
-    IC_LINT=$'\xef\x80\x8c'      # U+F00C  nf-fa-check
-    IC_BUG=$'\xef\x86\x88'       # U+F188  nf-fa-bug
-    ;;
-  emoji)
-    IC_MAVEN='📦'
-    IC_GRADLE='🐘'
-    IC_SPRING='🌱'
-    IC_QUARKUS='🚀'
-    IC_MICRONAUT='⚡'
-    IC_TEST='🧪' IC_GEAR='⚙' IC_LINT='✓' IC_BUG='🐞'
-    ;;
-  *)
-    IC_MAVEN='' IC_GRADLE='' IC_SPRING='' IC_QUARKUS='' IC_MICRONAUT=''
-    IC_TEST='' IC_GEAR='' IC_LINT='' IC_BUG=''
-    ;;
-esac
+bl_icon_set IC_MAVEN     $'\xee\x9c\xb8' '📦'  # U+E738  nf-dev-java
+bl_icon_set IC_GRADLE    $'\xef\x80\x93' '🐘'  # U+F013  nf-fa-cog
+bl_icon_set IC_SPRING    $'\xef\x81\xac' '🌱'  # U+F06C  nf-fa-leaf  (Spring's leaf logo)
+bl_icon_set IC_QUARKUS   $'\xef\x84\xb5' '🚀'  # U+F135  nf-fa-rocket
+bl_icon_set IC_MICRONAUT $'\xef\x83\xa7' '⚡'  # U+F0E7  nf-fa-bolt
+bl_icon_set IC_TEST      $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
+bl_icon_set IC_GEAR      $'\xef\x82\x85' '⚙'   # U+F085  nf-fa-cogs (codegen)
+bl_icon_set IC_LINT      $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check
+bl_icon_set IC_BUG       $'\xef\x86\x88' '🐞'  # U+F188  nf-fa-bug
 
 
 # ── Detect framework and version ──────────────────────────────────────────────
@@ -164,65 +135,31 @@ if $has_gradle; then
   [[ -z "$pmd_version" ]]        && $has_pmd        && pmd_version=$(_gradle_dep_version "pmd" "$_gf")
 fi
 
-
-_bl_out=$(
-  # ── Build tool ────────────────────────────────────────────────────────────────
-  if $has_maven; then
-    java_seg="${FG_ACCENT}${IC_MAVEN} ${FG_TEXT}Maven"
-    [[ -n "$java_version" ]] && java_seg+=" ${FG_ACCENT}(Java ${java_version})"
-    add_seg "$java_seg"
-  elif $has_gradle; then
-    java_seg="${FG_ACCENT}${IC_GRADLE} ${FG_TEXT}Gradle"
-    [[ -n "$java_version" ]] && java_seg+=" ${FG_ACCENT}(Java ${java_version})"
-    add_seg "$java_seg"
-  fi
-
-  # ── Framework ─────────────────────────────────────────────────────────────────
-  if $has_spring; then
-    spring_seg="${FG_ACCENT}${IC_SPRING} ${FG_TEXT}Spring Boot"
-    [[ -n "$spring_version" ]] && spring_seg+=" ${FG_ACCENT}v${spring_version}"
-    add_seg "$spring_seg"
-  elif $has_quarkus; then
-    quarkus_seg="${FG_ACCENT}${IC_QUARKUS} ${FG_TEXT}Quarkus"
-    [[ -n "$quarkus_version" ]] && quarkus_seg+=" ${FG_ACCENT}v${quarkus_version}"
-    add_seg "$quarkus_seg"
-  elif $has_micronaut; then
-    micronaut_seg="${FG_ACCENT}${IC_MICRONAUT} ${FG_TEXT}Micronaut"
-    [[ -n "$micronaut_version" ]] && micronaut_seg+=" ${FG_ACCENT}v${micronaut_version}"
-    add_seg "$micronaut_seg"
-  fi
-
-  # Slot 5: Testing
-  $has_junit5 && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}JUnit 5"
-  $has_junit4 && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}JUnit 4"
-  $has_testng && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}TestNG"
-
-  # Slot 6: Tooling
-  if $has_checkstyle; then
-    cs_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}Checkstyle"
-    [[ -n "$checkstyle_version" ]] && cs_seg+=" ${FG_ACCENT}v${checkstyle_version}"
-    add_seg "$cs_seg"
-  fi
-  if $has_spotbugs; then
-    sb_seg="${FG_ACCENT}${IC_BUG} ${FG_TEXT}SpotBugs"
-    [[ -n "$spotbugs_version" ]] && sb_seg+=" ${FG_ACCENT}v${spotbugs_version}"
-    add_seg "$sb_seg"
-  fi
-  if $has_pmd; then
-    pmd_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}PMD"
-    [[ -n "$pmd_version" ]] && pmd_seg+=" ${FG_ACCENT}v${pmd_version}"
-    add_seg "$pmd_seg"
-  fi
-  if $has_lombok; then
-    lk_seg="${FG_ACCENT}${IC_GEAR} ${FG_TEXT}Lombok"
-    [[ -n "$lombok_version" ]] && lk_seg+=" ${FG_ACCENT}v${lombok_version}"
-    add_seg "$lk_seg"
-  fi
-
-  (( ${#_sc[@]} == 0 )) && exit 0
-  flush "$_bar_gradient"
-)
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  bl_cache_write "$_bl_cache" "$_bl_out"
+# ── Build tool ────────────────────────────────────────────────────────────────
+if $has_maven; then
+  java_seg="${FG_ACCENT}${IC_MAVEN} ${FG_TEXT}Maven"
+  [[ -n "$java_version" ]] && java_seg+=" ${FG_ACCENT}(Java ${java_version})"
+  add_seg "$java_seg"
+elif $has_gradle; then
+  java_seg="${FG_ACCENT}${IC_GRADLE} ${FG_TEXT}Gradle"
+  [[ -n "$java_version" ]] && java_seg+=" ${FG_ACCENT}(Java ${java_version})"
+  add_seg "$java_seg"
 fi
-printf '%s' "$_bl_out"
+
+# ── Framework ─────────────────────────────────────────────────────────────────
+$has_spring && bl_version_seg "$IC_SPRING" "Spring Boot" "$spring_version"
+$has_quarkus && bl_version_seg "$IC_QUARKUS" "Quarkus" "$quarkus_version"
+$has_micronaut && bl_version_seg "$IC_MICRONAUT" "Micronaut" "$micronaut_version"
+
+# Slot 5: Testing
+$has_junit5 && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}JUnit 5"
+$has_junit4 && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}JUnit 4"
+$has_testng && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}TestNG"
+
+# Slot 6: Tooling
+$has_checkstyle && bl_version_seg "$IC_LINT" Checkstyle "$checkstyle_version"
+$has_spotbugs && bl_version_seg "$IC_BUG" SpotBugs "$spotbugs_version"
+$has_pmd && bl_version_seg "$IC_LINT" PMD "$pmd_version"
+$has_lombok && bl_version_seg "$IC_GEAR" Lombok "$lombok_version"
+
+bl_bar_finish "$_bar_gradient"

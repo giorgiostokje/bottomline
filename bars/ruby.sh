@@ -8,45 +8,18 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "ruby" "$_bl_ttl" "$PROJ" "$PROJ/Gemfile" "$PROJ/Gemfile.lock")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+bl_bar_init ruby "#f5d0d0" "#e05060" '["#1e0505","#350c0c"]' "$PROJ/Gemfile" "$PROJ/Gemfile.lock"
 
 [[ ! -f "$PROJ/Gemfile" ]] && exit 0
 
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg "$(hex_to_rgb "#f5d0d0")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#e05060")")
-  _bar_gradient='["#1e0505","#350c0c"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
-
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)
-    IC_RUBY=$'\xee\x9e\x91'    # U+E791  nf-dev-ruby
-    IC_RAILS=$'\xee\x9c\xbb'   # U+E73B  nf-dev-rails
-    IC_SINATRA=$'\xef\x81\xad' # U+F06D  nf-fa-fire  (Sinatra — keeps it simple)
-    IC_HANAMI=$'\xef\x81\xac'  # U+F06C  nf-fa-leaf
-    IC_TEST=$'\xef\x81\x80'    # U+F040  nf-fa-pencil
-    IC_QUEUE=$'\xef\x83\xa2'   # U+F0E2  nf-fa-history
-    IC_AUTH=$'\xef\x82\xa3'    # U+F0A3  nf-fa-certificate
-    IC_LINT=$'\xef\x80\x8c'    # U+F00C  nf-fa-check
-    ;;
-  emoji)
-    IC_RUBY='💎'
-    IC_RAILS='🛤'
-    IC_SINATRA='🎵'
-    IC_HANAMI='🌸'
-    IC_TEST='🧪' IC_QUEUE='📨' IC_AUTH='🔑' IC_LINT='✓'
-    ;;
-  *)
-    IC_RUBY='' IC_RAILS='' IC_SINATRA='' IC_HANAMI=''
-    IC_TEST='' IC_QUEUE='' IC_AUTH='' IC_LINT=''
-    ;;
-esac
+bl_icon_set IC_RUBY    $'\xee\x9e\x91' '💎'  # U+E791  nf-dev-ruby
+bl_icon_set IC_RAILS   $'\xee\x9c\xbb' '🛤'  # U+E73B  nf-dev-rails
+bl_icon_set IC_SINATRA $'\xef\x81\xad' '🎵'  # U+F06D  nf-fa-fire  (Sinatra — keeps it simple)
+bl_icon_set IC_HANAMI  $'\xef\x81\xac' '🌸'  # U+F06C  nf-fa-leaf
+bl_icon_set IC_TEST    $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
+bl_icon_set IC_QUEUE   $'\xef\x83\xa2' '📨'  # U+F0E2  nf-fa-history
+bl_icon_set IC_AUTH    $'\xef\x82\xa3' '🔑'  # U+F0A3  nf-fa-certificate
+bl_icon_set IC_LINT    $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check
 
 
 # Returns the locked version of a gem from Gemfile.lock.
@@ -104,57 +77,27 @@ devise_version=''
 $has_sidekiq && sidekiq_version=$(gem_version "sidekiq")
 $has_devise  && devise_version=$(gem_version "devise")
 
+# ── Ruby runtime ──────────────────────────────────────────────────────────────
+bl_version_seg "$IC_RUBY" Ruby "$ruby_version"
 
-_bl_out=$(
-  # ── Ruby runtime ──────────────────────────────────────────────────────────────
-  ruby_seg="${FG_ACCENT}${IC_RUBY} ${FG_TEXT}Ruby"
-  [[ -n "$ruby_version" ]] && ruby_seg+=" ${FG_ACCENT}v${ruby_version}"
-  add_seg "$ruby_seg"
+# ── Framework ─────────────────────────────────────────────────────────────────
+$has_rails   && bl_version_seg "$IC_RAILS" Rails "$rails_version"
+$has_sinatra && bl_version_seg "$IC_SINATRA" Sinatra "$sinatra_version"
+$has_hanami  && bl_version_seg "$IC_HANAMI" Hanami "$hanami_version"
 
-  # ── Framework ─────────────────────────────────────────────────────────────────
-  if $has_rails; then
-    rails_seg="${FG_ACCENT}${IC_RAILS} ${FG_TEXT}Rails"
-    [[ -n "$rails_version" ]] && rails_seg+=" ${FG_ACCENT}v${rails_version}"
-    add_seg "$rails_seg"
-  fi
-  if $has_sinatra; then
-    sinatra_seg="${FG_ACCENT}${IC_SINATRA} ${FG_TEXT}Sinatra"
-    [[ -n "$sinatra_version" ]] && sinatra_seg+=" ${FG_ACCENT}v${sinatra_version}"
-    add_seg "$sinatra_seg"
-  fi
-  if $has_hanami; then
-    hanami_seg="${FG_ACCENT}${IC_HANAMI} ${FG_TEXT}Hanami"
-    [[ -n "$hanami_version" ]] && hanami_seg+=" ${FG_ACCENT}v${hanami_version}"
-    add_seg "$hanami_seg"
-  fi
+# Slot 5: Testing
+$has_rspec    && bl_version_seg "$IC_TEST" RSpec
+$has_minitest && bl_version_seg "$IC_TEST" Minitest
 
-  # Slot 5: Testing
-  $has_rspec    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}RSpec"
-  $has_minitest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Minitest"
-
-  # Slot 6: Tooling (order: RuboCop → Sidekiq → Devise)
-  if [[ -n "$rubocop_version" ]]; then
-    if [[ "$rubocop_version" == "present" ]]; then
-      add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop"
-    else
-      add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop ${FG_ACCENT}v${rubocop_version}"
-    fi
+# Slot 6: Tooling (order: RuboCop → Sidekiq → Devise)
+if [[ -n "$rubocop_version" ]]; then
+  if [[ "$rubocop_version" == "present" ]]; then
+    add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop"
+  else
+    add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop ${FG_ACCENT}v${rubocop_version}"
   fi
-  if $has_sidekiq; then
-    sk_seg="${FG_ACCENT}${IC_QUEUE} ${FG_TEXT}Sidekiq"
-    [[ -n "$sidekiq_version" ]] && sk_seg+=" ${FG_ACCENT}v${sidekiq_version}"
-    add_seg "$sk_seg"
-  fi
-  if $has_devise; then
-    dv_seg="${FG_ACCENT}${IC_AUTH} ${FG_TEXT}Devise"
-    [[ -n "$devise_version" ]] && dv_seg+=" ${FG_ACCENT}v${devise_version}"
-    add_seg "$dv_seg"
-  fi
-
-  (( ${#_sc[@]} == 0 )) && exit 0
-  flush "$_bar_gradient"
-)
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  bl_cache_write "$_bl_cache" "$_bl_out"
 fi
-printf '%s' "$_bl_out"
+$has_sidekiq && bl_version_seg "$IC_QUEUE" Sidekiq "$sidekiq_version"
+$has_devise  && bl_version_seg "$IC_AUTH" Devise "$devise_version"
+
+bl_bar_finish "$_bar_gradient"

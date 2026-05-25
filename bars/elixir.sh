@@ -8,43 +8,18 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "elixir" "$_bl_ttl" "$PROJ" "$PROJ/mix.exs" "$PROJ/mix.lock")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+bl_bar_init elixir "#e8d8f8" "#a078d8" '["#180c2e","#2a1850"]' "$PROJ/mix.exs" "$PROJ/mix.lock"
 
 [[ ! -f "$PROJ/mix.exs" ]] && exit 0
 
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg "$(hex_to_rgb "#e8d8f8")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#a078d8")")
-  _bar_gradient='["#180c2e","#2a1850"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
-
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)
-    IC_ELIXIR=$'\xef\x81\xad'   # U+F06D  nf-fa-fire  (Elixir's flame-like logo)
-    IC_PHOENIX=$'\xef\x86\x85'  # U+F185  nf-fa-sun-o  (Phoenix rising)
-    IC_LV=$'\xef\x84\xa1'        # U+F121  nf-fa-code
-    IC_DB=$'\xef\x87\x80'        # U+F1C0  nf-fa-database
-    IC_QUEUE=$'\xef\x83\xa2'     # U+F0E2  nf-fa-history
-    IC_TEST=$'\xef\x81\x80'      # U+F040  nf-fa-pencil
-    IC_LINT=$'\xef\x80\x8c'      # U+F00C  nf-fa-check
-    IC_TYPE=$'\xef\x80\xae'      # U+F02E  nf-fa-bookmark (type analysis)
-    ;;
-  emoji)
-    IC_ELIXIR='💧'
-    IC_PHOENIX='🔥'
-    IC_LV='🔌' IC_DB='🗄' IC_QUEUE='📨' IC_TEST='🧪' IC_LINT='✓' IC_TYPE='🔎'
-    ;;
-  *)
-    IC_ELIXIR='' IC_PHOENIX=''
-    IC_LV='' IC_DB='' IC_QUEUE='' IC_TEST='' IC_LINT='' IC_TYPE=''
-    ;;
-esac
+bl_icon_set IC_ELIXIR $'\xef\x81\xad' '💧'
+bl_icon_set IC_PHOENIX $'\xef\x86\x85' '🔥'
+bl_icon_set IC_LV     $'\xef\x84\xa1' '🔌'
+bl_icon_set IC_DB     $'\xef\x87\x80' '🗄'
+bl_icon_set IC_QUEUE  $'\xef\x83\xa2' '📨'
+bl_icon_set IC_TEST   $'\xef\x81\x80' '🧪'
+bl_icon_set IC_LINT   $'\xef\x80\x8c' '✓'
+bl_icon_set IC_TYPE   $'\xef\x80\xae' '🔎'
 
 
 # ── Read Elixir version constraint from mix.exs ───────────────────────────────
@@ -91,41 +66,22 @@ fi
 has_exunit=false
 [[ -d "$PROJ/test" ]] && has_exunit=true
 
-_bl_out=$(
-  # ── Elixir runtime ────────────────────────────────────────────────────────────
-  elixir_seg="${FG_ACCENT}${IC_ELIXIR} ${FG_TEXT}Elixir"
-  [[ -n "$elixir_version" ]] && elixir_seg+=" ${FG_ACCENT}v${elixir_version}"
-  add_seg "$elixir_seg"
+# ── Elixir runtime ────────────────────────────────────────────────────────────
+bl_version_seg "$IC_ELIXIR" Elixir "$elixir_version"
 
-  # ── Phoenix ───────────────────────────────────────────────────────────────────
-  if $has_phoenix; then
-    phoenix_seg="${FG_ACCENT}${IC_PHOENIX} ${FG_TEXT}Phoenix"
-    [[ -n "$phoenix_version" ]] && phoenix_seg+=" ${FG_ACCENT}v${phoenix_version}"
-    add_seg "$phoenix_seg"
-  fi
+# ── Phoenix ───────────────────────────────────────────────────────────────────
+$has_phoenix && bl_version_seg "$IC_PHOENIX" Phoenix "$phoenix_version"
 
-  # Slot 4: Add-ons
-  [[ -n "$liveview_version" ]] \
-    && add_seg "${FG_ACCENT}${IC_LV} ${FG_TEXT}LiveView ${FG_ACCENT}v${liveview_version}"
-  [[ -n "$ecto_version" ]] \
-    && add_seg "${FG_ACCENT}${IC_DB} ${FG_TEXT}Ecto ${FG_ACCENT}v${ecto_version}"
-  [[ -n "$oban_version" ]] \
-    && add_seg "${FG_ACCENT}${IC_QUEUE} ${FG_TEXT}Oban ${FG_ACCENT}v${oban_version}"
+# Slot 4: Add-ons
+[[ -n "$liveview_version" ]] && bl_version_seg "$IC_LV" LiveView "$liveview_version"
+[[ -n "$ecto_version" ]] && bl_version_seg "$IC_DB" Ecto "$ecto_version"
+[[ -n "$oban_version" ]] && bl_version_seg "$IC_QUEUE" Oban "$oban_version"
 
-  # Slot 5: Testing
-  $has_exunit \
-    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}ExUnit"
+# Slot 5: Testing
+$has_exunit && bl_version_seg "$IC_TEST" ExUnit ""
 
-  # Slot 6: Tooling
-  [[ -n "$credo_version" ]] \
-    && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}Credo ${FG_ACCENT}v${credo_version}"
-  [[ -n "$dialyxir_version" ]] \
-    && add_seg "${FG_ACCENT}${IC_TYPE} ${FG_TEXT}Dialyxir ${FG_ACCENT}v${dialyxir_version}"
+# Slot 6: Tooling
+[[ -n "$credo_version" ]] && bl_version_seg "$IC_LINT" Credo "$credo_version"
+[[ -n "$dialyxir_version" ]] && bl_version_seg "$IC_TYPE" Dialyxir "$dialyxir_version"
 
-  (( ${#_sc[@]} == 0 )) && exit 0
-  flush "$_bar_gradient"
-)
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  bl_cache_write "$_bl_cache" "$_bl_out"
-fi
-printf '%s' "$_bl_out"
+bl_bar_finish "$_bar_gradient"

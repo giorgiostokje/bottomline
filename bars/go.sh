@@ -8,43 +8,17 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "go" "$_bl_ttl" "$PROJ" "$PROJ/go.mod" "$PROJ/go.work")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+bl_bar_init go "#c8e8f4" "#29bcd8" '["#031824","#054860"]' \
+  "$PROJ/go.mod" "$PROJ/go.work"
 
 [[ ! -f "$PROJ/go.mod" ]] && exit 0
 
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg "$(hex_to_rgb "#c8e8f4")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#29bcd8")")
-  _bar_gradient='["#031824","#054860"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
-
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)
-    IC_GO=$'\xee\x9c\xa4'        # U+E724  nf-seti-go_lang
-    IC_WORKSPACE=$'\xef\x81\xae' # U+F06E  nf-fa-eye
-    IC_WEB=$'\xef\x83\xac'       # U+F0EC  nf-fa-exchange
-    IC_TEST=$'\xef\x81\x80'      # U+F040  nf-fa-pencil
-    IC_DB=$'\xef\x87\x80'        # U+F1C0  nf-fa-database
-    IC_LINT=$'\xef\x80\x8c'      # U+F00C  nf-fa-check
-    ;;
-  emoji)
-    IC_GO='🐹'
-    IC_WORKSPACE='🗂'
-    IC_WEB='🌐'
-    IC_TEST='🧪'
-    IC_DB='🗄'
-    IC_LINT='✓'
-    ;;
-  *)
-    IC_GO='' IC_WORKSPACE='' IC_WEB='' IC_TEST='' IC_DB='' IC_LINT=''
-    ;;
-esac
+bl_icon_set IC_GO        $'\xee\x9c\xa4' '🐹'  # U+E724  nf-seti-go_lang
+bl_icon_set IC_WORKSPACE $'\xef\x81\xae' '🗂'  # U+F06E  nf-fa-eye
+bl_icon_set IC_WEB       $'\xef\x83\xac' '🌐'  # U+F0EC  nf-fa-exchange
+bl_icon_set IC_TEST      $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
+bl_icon_set IC_DB        $'\xef\x87\x80' '🗄'  # U+F1C0  nf-fa-database
+bl_icon_set IC_LINT      $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check
 
 
 # ── Read go.mod ───────────────────────────────────────────────────────────────
@@ -100,7 +74,6 @@ elif [[ -f "$PROJ/.golangci.yml" || -f "$PROJ/.golangci.yaml" || -f "$PROJ/.gola
   has_golangci=true
 fi
 
-_bl_out=$(
   # ── Segments (canonical slot order) ───────────────────────────────────────────
   # Slot 1: Runtime
   go_seg="${FG_ACCENT}${IC_GO} ${FG_TEXT}Go"
@@ -116,16 +89,8 @@ _bl_out=$(
   fi
 
   # Slot 5: Testing
-  if $has_ginkgo; then
-    ginkgo_seg="${FG_ACCENT}${IC_TEST} ${FG_TEXT}Ginkgo"
-    [[ -n "$ginkgo_version" ]] && ginkgo_seg+=" ${FG_ACCENT}v${ginkgo_version}"
-    add_seg "$ginkgo_seg"
-  fi
-  if $has_testify; then
-    testify_seg="${FG_ACCENT}${IC_TEST} ${FG_TEXT}testify"
-    [[ -n "$testify_version" ]] && testify_seg+=" ${FG_ACCENT}v${testify_version}"
-    add_seg "$testify_seg"
-  fi
+  $has_ginkgo  && bl_version_seg "$IC_TEST" Ginkgo  "$ginkgo_version"
+  $has_testify && bl_version_seg "$IC_TEST" testify "$testify_version"
 
   # Slot 6: Tooling
   # static analysis first
@@ -135,16 +100,6 @@ _bl_out=$(
     add_seg "$lint_seg"
   fi
   # ORM second
-  if $has_gorm; then
-    gorm_seg="${FG_ACCENT}${IC_DB} ${FG_TEXT}GORM"
-    [[ -n "$gorm_version" ]] && gorm_seg+=" ${FG_ACCENT}v${gorm_version}"
-    add_seg "$gorm_seg"
-  fi
+  $has_gorm && bl_version_seg "$IC_DB" GORM "$gorm_version"
 
-  (( ${#_sc[@]} == 0 )) && exit 0
-  flush "$_bar_gradient"
-)
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  bl_cache_write "$_bl_cache" "$_bl_out"
-fi
-printf '%s' "$_bl_out"
+bl_bar_finish "$_bar_gradient"

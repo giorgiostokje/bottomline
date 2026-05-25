@@ -9,51 +9,18 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "git" "$_bl_ttl" "$PROJ")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+bl_bar_init git "#f0ddd8" "#f05033" '["#1a0c08","#2e1610"]'
 
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg "$(hex_to_rgb "#f0ddd8")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#f05033")")
-  _bar_gradient='["#1a0c08","#2e1610"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
-
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)
-    IC_BRANCH=$'\xee\x82\xa0'    # U+E0A0  nf-branch
-    IC_WORKTREE=$'\xee\x9c\xa7'  # U+E727  nf-dev-git_branch
-    IC_CHANGES=$'\xef\x81\x84'   # U+F044  nf-fa-pencil
-    IC_STASH=$'\xef\x86\x87'     # U+F187  nf-fa-archive
-    IC_COMMIT=$'\xef\x87\x9a'    # U+F1DA  nf-fa-history
-    IC_WARN=$'\xef\x81\xb1'      # U+F071  nf-fa-warning
-    IC_CLEAN=$'\xef\x80\x8c'     # U+F00C  nf-fa-check
-    IC_CI_PASS=$'\xef\x80\x8c'  # U+F00C  nf-fa-check
-    IC_CI_FAIL=$'\xef\x80\x8d'  # U+F00D  nf-fa-times
-    IC_CI_RUN=$'\xef\x80\xa1'   # U+F021  nf-fa-refresh
-    ;;
-  emoji)
-    IC_BRANCH='⎇'
-    IC_WORKTREE='🌿'
-    IC_CHANGES='✏️'
-    IC_STASH='📦'
-    IC_COMMIT='🕐'
-    IC_WARN='⚠️'
-    IC_CLEAN='✓'
-    IC_CI_PASS='✓'
-    IC_CI_FAIL='✗'
-    IC_CI_RUN='⟳'
-    ;;
-  *)
-    IC_BRANCH='' IC_WORKTREE='' IC_CHANGES='' IC_STASH=''
-    IC_COMMIT='' IC_WARN='' IC_CLEAN='✓'
-    IC_CI_PASS='✓' IC_CI_FAIL='✗' IC_CI_RUN='~'
-    ;;
-esac
+bl_icon_set IC_BRANCH    $'\xee\x82\xa0' '⎇'   # U+E0A0  nf-branch
+bl_icon_set IC_WORKTREE  $'\xee\x9c\xa7' '🌿'   # U+E727  nf-dev-git_branch
+bl_icon_set IC_CHANGES   $'\xef\x81\x84' '✏️'  # U+F044  nf-fa-pencil
+bl_icon_set IC_STASH     $'\xef\x86\x87' '📦'   # U+F187  nf-fa-archive
+bl_icon_set IC_COMMIT    $'\xef\x87\x9a' '🕐'   # U+F1DA  nf-fa-history
+bl_icon_set IC_WARN      $'\xef\x81\xb1' '⚠️'  # U+F071  nf-fa-warning
+bl_icon_set IC_CLEAN     $'\xef\x80\x8c' '✓' '✓'  # U+F00C  nf-fa-check  (fallback: ✓)
+bl_icon_set IC_CI_PASS   $'\xef\x80\x8c' '✓' '✓'  # U+F00C  nf-fa-check
+bl_icon_set IC_CI_FAIL   $'\xef\x80\x8d' '✗' '✗'  # U+F00D  nf-fa-times
+bl_icon_set IC_CI_RUN    $'\xef\x80\xa1' '⟳' '~'  # U+F021  nf-fa-refresh
 
 # ── Utility functions ─────────────────────────────────────────────────────────
 shorten_rel_time() {
@@ -76,10 +43,9 @@ shorten_rel_time() {
 }
 
 # ── Git availability check ────────────────────────────────────────────────────
-_bl_out=$(
 if ! command -v git > /dev/null 2>&1; then
   add_seg "${FG_WARN}${IC_WARN} ${FG_TEXT}git not installed"
-  flush "$_bar_gradient"
+  bl_bar_finish "$_bar_gradient"
   exit 0
 fi
 
@@ -258,10 +224,4 @@ if ! $is_detached && command -v gh > /dev/null 2>&1; then
   fi
 fi
 
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
-)
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  bl_cache_write "$_bl_cache" "$_bl_out"
-fi
-printf '%s' "$_bl_out"
+bl_bar_finish "$_bar_gradient"

@@ -8,72 +8,33 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "javascript" "$_bl_ttl" "$PROJ" \
-    "$PROJ/package.json" "$PROJ/package-lock.json" \
-    "$PROJ/pnpm-lock.yaml" "$PROJ/yarn.lock" \
-    "$PROJ/bun.lockb" "$PROJ/bun.lock")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+bl_bar_init javascript "#f5f0c8" "#f7df1e" '["#1c1a00","#2d2b00"]' \
+  "$PROJ/package.json" "$PROJ/package-lock.json" \
+  "$PROJ/pnpm-lock.yaml" "$PROJ/yarn.lock" \
+  "$PROJ/bun.lockb" "$PROJ/bun.lock"
 
 [[ ! -f "$PROJ/package.json" ]] && exit 0
 
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg "$(hex_to_rgb "#f5f0c8")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#f7df1e")")
-  _bar_gradient='["#1c1a00","#2d2b00"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
-
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)
-    IC_REACT=$'\xee\x9e\xba'      # U+E7BA  nf-dev-react
-    IC_NEXT=$'\xee\x9f\x8a'       # U+E7CA  nf-dev-nextjs
-    IC_RN=$'\xee\x9e\xba'         # U+E7BA  nf-dev-react  (React Native)
-    IC_EXPO=$'\xef\x84\xb5'       # U+F135  nf-fa-rocket
-    IC_VUE=$'\xee\x9e\xa8'        # U+E7A8  nf-dev-vuejs
-    IC_NUXT=$'\xee\x9e\xa8'       # U+E7A8  nf-dev-vuejs  (no dedicated Nuxt glyph)
-    IC_SVELTE=$'\xee\x9f\xab'     # U+E7EB  nf-dev-svelte
-    IC_SVELTEKIT=$'\xee\x9f\xab'  # U+E7EB  nf-dev-svelte
-    IC_VITE=$'\xef\x83\xa7'       # U+F0E7  nf-fa-bolt
-    IC_ANGULAR=$'\xee\x9d\x93'    # U+E753  nf-dev-angularjs
-    IC_ASTRO=$'\xef\x84\xb5'      # U+F135  nf-fa-rocket
-    IC_REMIX=$'\xef\x84\xa1'      # U+F121  nf-fa-code
-    IC_ELECTRON=$'\xee\x9d\x8a'   # U+E74A  nf-dev-electron
-    IC_TS=$'\xee\x98\xa8'         # U+E628  nf-seti-typescript
-    IC_NODE=$'\xee\x9c\x98'       # U+E718  nf-seti-nodejs
-    IC_PKG=$'\xef\x92\xae'        # U+F4AE  nf-mdi-package
-    IC_TEST=$'\xef\x81\x80'       # U+F040  nf-fa-pencil
-    IC_CSS=$'\xee\x9d\x89'        # U+E749  nf-dev-css3
-    IC_LINT=$'\xef\x80\x8c'       # U+F00C  nf-fa-check
-    IC_FMT=$'\xef\x80\xb1'        # U+F031  nf-fa-font
-    ;;
-  emoji)
-    IC_REACT='⚛'
-    IC_NEXT='▲'
-    IC_RN='📱'
-    IC_EXPO='📱'
-    IC_VUE='💚'
-    IC_NUXT='💚'
-    IC_SVELTE='🧡'
-    IC_SVELTEKIT='🧡'
-    IC_VITE='⚡'
-    IC_ANGULAR='🔴'
-    IC_ASTRO='🚀'
-    IC_REMIX='♻'
-    IC_ELECTRON='⚡'
-    IC_TS='🔷'
-    IC_NODE='🟢' IC_PKG='📦' IC_TEST='🧪' IC_CSS='🎨' IC_LINT='✓' IC_FMT='🖋'
-    ;;
-  *)
-    IC_REACT='' IC_NEXT='' IC_RN='' IC_EXPO='' IC_VUE='' IC_NUXT=''
-    IC_SVELTE='' IC_SVELTEKIT='' IC_VITE='' IC_ANGULAR='' IC_ASTRO=''
-    IC_REMIX='' IC_ELECTRON='' IC_TS=''
-    IC_NODE='' IC_PKG='' IC_TEST='' IC_CSS='' IC_LINT='' IC_FMT=''
-    ;;
-esac
+bl_icon_set IC_REACT    $'\xee\x9e\xba' '⚛'   # U+E7BA  nf-dev-react
+bl_icon_set IC_NEXT     $'\xee\x9f\x8a' '▲'   # U+E7CA  nf-dev-nextjs
+bl_icon_set IC_RN       $'\xee\x9e\xba' '📱'  # U+E7BA  nf-dev-react  (React Native)
+bl_icon_set IC_EXPO     $'\xef\x84\xb5' '📱'  # U+F135  nf-fa-rocket
+bl_icon_set IC_VUE      $'\xee\x9e\xa8' '💚'  # U+E7A8  nf-dev-vuejs
+bl_icon_set IC_NUXT     $'\xee\x9e\xa8' '💚'  # U+E7A8  nf-dev-vuejs  (no dedicated Nuxt glyph)
+bl_icon_set IC_SVELTE   $'\xee\x9f\xab' '🧡'  # U+E7EB  nf-dev-svelte
+bl_icon_set IC_SVELTEKIT $'\xee\x9f\xab' '🧡' # U+E7EB  nf-dev-svelte
+bl_icon_set IC_VITE     $'\xef\x83\xa7' '⚡'  # U+F0E7  nf-fa-bolt
+bl_icon_set IC_ANGULAR  $'\xee\x9d\x93' '🔴'  # U+E753  nf-dev-angularjs
+bl_icon_set IC_ASTRO    $'\xef\x84\xb5' '🚀'  # U+F135  nf-fa-rocket
+bl_icon_set IC_REMIX    $'\xef\x84\xa1' '♻'   # U+F121  nf-fa-code
+bl_icon_set IC_ELECTRON $'\xee\x9d\x8a' '⚡'  # U+E74A  nf-dev-electron
+bl_icon_set IC_TS       $'\xee\x98\xa8' '🔷'  # U+E628  nf-seti-typescript
+bl_icon_set IC_NODE     $'\xee\x9c\x98' '🟢'  # U+E718  nf-seti-nodejs
+bl_icon_set IC_PKG      $'\xef\x92\xae' '📦'  # U+F4AE  nf-mdi-package
+bl_icon_set IC_TEST     $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
+bl_icon_set IC_CSS      $'\xee\x9d\x89' '🎨'  # U+E749  nf-dev-css3
+bl_icon_set IC_LINT     $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check
+bl_icon_set IC_FMT      $'\xef\x80\xb1' '🖋'  # U+F031  nf-fa-font
 
 
 # ── Node version (priority: .nvmrc → .node-version → engines.node) ────────────
@@ -159,60 +120,53 @@ js_seg() {
   seg "${FG_ACCENT}${icon} ${FG_TEXT}${label}${vsuf}"
 }
 
-_bl_out=$(
-  # Slot 1: Runtime
-  [[ -n "$node_version" ]] \
-    && seg "${FG_ACCENT}${IC_NODE} ${FG_TEXT}Node ${FG_ACCENT}v${node_version}"
+# Slot 1: Runtime
+[[ -n "$node_version" ]] \
+  && seg "${FG_ACCENT}${IC_NODE} ${FG_TEXT}Node ${FG_ACCENT}v${node_version}"
 
-  # Slot 2: Package manager
-  [[ -n "$pkg_mgr" ]] \
-    && seg "${FG_ACCENT}${IC_PKG} ${FG_TEXT}${pkg_mgr}"
+# Slot 2: Package manager
+[[ -n "$pkg_mgr" ]] \
+  && seg "${FG_ACCENT}${IC_PKG} ${FG_TEXT}${pkg_mgr}"
 
-  # ── React ecosystem ───────────────────────────────────────────────────────────
-  $has_next  && js_seg "$IC_NEXT"  "Next.js" "next"
-  ( $has_react && ! $has_next && ! $has_remix ) && js_seg "$IC_REACT" "React" "react"
-  $has_remix && js_seg "$IC_REMIX" "Remix" "@remix-run/react"
+# ── React ecosystem ───────────────────────────────────────────────────────────
+$has_next  && js_seg "$IC_NEXT"  "Next.js" "next"
+( $has_react && ! $has_next && ! $has_remix ) && js_seg "$IC_REACT" "React" "react"
+$has_remix && js_seg "$IC_REMIX" "Remix" "@remix-run/react"
 
-  # ── Mobile ────────────────────────────────────────────────────────────────────
-  $has_expo && js_seg "$IC_EXPO" "Expo" "expo"
-  ( $has_rn && ! $has_expo ) && js_seg "$IC_RN" "React Native" "react-native"
+# ── Mobile ────────────────────────────────────────────────────────────────────
+$has_expo && js_seg "$IC_EXPO" "Expo" "expo"
+( $has_rn && ! $has_expo ) && js_seg "$IC_RN" "React Native" "react-native"
 
-  # ── Vue ecosystem ─────────────────────────────────────────────────────────────
-  $has_nuxt && js_seg "$IC_NUXT" "Nuxt" "nuxt"
-  ( $has_vue && ! $has_nuxt ) && js_seg "$IC_VUE" "Vue" "vue"
+# ── Vue ecosystem ─────────────────────────────────────────────────────────────
+$has_nuxt && js_seg "$IC_NUXT" "Nuxt" "nuxt"
+( $has_vue && ! $has_nuxt ) && js_seg "$IC_VUE" "Vue" "vue"
 
-  # ── Svelte ecosystem ──────────────────────────────────────────────────────────
-  $has_sveltekit && js_seg "$IC_SVELTEKIT" "SvelteKit" "@sveltejs/kit"
-  ( $has_svelte && ! $has_sveltekit ) && js_seg "$IC_SVELTE" "Svelte" "svelte"
+# ── Svelte ecosystem ──────────────────────────────────────────────────────────
+$has_sveltekit && js_seg "$IC_SVELTEKIT" "SvelteKit" "@sveltejs/kit"
+( $has_svelte && ! $has_sveltekit ) && js_seg "$IC_SVELTE" "Svelte" "svelte"
 
-  # ── Other frameworks ──────────────────────────────────────────────────────────
-  $has_angular  && js_seg "$IC_ANGULAR"  "Angular"  "@angular/core"
-  $has_astro    && js_seg "$IC_ASTRO"    "Astro"    "astro"
-  $has_electron && js_seg "$IC_ELECTRON" "Electron" "electron"
+# ── Other frameworks ──────────────────────────────────────────────────────────
+$has_angular  && js_seg "$IC_ANGULAR"  "Angular"  "@angular/core"
+$has_astro    && js_seg "$IC_ASTRO"    "Astro"    "astro"
+$has_electron && js_seg "$IC_ELECTRON" "Electron" "electron"
 
-  # Vite — suppress when implied by Vite-native meta-frameworks.
-  ( $has_vite && ! $has_nuxt && ! $has_sveltekit && ! $has_astro ) \
-    && js_seg "$IC_VITE" "Vite" "vite"
+# Vite — suppress when implied by Vite-native meta-frameworks.
+( $has_vite && ! $has_nuxt && ! $has_sveltekit && ! $has_astro ) \
+  && js_seg "$IC_VITE" "Vite" "vite"
 
-  # ── Language ──────────────────────────────────────────────────────────────────
-  $has_ts && js_seg "$IC_TS" "TypeScript" "typescript"
+# ── Language ──────────────────────────────────────────────────────────────────
+$has_ts && js_seg "$IC_TS" "TypeScript" "typescript"
 
-  # Slot 5: Testing
-  $has_jest       && js_seg "$IC_TEST" "Jest" "jest"
-  $has_vitest     && js_seg "$IC_TEST" "Vitest" "vitest"
-  $has_playwright && js_seg "$IC_TEST" "Playwright" "@playwright/test"
-  $has_cypress    && js_seg "$IC_TEST" "Cypress" "cypress"
+# Slot 5: Testing
+$has_jest       && js_seg "$IC_TEST" "Jest" "jest"
+$has_vitest     && js_seg "$IC_TEST" "Vitest" "vitest"
+$has_playwright && js_seg "$IC_TEST" "Playwright" "@playwright/test"
+$has_cypress    && js_seg "$IC_TEST" "Cypress" "cypress"
 
-  # Slot 6: Tooling
-  $has_eslint   && js_seg "$IC_LINT" "ESLint"       "eslint"
-  $has_prettier && js_seg "$IC_FMT"  "Prettier"     "prettier"
-  $has_biome    && js_seg "$IC_LINT" "Biome"        "@biomejs/biome"
-  $has_tailwind && js_seg "$IC_CSS"  "Tailwind CSS" "tailwindcss"
+# Slot 6: Tooling
+$has_eslint   && js_seg "$IC_LINT" "ESLint"       "eslint"
+$has_prettier && js_seg "$IC_FMT"  "Prettier"     "prettier"
+$has_biome    && js_seg "$IC_LINT" "Biome"        "@biomejs/biome"
+$has_tailwind && js_seg "$IC_CSS"  "Tailwind CSS" "tailwindcss"
 
-  (( ${#_sc[@]} == 0 )) && exit 0
-  flush "$_bar_gradient"
-)
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  bl_cache_write "$_bl_cache" "$_bl_out"
-fi
-printf '%s' "$_bl_out"
+bl_bar_finish "$_bar_gradient"

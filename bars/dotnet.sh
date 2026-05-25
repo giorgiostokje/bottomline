@@ -8,12 +8,7 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "dotnet" "$_bl_ttl" "$PROJ" \
-    "$PROJ/global.json" "$PROJ/Directory.Build.props" "$PROJ/Directory.Build.targets")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+bl_bar_init dotnet "#e8d9f5" "#512BD4" '["#1a0640","#2d0e6e"]' "$PROJ/global.json" "$PROJ/Directory.Build.props" "$PROJ/Directory.Build.targets"
 
 shopt -s nullglob
 _csproj=("$PROJ"/*.csproj)
@@ -32,31 +27,12 @@ _csproj_pkg_version() {
     | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+(-[^"]+)?)?' | head -1
 }
 
-# ── Palette (.NET brand purple) ───────────────────────────────────────────────
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg   "$(hex_to_rgb "#e8d9f5")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#512BD4")")
-  _bar_gradient='["#1a0640","#2d0e6e"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
-
 # ── Icons ─────────────────────────────────────────────────────────────────────
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)
-    IC_DOTNET=$'\xee\x9d\xbf'   # U+E77F  nf-dev-dotnet
-    IC_WEB=$'\xef\x83\xac'      # U+F0EC  nf-fa-exchange
-    IC_TEST=$'\xef\x81\x80'     # U+F040  nf-fa-pencil
-    IC_DB=$'\xef\x87\x80'       # U+F1C0  nf-fa-database
-    IC_LINT=$'\xef\x80\x8c'     # U+F00C  nf-fa-check
-    ;;
-  emoji)
-    IC_DOTNET='🔷' IC_WEB='🌐' IC_TEST='🧪' IC_DB='🗄' IC_LINT='✓'
-    ;;
-  *)
-    IC_DOTNET='' IC_WEB='' IC_TEST='' IC_DB='' IC_LINT=''
-    ;;
-esac
+bl_icon_set IC_DOTNET $'\xee\x9d\xbf' '🔷'  # U+E77F  nf-dev-dotnet
+bl_icon_set IC_WEB    $'\xef\x83\xac' '🌐'  # U+F0EC  nf-fa-exchange
+bl_icon_set IC_TEST   $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
+bl_icon_set IC_DB     $'\xef\x87\x80' '🗄'  # U+F1C0  nf-fa-database
+bl_icon_set IC_LINT   $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check
 
 # ── SDK version ───────────────────────────────────────────────────────────────
 sdk_version=''
@@ -106,44 +82,23 @@ if [[ -n "$csproj" ]]; then
   $has_sonar    && sonar_version=$(_csproj_pkg_version "SonarAnalyzer" "$csproj")
 fi
 
-_bl_out=$(
-  # ── Segments ──────────────────────────────────────────────────────────────────
-  dotnet_seg="${FG_ACCENT}${IC_DOTNET} ${FG_TEXT}.NET"
-  [[ -n "$sdk_version" ]] && dotnet_seg+=" ${FG_ACCENT}v${sdk_version}"
-  add_seg "$dotnet_seg"
+# ── Segments ──────────────────────────────────────────────────────────────────
+bl_version_seg "$IC_DOTNET" .NET "$sdk_version"
 
-  [[ -n "$target_framework" ]] && add_seg "${FG_TEXT}${target_framework}"
+[[ -n "$target_framework" ]] && add_seg "${FG_TEXT}${target_framework}"
 
-  # Slot 3: Framework
-  [[ -n "$framework" ]] \
-    && add_seg "${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework}"
+# Slot 3: Framework
+[[ -n "$framework" ]] \
+  && add_seg "${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework}"
 
-  # Slot 5: Testing
-  $has_xunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}xUnit"
-  $has_nunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}NUnit"
-  $has_mstest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}MSTest"
+# Slot 5: Testing
+$has_xunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}xUnit"
+$has_nunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}NUnit"
+$has_mstest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}MSTest"
 
-  # Slot 6: Tooling
-  if $has_stylecop; then
-    sc_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}StyleCop"
-    [[ -n "$stylecop_version" ]] && sc_seg+=" ${FG_ACCENT}v${stylecop_version}"
-    add_seg "$sc_seg"
-  fi
-  if $has_sonar; then
-    sn_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}SonarAnalyzer"
-    [[ -n "$sonar_version" ]] && sn_seg+=" ${FG_ACCENT}v${sonar_version}"
-    add_seg "$sn_seg"
-  fi
-  if $has_ef; then
-    ef_seg="${FG_ACCENT}${IC_DB} ${FG_TEXT}EF Core"
-    [[ -n "$ef_version" ]] && ef_seg+=" ${FG_ACCENT}v${ef_version}"
-    add_seg "$ef_seg"
-  fi
+# Slot 6: Tooling
+$has_stylecop && bl_version_seg "$IC_LINT" StyleCop "$stylecop_version"
+$has_sonar    && bl_version_seg "$IC_LINT" SonarAnalyzer "$sonar_version"
+$has_ef       && bl_version_seg "$IC_DB" "EF Core" "$ef_version"
 
-  (( ${#_sc[@]} == 0 )) && exit 0
-  flush "$_bar_gradient"
-)
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  bl_cache_write "$_bl_cache" "$_bl_out"
-fi
-printf '%s' "$_bl_out"
+bl_bar_finish "$_bar_gradient"

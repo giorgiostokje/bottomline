@@ -8,72 +8,30 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "php" "$_bl_ttl" "$PROJ" "$PROJ/composer.json" "$PROJ/composer.lock")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+bl_bar_init php "#ddd6f3" "#9898e0" '["#0d0b1e","#1c1850"]' \
+  "$PROJ/composer.json" "$PROJ/composer.lock"
 
 [[ ! -f "$PROJ/composer.json" ]] && exit 0
 
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg "$(hex_to_rgb "#ddd6f3")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#9898e0")")
-  _bar_gradient='["#0d0b1e","#1c1850"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
-
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)
-    IC_PHP=$'\xee\x9d\xa5'       # U+E765  nf-dev-php
-    IC_LARAVEL=$'\xee\x9c\xbf'   # U+E73F  nf-dev-laravel
-    IC_LUMEN=$'\xee\x9c\xbf'     # U+E73F  nf-dev-laravel  (Lumen = Laravel family)
-    IC_SYMFONY=$'\xee\x9d\x97'   # U+E757  nf-dev-symfony
-    IC_CAKE=$'\xef\x87\xbd'      # U+F1FD  nf-fa-birthday-cake
-    IC_SLIM=$'\xef\x81\xac'      # U+F06C  nf-fa-leaf
-    IC_OCTANE=$'\xef\x83\xa4'    # U+F0E4  nf-fa-tachometer
-    IC_BOOST=$'\xef\x83\xa7'     # U+F0E7  nf-fa-bolt
-    IC_REVERB=$'\xef\x87\xab'    # U+F1EB  nf-fa-wifi
-    IC_LIVEWIRE=$'\xef\x81\x83'  # U+F043  nf-fa-tint
-    IC_FLUX=$'\xef\x84\xa1'      # U+F121  nf-fa-code
-    IC_INERTIA=$'\xef\x84\xa4'   # U+F124  nf-fa-location-arrow
-    IC_FILAMENT=$'\xef\x80\x85'  # U+F005  nf-fa-star
-    IC_HERD=$'\xef\x82\xac'      # U+F0AC  nf-fa-globe
-    IC_TEST=$'\xef\x81\x80'      # U+F040  nf-fa-pencil
-    IC_PHPSTAN=$'\xef\x80\x8c'   # U+F00C  nf-fa-check
-    IC_CSFIXER=$'\xef\x80\xb1'   # U+F031  nf-fa-font
-    IC_PRO=$'\xef\x82\x91'       # U+F091  nf-fa-trophy
-    IC_WARN=$'\xef\x81\xb1'      # U+F071  nf-fa-warning
-    ;;
-  emoji)
-    IC_PHP='🐘'
-    IC_LARAVEL='🔥'
-    IC_LUMEN='🔦'
-    IC_SYMFONY='🎵'
-    IC_CAKE='🎂'
-    IC_SLIM='🪶'
-    IC_OCTANE='🏎'
-    IC_BOOST='⚡'
-    IC_REVERB='📡'
-    IC_LIVEWIRE='🌊'
-    IC_FLUX='✨'
-    IC_INERTIA='🚀'
-    IC_FILAMENT='⭐'
-    IC_HERD='🌐'
-    IC_TEST='🧪'
-    IC_PHPSTAN='🔍'
-    IC_CSFIXER='🔧'
-    IC_PRO='🏅'
-    IC_WARN='⚠'
-    ;;
-  *)
-    IC_PHP='' IC_LARAVEL='' IC_LUMEN='' IC_SYMFONY='' IC_CAKE='' IC_SLIM=''
-    IC_OCTANE='' IC_BOOST='' IC_REVERB='' IC_LIVEWIRE='' IC_FLUX='' IC_INERTIA=''
-    IC_FILAMENT='' IC_HERD='' IC_TEST='' IC_PHPSTAN='' IC_CSFIXER=''
-    IC_PRO='' IC_WARN=''
-    ;;
-esac
+bl_icon_set IC_PHP      $'\xee\x9d\xa5' '🐘'  # U+E765  nf-dev-php
+bl_icon_set IC_LARAVEL  $'\xee\x9c\xbf' '🔥'  # U+E73F  nf-dev-laravel
+bl_icon_set IC_LUMEN    $'\xee\x9c\xbf' '🔦'  # U+E73F  nf-dev-laravel  (Lumen = Laravel family)
+bl_icon_set IC_SYMFONY  $'\xee\x9d\x97' '🎵'  # U+E757  nf-dev-symfony
+bl_icon_set IC_CAKE     $'\xef\x87\xbd' '🎂'  # U+F1FD  nf-fa-birthday-cake
+bl_icon_set IC_SLIM     $'\xef\x81\xac' '🪶'  # U+F06C  nf-fa-leaf
+bl_icon_set IC_OCTANE   $'\xef\x83\xa4' '🏎'  # U+F0E4  nf-fa-tachometer
+bl_icon_set IC_BOOST    $'\xef\x83\xa7' '⚡'  # U+F0E7  nf-fa-bolt
+bl_icon_set IC_REVERB   $'\xef\x87\xab' '📡'  # U+F1EB  nf-fa-wifi
+bl_icon_set IC_LIVEWIRE $'\xef\x81\x83' '🌊'  # U+F043  nf-fa-tint
+bl_icon_set IC_FLUX     $'\xef\x84\xa1' '✨'  # U+F121  nf-fa-code
+bl_icon_set IC_INERTIA  $'\xef\x84\xa4' '🚀'  # U+F124  nf-fa-location-arrow
+bl_icon_set IC_FILAMENT $'\xef\x80\x85' '⭐'  # U+F005  nf-fa-star
+bl_icon_set IC_HERD     $'\xef\x82\xac' '🌐'  # U+F0AC  nf-fa-globe
+bl_icon_set IC_TEST     $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
+bl_icon_set IC_PHPSTAN  $'\xef\x80\x8c' '🔍'  # U+F00C  nf-fa-check
+bl_icon_set IC_CSFIXER  $'\xef\x80\xb1' '🔧'  # U+F031  nf-fa-font
+bl_icon_set IC_PRO      $'\xef\x82\x91' '🏅'  # U+F091  nf-fa-trophy
+bl_icon_set IC_WARN     $'\xef\x81\xb1' '⚠'   # U+F071  nf-fa-warning
 
 # PHP version from the active binary (fast — no framework bootstrap).
 php_version=''
@@ -156,25 +114,24 @@ if command -v herd > /dev/null 2>&1; then
 fi
 
 # ── PHP runtime ───────────────────────────────────────────────────────────────
-_bl_out=$(
 [[ -n "$php_version" ]] \
   && add_seg "${FG_ACCENT}${IC_PHP} ${FG_TEXT}PHP ${FG_ACCENT}${php_version}"
 
 # ── Framework ─────────────────────────────────────────────────────────────────
 [[ -n "$laravel_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_LARAVEL} ${FG_TEXT}Laravel ${FG_ACCENT}v${laravel_version}"
+  && bl_version_seg "$IC_LARAVEL" Laravel "$laravel_version"
 [[ -n "$lumen_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_LUMEN} ${FG_TEXT}Lumen ${FG_ACCENT}v${lumen_version}"
+  && bl_version_seg "$IC_LUMEN" Lumen "$lumen_version"
 [[ -n "$symfony_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_SYMFONY} ${FG_TEXT}Symfony ${FG_ACCENT}v${symfony_version}"
+  && bl_version_seg "$IC_SYMFONY" Symfony "$symfony_version"
 [[ -n "$cake_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_CAKE} ${FG_TEXT}CakePHP ${FG_ACCENT}v${cake_version}"
+  && bl_version_seg "$IC_CAKE" CakePHP "$cake_version"
 [[ -n "$slim_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_SLIM} ${FG_TEXT}Slim ${FG_ACCENT}v${slim_version}"
+  && bl_version_seg "$IC_SLIM" Slim "$slim_version"
 
 # ── Laravel runtime & tooling ─────────────────────────────────────────────────
 [[ -n "$octane_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_OCTANE} ${FG_TEXT}Octane ${FG_ACCENT}v${octane_version}"
+  && bl_version_seg "$IC_OCTANE" Octane "$octane_version"
 
 if [[ -n "$boost_version" ]]; then
   if [[ "$boost_json_exists" == "false" || "$boost_agents_ok" == "true" ]]; then
@@ -185,11 +142,11 @@ if [[ -n "$boost_version" ]]; then
 fi
 
 [[ -n "$reverb_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_REVERB} ${FG_TEXT}Reverb ${FG_ACCENT}v${reverb_version}"
+  && bl_version_seg "$IC_REVERB" Reverb "$reverb_version"
 
 # ── Livewire + Flux ───────────────────────────────────────────────────────────
 [[ -n "$livewire_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_LIVEWIRE} ${FG_TEXT}Livewire ${FG_ACCENT}v${livewire_version}"
+  && bl_version_seg "$IC_LIVEWIRE" Livewire "$livewire_version"
 
 if [[ -n "$livewire_version" && -n "$flux_version" ]]; then
   local_pro=''
@@ -198,40 +155,39 @@ if [[ -n "$livewire_version" && -n "$flux_version" ]]; then
 fi
 
 # ── Inertia ───────────────────────────────────────────────────────────────────
-if [[ -n "$inertia_version" ]]; then
-  add_seg "${FG_ACCENT}${IC_INERTIA} ${FG_TEXT}Inertia ${FG_ACCENT}v${inertia_version}"
-fi
+[[ -n "$inertia_version" ]] \
+  && bl_version_seg "$IC_INERTIA" Inertia "$inertia_version"
 
 # ── Admin panels ──────────────────────────────────────────────────────────────
 [[ -n "$filament_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_FILAMENT} ${FG_TEXT}Filament ${FG_ACCENT}v${filament_version}"
+  && bl_version_seg "$IC_FILAMENT" Filament "$filament_version"
 
 # ── Testing (slot 5) ──────────────────────────────────────────────────────────
 if [[ -n "$pest_version" ]]; then
-  add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Pest ${FG_ACCENT}v${pest_version}"
+  bl_version_seg "$IC_TEST" Pest "$pest_version"
 elif [[ -n "$phpunit_version" ]]; then
-  add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}PHPUnit ${FG_ACCENT}v${phpunit_version}"
+  bl_version_seg "$IC_TEST" PHPUnit "$phpunit_version"
 fi
 
 # ── Static analysis (slot 6) ──────────────────────────────────────────────
 # Larastan wraps PHPStan for Laravel — show Larastan only when present.
 if [[ -n "$larastan_version" ]]; then
-  add_seg "${FG_ACCENT}${IC_PHPSTAN} ${FG_TEXT}Larastan ${FG_ACCENT}v${larastan_version}"
+  bl_version_seg "$IC_PHPSTAN" Larastan "$larastan_version"
 elif [[ -n "$phpstan_version" ]]; then
   if [[ "$phpstan_version" == 'present' ]]; then
     add_seg "${FG_ACCENT}${IC_PHPSTAN} ${FG_TEXT}PHPStan"
   else
-    add_seg "${FG_ACCENT}${IC_PHPSTAN} ${FG_TEXT}PHPStan ${FG_ACCENT}v${phpstan_version}"
+    bl_version_seg "$IC_PHPSTAN" PHPStan "$phpstan_version"
   fi
 fi
 # Pint wraps PHP-CS-Fixer for Laravel — show Pint only when present.
 if [[ -n "$pint_version" ]]; then
-  add_seg "${FG_ACCENT}${IC_CSFIXER} ${FG_TEXT}Pint ${FG_ACCENT}v${pint_version}"
+  bl_version_seg "$IC_CSFIXER" Pint "$pint_version"
 elif [[ -n "$csfixer_version" ]]; then
   if [[ "$csfixer_version" == 'present' ]]; then
     add_seg "${FG_ACCENT}${IC_CSFIXER} ${FG_TEXT}PHP CS Fixer"
   else
-    add_seg "${FG_ACCENT}${IC_CSFIXER} ${FG_TEXT}PHP CS Fixer ${FG_ACCENT}v${csfixer_version}"
+    bl_version_seg "$IC_CSFIXER" "PHP CS Fixer" "$csfixer_version"
   fi
 fi
 
@@ -241,10 +197,4 @@ if [[ -n "$herd_url" ]]; then
   add_seg "$herd_label"
 fi
 
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
-)
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  bl_cache_write "$_bl_cache" "$_bl_out"
-fi
-printf '%s' "$_bl_out"
+bl_bar_finish "$_bar_gradient"

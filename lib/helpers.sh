@@ -55,3 +55,69 @@ FG_ACCENT=$(make_fg "$(hex_to_rgb "$BOTTOMLINE_ACCENT_HEX")")
 FG_WARN=$(make_fg   "$(hex_to_rgb "${BOTTOMLINE_WARN_HEX:-#f4a261}")")
 # shellcheck disable=SC2034
 FG_CRIT=$(make_fg   "$(hex_to_rgb "${BOTTOMLINE_DANGER_HEX:-#e05a4e}")")
+
+# ── Bar boilerplate helpers ───────────────────────────────────────────────────
+
+# bl_bar_init <name> <fallback_text_hex> <fallback_accent_hex> <fallback_gradient_json> [cache_input_file…]
+# Collapses the cache-check + color-init prelude. Sets FG_TEXT, FG_ACCENT,
+# _bar_gradient, _bl_ttl, _bl_cache. On cache hit: prints cached output and
+# exit 0s the calling script. Reads $PROJ (must be set before calling).
+bl_bar_init() {
+  local name="$1" fb_text="$2" fb_accent="$3" fb_gradient="$4"
+  shift 4
+  _bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+  if [[ "$_bl_ttl" -gt 0 ]]; then
+    _bl_cache=$(bl_cache_path "$name" "$_bl_ttl" "$PROJ" "$@")
+    if [[ -f "$_bl_cache" ]]; then
+      cat "$_bl_cache"
+      exit 0
+    fi
+  fi
+  if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
+    FG_TEXT=$(make_fg "$(hex_to_rgb "$fb_text")")
+    FG_ACCENT=$(make_fg "$(hex_to_rgb "$fb_accent")")
+    _bar_gradient="$fb_gradient"
+  else
+    _bar_gradient="$BOTTOMLINE_GRADIENT"
+  fi
+}
+
+# bl_bar_finish <gradient_json>
+# Wraps the post-render tail. Returns 0 if _sc is empty (nothing to render).
+# Otherwise captures flush output, caches it if _bl_ttl > 0, and prints it.
+bl_bar_finish() {
+  local gradient_json="$1"
+  (( ${#_sc[@]} == 0 )) && return 0
+  local out
+  out=$(flush "$gradient_json")
+  if [[ "$_bl_ttl" -gt 0 && -n "$out" ]]; then
+    bl_cache_write "$_bl_cache" "$out"
+  fi
+  printf '%s' "$out"
+}
+
+# bl_icon_set <var_name> <nerd_bytes> <emoji> [fallback]
+# Sets a single icon variable based on BOTTOMLINE_ICON_TYPE.
+bl_icon_set() {
+  local var="$1" nerd="$2" emoji="$3" fallback="${4:-}"
+  case "${BOTTOMLINE_ICON_TYPE:-}" in
+    nerd)  printf -v "$var" '%s' "$nerd"     ;;
+    emoji) printf -v "$var" '%s' "$emoji"    ;;
+    *)     printf -v "$var" '%s' "$fallback" ;;
+  esac
+}
+
+# bl_version_seg <icon> <label> [version]
+# Emits an "icon label [vX.Y.Z]" segment. Always renders the label (and icon
+# if non-empty). Appends version only if non-empty.
+bl_version_seg() {
+  local icon="$1" label="$2" version="$3"
+  local seg
+  if [[ -n "$icon" ]]; then
+    seg="${FG_ACCENT}${icon} ${FG_TEXT}${label}"
+  else
+    seg="${FG_TEXT}${label}"
+  fi
+  [[ -n "$version" ]] && seg+=" ${FG_ACCENT}v${version}"
+  add_seg "$seg"
+}

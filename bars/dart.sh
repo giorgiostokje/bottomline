@@ -8,11 +8,8 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "dart" "$_bl_ttl" "$PROJ" "$PROJ/pubspec.yaml" "$PROJ/pubspec.lock")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+bl_bar_init dart "#c5e8ff" "#0175C2" '["#042B59","#011F3F"]' \
+  "$PROJ/pubspec.yaml" "$PROJ/pubspec.lock"
 
 [[ ! -f "$PROJ/pubspec.yaml" ]] && exit 0
 
@@ -31,37 +28,12 @@ pubspec_dep_version() {
   ' "$PROJ/pubspec.yaml" 2>/dev/null
 }
 
-# ── Palette (Dart brand blue) ─────────────────────────────────────────────────
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg   "$(hex_to_rgb "#c5e8ff")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#0175C2")")
-  _bar_gradient='["#042B59","#011F3F"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
-
-# ── Icons ─────────────────────────────────────────────────────────────────────
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)
-    IC_DART=$'\xef\x88\x99'    # U+F219  nf-fa-diamond
-    IC_FLUTTER=$'\xef\x84\x8b' # U+F10B  nf-fa-mobile
-    IC_TEST=$'\xef\x81\x80'      # U+F040  nf-fa-pencil
-    IC_STATE=$'\xef\x84\xa9'     # U+F129  nf-fa-info (state mgmt)
-    IC_NET=$'\xef\x82\xac'       # U+F0AC  nf-fa-globe (HTTP)
-    IC_LINT=$'\xef\x80\x8c'      # U+F00C  nf-fa-check
-    ;;
-  emoji)
-    IC_DART='🎯'
-    IC_FLUTTER='🐦'
-    IC_TEST='🧪'
-    IC_STATE='🧭'
-    IC_NET='🌐'
-    IC_LINT='✓'
-    ;;
-  *)
-    IC_DART='' IC_FLUTTER='' IC_TEST='' IC_STATE='' IC_NET='' IC_LINT=''
-    ;;
-esac
+bl_icon_set IC_DART   $'\xef\x88\x99' '🎯'  # U+F219  nf-fa-diamond
+bl_icon_set IC_FLUTTER $'\xef\x84\x8b' '🐦' # U+F10B  nf-fa-mobile
+bl_icon_set IC_TEST   $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
+bl_icon_set IC_STATE  $'\xef\x84\xa9' '🧭'  # U+F129  nf-fa-info (state mgmt)
+bl_icon_set IC_NET    $'\xef\x82\xac' '🌐'  # U+F0AC  nf-fa-globe (HTTP)
+bl_icon_set IC_LINT   $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check
 
 # ── Parse pubspec.yaml ────────────────────────────────────────────────────────
 pkg_name=$(grep -m1 '^name:' "$PROJ/pubspec.yaml" 2>/dev/null | awk '{print $2}')
@@ -122,45 +94,26 @@ elif grep -Eq '^[[:space:]]+lints:' "$pubspec" 2>/dev/null; then
 fi
 [[ -n "$lint_pkg" ]] && lint_pkg_version=$(pubspec_dep_version "$lint_pkg")
 
-_bl_out=$(
-  # ── Segments ──────────────────────────────────────────────────────────────────
-  dart_seg="${FG_ACCENT}${IC_DART} ${FG_TEXT}Dart"
-  [[ -n "$sdk_version" ]] && dart_seg+=" ${FG_ACCENT}>=${sdk_version}"
-  [[ -n "$pkg_name" ]]    && dart_seg+=" ${FG_TEXT}${pkg_name}"
-  add_seg "$dart_seg"
+# ── Segments ──────────────────────────────────────────────────────────────────
+dart_seg="${FG_ACCENT}${IC_DART} ${FG_TEXT}Dart"
+[[ -n "$sdk_version" ]] && dart_seg+=" ${FG_ACCENT}>=${sdk_version}"
+[[ -n "$pkg_name" ]]    && dart_seg+=" ${FG_TEXT}${pkg_name}"
+add_seg "$dart_seg"
 
-  $is_flutter && add_seg "${FG_ACCENT}${IC_FLUTTER} ${FG_TEXT}Flutter"
+$is_flutter && add_seg "${FG_ACCENT}${IC_FLUTTER} ${FG_TEXT}Flutter"
 
-  # Slot 5: Testing
-  $has_flutter_test \
-    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}flutter_test"
-  $has_test \
-    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}test"
+# Slot 5: Testing
+$has_flutter_test \
+  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}flutter_test"
+$has_test \
+  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}test"
 
-  # Slot 6: Tooling
-  # static analysis first
-  if [[ -n "$lint_pkg" ]]; then
-    lp_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}${lint_pkg}"
-    [[ -n "$lint_pkg_version" ]] && lp_seg+=" ${FG_ACCENT}v${lint_pkg_version}"
-    add_seg "$lp_seg"
-  fi
-  # business logic / state management
-  if [[ -n "$state_mgmt" ]]; then
-    sm_seg="${FG_ACCENT}${IC_STATE} ${FG_TEXT}${state_mgmt_display}"
-    [[ -n "$state_mgmt_version" ]] && sm_seg+=" ${FG_ACCENT}v${state_mgmt_version}"
-    add_seg "$sm_seg"
-  fi
-  # HTTP client
-  if $has_dio; then
-    dio_seg="${FG_ACCENT}${IC_NET} ${FG_TEXT}Dio"
-    [[ -n "$dio_version" ]] && dio_seg+=" ${FG_ACCENT}v${dio_version}"
-    add_seg "$dio_seg"
-  fi
+# Slot 6: Tooling
+# static analysis first
+[[ -n "$lint_pkg" ]] && bl_version_seg "$IC_LINT" "$lint_pkg" "$lint_pkg_version"
+# business logic / state management
+[[ -n "$state_mgmt" ]] && bl_version_seg "$IC_STATE" "$state_mgmt_display" "$state_mgmt_version"
+# HTTP client
+$has_dio && bl_version_seg "$IC_NET" Dio "$dio_version"
 
-  (( ${#_sc[@]} == 0 )) && exit 0
-  flush "$_bar_gradient"
-)
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  bl_cache_write "$_bl_cache" "$_bl_out"
-fi
-printf '%s' "$_bl_out"
+bl_bar_finish "$_bar_gradient"

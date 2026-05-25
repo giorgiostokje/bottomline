@@ -8,13 +8,9 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "c-cpp" "$_bl_ttl" "$PROJ" \
-    "$PROJ/CMakeLists.txt" "$PROJ/meson.build" "$PROJ/configure.ac" \
-    "$PROJ/conanfile.txt" "$PROJ/conanfile.py" "$PROJ/vcpkg.json")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+bl_bar_init c-cpp "#dce8f0" "#4a8db7" '["#0a1520","#0f2535"]' \
+  "$PROJ/CMakeLists.txt" "$PROJ/meson.build" "$PROJ/configure.ac" \
+  "$PROJ/conanfile.txt" "$PROJ/conanfile.py" "$PROJ/vcpkg.json"
 
 # Hard guard: exit silently if not a C/C++ project
 has_cmake=false has_meson=false has_autotools=false
@@ -23,33 +19,11 @@ has_cmake=false has_meson=false has_autotools=false
 [[ -f "$PROJ/configure.ac" ]]   && has_autotools=true
 $has_cmake || $has_meson || $has_autotools || exit 0
 
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg "$(hex_to_rgb "#dce8f0")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#4a8db7")")
-  _bar_gradient='["#0a1520","#0f2535"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
-
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)
-    IC_CPLUSPLUS=$'\xee\x98\xa3'  # U+E623  nf-seti-c (used for both C and C++)
-    IC_BUILD=$'\xef\x80\x93'      # U+F013  nf-fa-cog
-    IC_TEST=$'\xef\x81\x80'       # U+F040  nf-fa-pencil
-    IC_LINT=$'\xef\x80\x8c'       # U+F00C  nf-fa-check
-    IC_PKG=$'\xef\x80\xbc'        # U+F0BC  nf-fa-cube
-    ;;
-  emoji)
-    IC_CPLUSPLUS='⚙'
-    IC_BUILD='🔨'
-    IC_TEST='🧪'
-    IC_LINT='✓'
-    IC_PKG='📦'
-    ;;
-  *)
-    IC_CPLUSPLUS='' IC_BUILD='' IC_TEST='' IC_LINT='' IC_PKG=''
-    ;;
-esac
+bl_icon_set IC_CPLUSPLUS $'\xee\x98\xa3' '⚙'
+bl_icon_set IC_BUILD     $'\xef\x80\x93' '🔨'
+bl_icon_set IC_TEST      $'\xef\x81\x80' '🧪'
+bl_icon_set IC_LINT      $'\xef\x80\x8c' '✓'
+bl_icon_set IC_PKG       $'\xef\x80\xbc' '📦'
 
 
 # ── Slot 1: Detect language (C, C++, or C/C++) ────────────────────────────────
@@ -156,40 +130,33 @@ fi
 [[ -f "$PROJ/.cppcheck" ]] && has_cppcheck=true
 [[ -f "$PROJ/.clang-format" ]] && has_clangformat=true
 
-_bl_out=$(
-  # ── Slot 1: Runtime ───────────────────────────────────────────────────────────
-  lang_seg="${FG_ACCENT}${IC_CPLUSPLUS} ${FG_TEXT}${lang}"
-  [[ -n "$lang_standard" ]] && lang_seg+=" ${FG_ACCENT}${lang_standard}"
-  add_seg "$lang_seg"
+# ── Slot 1: Runtime ───────────────────────────────────────────────────────────
+lang_seg="${FG_ACCENT}${IC_CPLUSPLUS} ${FG_TEXT}${lang}"
+[[ -n "$lang_standard" ]] && lang_seg+=" ${FG_ACCENT}${lang_standard}"
+add_seg "$lang_seg"
 
-  # ── Slot 2: Build system ──────────────────────────────────────────────────────
-  if [[ -n "$build_system" ]]; then
-    build_seg="${FG_ACCENT}${IC_BUILD} ${FG_TEXT}${build_system}"
-    [[ -n "$build_version" ]] && build_seg+=" ${FG_ACCENT}${build_version}"
-    add_seg "$build_seg"
-  fi
-
-  # ── Slot 4: Package managers ──────────────────────────────────────────────────
-  $has_conan && add_seg "${FG_ACCENT}${IC_PKG} ${FG_TEXT}Conan"
-  $has_vcpkg && add_seg "${FG_ACCENT}${IC_PKG} ${FG_TEXT}vcpkg"
-
-  # ── Slot 5: Testing ───────────────────────────────────────────────────────────
-  $has_gtest    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}GoogleTest"
-  $has_catch2   && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Catch2"
-  $has_doctest  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}doctest"
-  $has_boosttest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Boost.Test"
-  $has_ctest    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}CTest"
-
-  # ── Slot 6: Tooling ───────────────────────────────────────────────────────────
-  # Static analysis first, then formatter
-  $has_clangtidy   && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}clang-tidy"
-  $has_cppcheck    && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}cppcheck"
-  $has_clangformat && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}clang-format"
-
-  (( ${#_sc[@]} == 0 )) && exit 0
-  flush "$_bar_gradient"
-)
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  bl_cache_write "$_bl_cache" "$_bl_out"
+# ── Slot 2: Build system ──────────────────────────────────────────────────────
+if [[ -n "$build_system" ]]; then
+  build_seg="${FG_ACCENT}${IC_BUILD} ${FG_TEXT}${build_system}"
+  [[ -n "$build_version" ]] && build_seg+=" ${FG_ACCENT}${build_version}"
+  add_seg "$build_seg"
 fi
-printf '%s' "$_bl_out"
+
+# ── Slot 4: Package managers ──────────────────────────────────────────────────
+$has_conan && add_seg "${FG_ACCENT}${IC_PKG} ${FG_TEXT}Conan"
+$has_vcpkg && add_seg "${FG_ACCENT}${IC_PKG} ${FG_TEXT}vcpkg"
+
+# ── Slot 5: Testing ───────────────────────────────────────────────────────────
+$has_gtest    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}GoogleTest"
+$has_catch2   && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Catch2"
+$has_doctest  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}doctest"
+$has_boosttest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Boost.Test"
+$has_ctest    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}CTest"
+
+# ── Slot 6: Tooling ───────────────────────────────────────────────────────────
+# Static analysis first, then formatter
+$has_clangtidy   && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}clang-tidy"
+$has_cppcheck    && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}cppcheck"
+$has_clangformat && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}clang-format"
+
+bl_bar_finish "$_bar_gradient"
