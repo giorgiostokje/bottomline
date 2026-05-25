@@ -151,7 +151,7 @@ Three files are **deep-merged** at runtime, highest priority first:
 
 `<plugin-dir>` is the root of the Bottomline installation. For marketplace installs it is `~/.claude/plugins/marketplaces/bottomline`; for a manual clone to the default location it is `~/.claude/bottomline`.
 
-Objects are merged recursively; arrays and scalars take the highest-priority non-null value. Start each file with `{}` and add only the keys you want to override. `segments.disabled` and `auto_bars.disabled` are unioned across all three levels rather than overridden.
+Objects are merged recursively; arrays and scalars take the highest-priority non-null value. **Exception:** non-empty arrays whose elements are objects with a `script` field are merged by `script` key — matched entries are deep-merged (higher-priority wins on conflicts), unmatched entries from either layer survive; an empty array still wins outright. `segments.disabled` and `auto_bars.disabled` are unioned across all three levels rather than overridden.
 
 ---
 
@@ -357,7 +357,7 @@ Auto-bars are disabled by default (`enabled: false` in `settings.json`).
 
 #### Cache
 
-Auto-detected bars cache output in `/tmp`. `auto_bars.refresh_minutes` sets the global TTL (default: `5`). Override per bar via `auto_bars.overrides.<name>.refresh_minutes`. The `git` bar defaults to `0` (live). Set `auto_bars.inherit_colors: true` to make all auto-detected bars use the merged config palette instead of their built-in language colours.
+Auto-detected bars cache output in `/tmp`. `auto_bars.refresh_minutes` sets the global TTL (default: `5`). Override per bar by adding a matching entry to `auto_bars.scripts` at user or project level — e.g. `{"auto_bars":{"scripts":[{"script":"git","refresh_minutes":1}]}}`. The `git` bar defaults to `0` (live). Set `auto_bars.inherit_colors: true` to make all auto-detected bars use the merged config palette instead of their built-in language colours.
 
 #### Registered signal files
 
@@ -455,10 +455,16 @@ Kotlin version, Gradle wrapper version, framework (Ktor or Spring Boot), testing
 
 #### `linear` — Linear project management
 
-No auto-detection signal — add explicitly with `params.api_key` (literal or `file:~/.token`) and `params.team` (team key from your Linear workspace URL). Obtain a key from Linear → Settings → API → Personal API keys.
+No auto-detection signal — configure via `/bottomline:configure`. Requires a personal API key (Linear → Settings → API → Personal API keys) and a team key from your workspace URL. Store the key in `~/.linear_api_key` to keep it out of JSON config. Config splits across two levels:
 
+**User level** (`~/.claude/bottomline.json`) — `api_key` only:
 ```json
-{ "script": "linear", "refresh_minutes": 15, "params": { "api_key": "file:~/.linear_token", "team": "ENG" } }
+{ "bars": [{ "script": "linear", "params": { "api_key": "file:~/.linear_api_key" } }] }
+```
+
+**Project level** (`.claude/bottomline.json`) — `team` and refresh interval:
+```json
+{ "bars": [{ "script": "linear", "refresh_minutes": 15, "params": { "team": "ENG" } }] }
 ```
 
 Default segments: `cycle` (sprint name and progress), `in_progress`, `review`, `assigned`. Opt-in via `params.segments`: `priority`, `overdue`, `due_soon` (configurable via `params.due_soon_days`, default 3), `cycle_days`, `blocked`, `mentions`. Falls back to stale cached data when offline.
@@ -513,8 +519,7 @@ All keys, their types, and which config files they belong in.
 | `auto_bars.inherit_colors` | `boolean` | When `true`, all auto-detected bars behave as `colors: "inherit"` |
 | `auto_bars.scripts` | `array` | Registry of `{ "script", "signals" }` entries — defined by the plugin; do not edit |
 | `auto_bars.refresh_minutes` | `integer` | Global cache TTL in minutes for all auto-detected bars. `0` disables caching. Default: `5`. |
-| `auto_bars.overrides` | `{ "name": { "refresh_minutes": N } }` | Per-bar overrides — object merges cleanly without rewriting `scripts`. |
-| `auto_bars.scripts[].refresh_minutes` | `integer` | Shipped per-entry TTL default. Only set in `settings.json`; use `auto_bars.overrides` to override at user/project level. |
+| `auto_bars.scripts[].refresh_minutes` | `integer` | Per-entry TTL default. Override at user/project level by adding a matching entry to `auto_bars.scripts`. |
 
 **Color value formats** (anywhere a colour is accepted):
 
