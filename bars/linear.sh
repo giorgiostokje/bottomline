@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bottomline bar: Linear project management
-# Segments (default order): label, team_id, cycle, in_progress, review, assigned
+# Segments (default order): label, cycle, in_progress, review, assigned
 # Opt-in segments: team, priority, overdue, due_soon, cycle_days, blocked, mentions
 #
 # Cache deviation: this bar does NOT use bl_bar_init because (1) refresh
@@ -25,7 +25,7 @@ fi
 # ── Icons ─────────────────────────────────────────────────────────────────────
 case "$BOTTOMLINE_ICON_TYPE" in
   nerd)
-    IC_LINEAR=$'\xef\x9e\xa2'     # U+F7A2  nf-mdi-rhombus (Linear diamond logo)
+    IC_LINEAR=$'\xef\x88\x99'     # U+F219  nf-fa-diamond
     IC_CYCLE=$'\xef\x8c\x81'      # U+F301  nf-mdi-sync
     IC_PROGRESS=$'\xef\x87\x99'   # U+F1D9  nf-fa-circle_o_notch
     IC_REVIEW=$'\xef\x81\xae'     # U+F06E  nf-fa-eye
@@ -207,17 +207,14 @@ if [[ -n "$_cycle_id" ]]; then
 fi
 
 # ── Segment list ──────────────────────────────────────────────────────────────
-_default_segs='["label","team_id","cycle","in_progress","review","assigned"]'
+_default_segs='["label","cycle","in_progress","review","assigned"]'
 _seg_list="${BOTTOMLINE_BAR_SEGMENTS:-$_default_segs}"
 
 # ── Render ────────────────────────────────────────────────────────────────────
 while IFS= read -r _seg_name; do
   case "$_seg_name" in
     label)
-      add_seg "${FG_ACCENT}${IC_LINEAR}${IC_LINEAR:+ }${FG_TEXT}Linear"
-      ;;
-    team_id)
-      add_seg "${FG_ACCENT}${_team}"
+      add_seg "${FG_ACCENT}${IC_LINEAR}${IC_LINEAR:+ }${FG_TEXT}Linear ${_team}"
       ;;
     team)
       [[ -n "$_team_name" ]] && \

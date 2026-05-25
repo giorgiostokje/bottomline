@@ -89,15 +89,10 @@ SCRIPT
   [[ "$BAR_OUTPUT" == *"11 open"* ]]
 }
 
-@test "linear: label segment renders 'Linear'" {
+@test "linear: label segment renders 'Linear' and team key" {
   _mock_curl_fixture "linear_success.json"
   bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' '["label"]'
   [[ "$BAR_OUTPUT" == *"Linear"* ]]
-}
-
-@test "linear: team_id segment renders team key" {
-  _mock_curl_fixture "linear_success.json"
-  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' '["team_id"]'
   [[ "$BAR_OUTPUT" == *"ENG"* ]]
 }
 
