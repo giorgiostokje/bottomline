@@ -61,3 +61,48 @@ setup() {
   [ "$IC_A" = $'\xee\x98\x86' ]
   [ "$IC_B" = $'\xef\x81\xac' ]
 }
+
+@test "bl_icon_set: accepts valid variable names" {
+  BOTTOMLINE_ICON_TYPE=nerd
+  bl_icon_set IC_PYTHON $'\xee\x98\x86' 'X'
+  [ "$IC_PYTHON" = $'\xee\x98\x86' ]
+  bl_icon_set _FOO $'\xee\x98\x86' 'Y'
+  [ "$_FOO" = $'\xee\x98\x86' ]
+  bl_icon_set bar_42 $'\xee\x98\x86' 'Z'
+  [ "$bar_42" = $'\xee\x98\x86' ]
+}
+
+@test "bl_icon_set: rejects invalid variable name and returns non-zero" {
+  BOTTOMLINE_ICON_TYPE=nerd
+  run bl_icon_set "PATH=evil" $'\xee\x98\x86' 'X'
+  [ "$status" -ne 0 ]
+}
+
+@test "bl_icon_set: rejects shell-metacharacter name" {
+  BOTTOMLINE_ICON_TYPE=nerd
+  run bl_icon_set "; rm -rf /" $'\xee\x98\x86' 'X'
+  [ "$status" -ne 0 ]
+}
+
+@test "bl_icon_set: rejects empty name" {
+  BOTTOMLINE_ICON_TYPE=nerd
+  run bl_icon_set "" $'\xee\x98\x86' 'X'
+  [ "$status" -ne 0 ]
+}
+
+@test "bl_icon_set: rejects name starting with digit" {
+  BOTTOMLINE_ICON_TYPE=nerd
+  run bl_icon_set "42bad" $'\xee\x98\x86' 'X'
+  [ "$status" -ne 0 ]
+}
+
+@test "bl_icon_set: invalid name does not clobber PATH or IFS" {
+  local saved_path="$PATH" saved_ifs="$IFS"
+  BOTTOMLINE_ICON_TYPE=nerd
+  bl_icon_set "PATH=evil" $'\xee\x98\x86' 'X' || true
+  bl_icon_set "; rm -rf /" $'\xee\x98\x86' 'X' || true
+  bl_icon_set "" $'\xee\x98\x86' 'X' || true
+  bl_icon_set "42bad" $'\xee\x98\x86' 'X' || true
+  [ "$PATH" = "$saved_path" ]
+  [ "$IFS" = "$saved_ifs" ]
+}

@@ -66,6 +66,7 @@ bl_bar_init() {
   local name="$1" fb_text="$2" fb_accent="$3" fb_gradient="$4"
   shift 4
   _bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
+  [[ "$_bl_ttl" =~ ^[0-9]+$ ]] || _bl_ttl=5
   if [[ "$_bl_ttl" -gt 0 ]]; then
     _bl_cache=$(bl_cache_path "$name" "$_bl_ttl" "$PROJ" "$@")
     if [[ -f "$_bl_cache" ]]; then
@@ -100,6 +101,7 @@ bl_bar_finish() {
 # Sets a single icon variable based on BOTTOMLINE_ICON_TYPE.
 bl_icon_set() {
   local var="$1" nerd="$2" emoji="$3" fallback="${4:-}"
+  [[ "$var" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || return 1
   case "${BOTTOMLINE_ICON_TYPE:-}" in
     nerd)  printf -v "$var" '%s' "$nerd"     ;;
     emoji) printf -v "$var" '%s' "$emoji"    ;;
@@ -110,6 +112,10 @@ bl_icon_set() {
 # bl_version_seg <icon> <label> [version]
 # Emits an "icon label [vX.Y.Z]" segment. Always renders the label (and icon
 # if non-empty). Appends version only if non-empty.
+# Note: in icon-type=none mode, this helper drops the icon entirely
+# (no leading FG_ACCENT escape or space), unlike the pre-refactor
+# inline pattern which preserved them. The cleaner output is
+# intentional.
 bl_version_seg() {
   local icon="$1" label="$2" version="$3"
   local seg

@@ -147,6 +147,10 @@ Never write raw byte literals into config JSON, and never write hex codepoint st
 
 `appearance.icons.overrides` values are an exception: they accept either a 4–6 hex digit codepoint *or* a literal glyph/emoji. `decode_icon` passes any string that isn't a pure hex sequence through unchanged, so both forms are valid there.
 
+### `bl_version_seg` empty-icon behavior
+
+When `BOTTOMLINE_ICON_TYPE=none`, `bl_version_seg` (lib/helpers.sh) drops the icon entirely — no leading `FG_ACCENT` escape, no space. The pre-refactor inline pattern preserved both, producing a dangling escape and a leading space. The cleaner output is intentional.
+
 ### `settings.json` is the right file for plugin defaults
 
 The end-user skills say "never edit `settings.json`" — that's correct for users. For plugin development, `settings.json` **is** the file for new segment defaults, `auto_bars` registrations, and shipped threshold values. User and project config files are for overrides only.

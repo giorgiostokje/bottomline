@@ -77,3 +77,31 @@ teardown() {
   [[ "$output" == *"cached_output"* ]]
   [[ "$output" != *"DID_NOT_EXIT"* ]]
 }
+
+@test "bl_bar_init: non-numeric BOTTOMLINE_BAR_REFRESH_MINUTES falls back to 5" {
+  BOTTOMLINE_BAR_REFRESH_MINUTES="foo"
+  bl_bar_init python "#c8dff0" "#ffd740" '["#0c1e30","#183352"]' \
+    "$PROJ/pyproject.toml"
+  [[ "$_bl_ttl" -eq 5 ]]
+}
+
+@test "bl_bar_init: BOTTOMLINE_BAR_REFRESH_MINUTES=0 stays 0" {
+  BOTTOMLINE_BAR_REFRESH_MINUTES=0
+  bl_bar_init python "#c8dff0" "#ffd740" '["#0c1e30","#183352"]' \
+    "$PROJ/pyproject.toml"
+  [[ "$_bl_ttl" -eq 0 ]]
+}
+
+@test "bl_bar_init: BOTTOMLINE_BAR_REFRESH_MINUTES=10 stays 10" {
+  BOTTOMLINE_BAR_REFRESH_MINUTES=10
+  bl_bar_init python "#c8dff0" "#ffd740" '["#0c1e30","#183352"]' \
+    "$PROJ/pyproject.toml"
+  [[ "$_bl_ttl" -eq 10 ]]
+}
+
+@test "bl_bar_init: non-numeric TTL produces no stderr noise" {
+  BOTTOMLINE_BAR_REFRESH_MINUTES="foo"
+  run bl_bar_init python "#c8dff0" "#ffd740" '["#0c1e30","#183352"]' \
+    "$PROJ/pyproject.toml"
+  [[ "$output" != *"integer expression expected"* ]]
+}
