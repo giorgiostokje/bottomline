@@ -13,7 +13,7 @@ Gradient status line for Claude Code. Renders a bar of ANSI segments below every
 - **Themes** — activate a named colour palette with one setting
 - **Bars** — one or more extra lines below the main status line, rendered by shell scripts or defined inline in JSON
 - **Auto-bars** — bars that appear automatically when a project's signal file (e.g. `composer.json`) is detected
-- **13 built-in bars** — 12 language bars (PHP, JavaScript, Go, Shell, Python, Rust, Ruby, Java, Swift, Elixir, Salesforce, Git) plus opt-in `random-facts`
+- **19 built-in bars** — 17 language and ecosystem bars (PHP, JavaScript, Go, Shell, Python, Rust, Ruby, Java, Swift, Elixir, Salesforce, C/C++, Dart, .NET, Kotlin, Lua, Git) plus Linear (project management) and opt-in `random-facts`
 - **Nerd Font, emoji, or text-only icons**
 - **Skills** — `/bottomline:setup`, `/bottomline:configure`, `/bottomline:debug`, `/bottomline:create-bar`, `/bottomline:create-theme`
 
@@ -136,13 +136,6 @@ Drop this in `~/.claude/bottomline.json` to get going with sensible defaults:
 }
 ```
 
-- Auto-detects language bars for any project that has a signal file (e.g. `composer.json`, `go.mod`), with the `git` bar excluded — the `git_branch` segment on the main line is enough.
-- Colours `effort` orange at `xhigh` and red at `max`, each with a matching icon.
-- Colours the context gauge orange at 200k tokens and red at 300k, with icons.
-- Flags the `main` branch red with an icon as a heads-up that you're on a protected branch.
-- Colours rate-limit usage orange at 75% and red at 90%.
-
-Read on for the full reference.
 
 ---
 
@@ -158,37 +151,13 @@ Three files are **deep-merged** at runtime, highest priority first:
 
 `<plugin-dir>` is the root of the Bottomline installation. For marketplace installs it is `~/.claude/plugins/marketplaces/bottomline`; for a manual clone to the default location it is `~/.claude/bottomline`.
 
-**Merge rules:** Objects are merged recursively — a partial object in a higher-priority file fills in only the keys it defines. Arrays and scalars: the highest-priority non-null value wins entirely.
-
-Create `~/.claude/bottomline.json` if it doesn't exist yet — start with an empty object:
-
-```json
-{}
-```
-
-Create `<project>/.claude/bottomline.json` at the project root the same way. Add only the keys you want to override; everything else falls through from lower-priority files.
-
-Whether to commit `<project>/.claude/bottomline.json` is up to you: commit it to share colours and thresholds across a team, or add it to `.gitignore` to keep it personal.
+Objects are merged recursively; arrays and scalars take the highest-priority non-null value. Start each file with `{}` and add only the keys you want to override. `segments.disabled` and `auto_bars.disabled` are unioned across all three levels rather than overridden.
 
 ---
 
 ### Colors & Theming
 
 Set colours under `appearance.colors`. All values are `#rrggbb` hex strings.
-
-```json
-{
-  "appearance": {
-    "colors": {
-      "text":       "#e2d5c3",
-      "accent":     "#da7756",
-      "warning":    "#f4a261",
-      "danger":     "#e05a4e",
-      "background": ["#2e1f14", "#160f0a"]
-    }
-  }
-}
-```
 
 | Key | Default | Description |
 |---|---|---|
@@ -198,41 +167,38 @@ Set colours under `appearance.colors`. All values are `#rrggbb` hex strings.
 | `danger` | `#e05a4e` | Critical threshold colour |
 | `background` | `["#2e1f14","#160f0a"]` | Hex string (flat) or array of hex keyframes (gradient) |
 
-`background` accepts any number of keyframe stops. The gradient is interpolated in linear RGB across the exact number of segments in the bar at render time, so the first keyframe always lands on the first segment and the last keyframe always lands on the last.
+`background` accepts any number of keyframe stops; the gradient is interpolated in linear RGB so the first keyframe always falls on the first segment and the last on the last.
 
 #### Themes
 
-A theme is a named JSON file in `<plugin-dir>/themes/` that sets some or all colours. Themes override all per-file colour settings, regardless of which config level activates them.
-
-Activate a theme at any config level:
-
-```json
-{ "appearance": { "theme": "catppuccin-mocha" } }
-```
-
-A project-level `appearance.theme` overrides the user's default theme for that project.
-
-**Theme priority vs. `appearance.colors`:** theme colours are applied *after* the three-layer config merge, so `appearance.theme` anywhere in the merged result will overwrite any `appearance.colors` values — including those set at project level. If you set a theme at user level and want project-specific colours, override the theme at the project level:
-
-```json
-{ "appearance": { "theme": "my-project-theme" } }
-```
-
-To disable the user-level theme entirely for a project and fall back to bare `appearance.colors`, set `appearance.theme` to an empty string at project level:
-
-```json
-{ "appearance": { "theme": "" } }
-```
-
-To create a new theme, run `/bottomline:create-theme`.
+A theme is a named JSON file in `<plugin-dir>/themes/` that overrides colour settings. Set `"appearance": { "theme": "catppuccin-mocha" }` at any config level. Theme colours are applied *after* the three-layer merge, so they win over any `appearance.colors` values. Set `"theme": ""` at project level to disable a user-level theme. Use `/bottomline:create-theme` to create a new one.
 
 #### Included themes
 
 | Theme | Background | Description |
 |---|---|---|
 | `claude` | Dark brown gradient | Matches Claude's brand orange tones (the default palette) |
+| `clarice` | Dark brown gradient | Claude's warm tones with a cooler blue accent |
+| `claire` | Dark navy gradient | Cool dark teal — low-contrast complement to `clarice` |
 | `catppuccin-mocha` | Dark blue-grey gradient | [Catppuccin](https://github.com/catppuccin/catppuccin) Mocha — dark lavender |
 | `catppuccin-latte` | Light grey gradient | Catppuccin Latte — light mode |
+| `dracula` | Dark charcoal gradient | [Dracula](https://draculatheme.com/) — dark with purple accent |
+| `everforest-dark` | Dark green-grey gradient | [Everforest](https://github.com/sainnhe/everforest) dark — muted forest greens |
+| `everforest-light` | Light warm gradient | Everforest light mode |
+| `github-dark` | Dark slate gradient | [GitHub](https://github.com/) dark — blue accent on near-black |
+| `github-light` | Light grey gradient | GitHub light mode |
+| `gruvbox-dark` | Dark brown gradient | [Gruvbox](https://github.com/morhetz/gruvbox) dark — retro teal accent |
+| `gruvbox-light` | Light tan gradient | Gruvbox light mode |
+| `monokai` | Dark charcoal gradient | [Monokai](https://monokai.pro/) — green accent on near-black |
+| `nord` | Dark blue-grey gradient | [Nord](https://www.nordtheme.com/) — icy blues on dark slate |
+| `one-dark` | Dark grey gradient | [One Dark](https://github.com/atom/one-dark-ui) — blue accent |
+| `one-light` | Light grey gradient | One Light — light mode |
+| `rose-pine` | Dark purple gradient | [Rosé Pine](https://rosepinetheme.com/) — lavender on deep purple |
+| `rose-pine-dawn` | Light warm gradient | Rosé Pine Dawn — light mode |
+| `solarized-dark` | Dark teal gradient | [Solarized](https://ethanschoonover.com/solarized/) dark |
+| `solarized-light` | Light yellow gradient | Solarized light mode |
+| `tokyo-night` | Dark blue-purple gradient | [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme) — blue on deep navy |
+| `tokyo-night-day` | Light blue gradient | Tokyo Night Day — light mode |
 
 ---
 
@@ -257,7 +223,7 @@ To create a new theme, run `/bottomline:create-theme`.
 | `type` | `nerd` \| `emoji` \| `none` | Icon set to use |
 | `overrides` | `{ "<segment>": "<codepoint>" }` | Per-segment icon override — 4–5 hex digits (e.g. `"e0b4"`) or a literal glyph |
 
-Override keys are segment names: `model`, `effort`, `context`, `directory`, `git_branch`, `tokens_in`, `tokens_out`, `usage_5h`, `usage_7d`, `cost`. `warn` and `danger` are cross-segment state indicators and are also overridable. A shared `tokens` key overrides both `tokens_in` and `tokens_out` at once; a specific key takes precedence over the shared one.
+Override keys are segment names (`model`, `effort`, `context`, `directory`, `git_branch`, `tokens_in`, `tokens_out`, `usage_5h`, `usage_7d`, `cost`) plus `warn` and `danger` (cross-segment indicators). A shared `tokens` key overrides both `tokens_in` and `tokens_out`; a specific key wins.
 
 ---
 
@@ -308,57 +274,12 @@ Override the separator glyph with a 4–5 hex codepoint string or a literal char
 
 #### Per-segment settings
 
-**`segments.effort`** — colour and icon per effort level:
+- **`segments.effort`** — `{ "level": { "color", "icon" } }` — valid levels: `low`, `medium`, `high`, `xhigh`, `max`
+- **`segments.context`** — `{ "token_threshold": { "color", "icon" } }` — quoted integer keys (e.g. `"200000"`)
+- **`segments.git_branch`** — `{ "branch_name": { "color", "icon" } }` — exact branch name match
+- **`segments.usage`** — `{ "percentage": { "color" } }` — quoted integer keys (e.g. `"75"`)
 
-```json
-{
-  "segments": {
-    "effort": {
-      "xhigh": { "color": "warning", "icon": { "nerd": "f071", "emoji": "26a0" } },
-      "high":  { "color": "accent" }
-    }
-  }
-}
-```
-
-**`segments.context`** — token-count thresholds (quoted integers) → colour and icon:
-
-```json
-{
-  "segments": {
-    "context": {
-      "160000": { "color": "warning" },
-      "190000": { "color": "danger",  "icon": { "nerd": "f071" } }
-    }
-  }
-}
-```
-
-**`segments.git_branch`** — per-branch-name colour and icon:
-
-```json
-{
-  "segments": {
-    "git_branch": {
-      "main":   { "color": "danger" },
-      "master": { "color": "danger" }
-    }
-  }
-}
-```
-
-**`segments.usage`** — percentage thresholds (quoted integers) → colour:
-
-```json
-{
-  "segments": {
-    "usage": {
-      "75": { "color": "warning" },
-      "90": { "color": "danger"  }
-    }
-  }
-}
-```
+`color` accepts a named reference (`text`, `accent`, `warning`, `danger`) or a `#rrggbb` hex string. `icon` accepts `{ "nerd": "codepoint", "emoji": "codepoint" }`.
 
 ---
 
@@ -382,33 +303,7 @@ A bar is an additional line rendered below the main status line. Bars are define
 
 #### Inline segment bars
 
-Define a bar's segments directly in JSON without writing a shell script:
-
-```json
-{
-  "bars": [
-    {
-      "segments": [
-        {
-          "icon": "f121",
-          "content": "Production",
-          "colors": { "text": "#ffffff", "accent": "#e05a4e" }
-        },
-        {
-          "script": "env-status",
-          "icon": { "nerd": "f013", "emoji": "⚙" }
-        },
-        {
-          "file": "~/.deploy-status"
-        }
-      ],
-      "colors": { "background": ["#3a0000","#1a0000"] }
-    }
-  ]
-}
-```
-
-Each segment object supports:
+Define a bar's segments directly in JSON without writing a shell script. Each segment object in the `segments` array supports:
 
 | Key | Description |
 |---|---|
@@ -436,9 +331,7 @@ Each bar entry accepts an optional `colors` block that controls the colours pass
 | `"inherit"` | Explicitly use the merged config colours; suppresses the bar's built-in language palette |
 | Absent | Bar script can apply its own built-in language palette |
 
-`background` in a `colors` block accepts a hex string or an array of keyframes, same as `appearance.colors.background`.
-
-Named colour references (`text`, `accent`, `warning`, `danger`) in colour values resolve to the current merged config colours.
+`background` accepts a hex string or keyframe array. Named colour values (`text`, `accent`, `warning`, `danger`) resolve to the current merged config colours.
 
 ---
 
@@ -464,45 +357,11 @@ Auto-bars are disabled by default (`enabled: false` in `settings.json`).
 
 #### Cache
 
-Auto-detected language bars cache their rendered output in `/tmp` to avoid re-running expensive detection (manifest parsing, binary version checks) on every refresh.
-
-```json
-{
-  "auto_bars": {
-    "refresh_minutes": 5
-  }
-}
-```
-
-`refresh_minutes` sets the cache TTL in minutes for all auto-detected bars. Set to `0` to disable caching for a bar. Default: `5`.
-
-Override per bar without rewriting the full `scripts` array:
-
-```json
-{
-  "auto_bars": {
-    "refresh_minutes": 5,
-    "overrides": {
-      "go":         { "refresh_minutes": 10 },
-      "javascript": { "refresh_minutes": 0 }
-    }
-  }
-}
-```
-
-The `git` bar ships with `refresh_minutes: 0` (live data by default). Set `auto_bars.overrides.git.refresh_minutes` to a positive integer to enable git bar caching.
-
-#### Suppressing language palettes
-
-When `inherit_colors` is `true`, all auto-detected bars behave as if `colors: "inherit"` was set — they use the merged config's colour scheme instead of their built-in language palette:
-
-```json
-{ "auto_bars": { "inherit_colors": true } }
-```
+Auto-detected bars cache output in `/tmp`. `auto_bars.refresh_minutes` sets the global TTL (default: `5`). Override per bar via `auto_bars.overrides.<name>.refresh_minutes`. The `git` bar defaults to `0` (live). Set `auto_bars.inherit_colors: true` to make all auto-detected bars use the merged config palette instead of their built-in language colours.
 
 #### Registered signal files
 
-The `auto_bars.scripts` array maps bar names to the signal files that trigger them. The full list is defined in the plugin's `settings.json`. The eleven language bars are auto-detectable; `random-facts` has no signal file and must be added explicitly.
+The `auto_bars.scripts` array maps bar names to the signal files that trigger them. The full list is defined in the plugin's `settings.json`. All 17 language and ecosystem bars are auto-detectable; `random-facts` and `linear` have no auto-detection signal and must be added explicitly via `bars`.
 
 ---
 
@@ -518,108 +377,97 @@ Segments: current branch (or detached HEAD / tag), linked worktree name, dirty/c
 
 **Signal:** `composer.json`
 
-Segments: PHP runtime version, then any detected packages from `composer.lock`:
-- **Frameworks:** Laravel, Lumen, Symfony, CakePHP, Slim
-- **Laravel stack:** Octane, Boost (with `boost.json` validation), Reverb, Livewire, Flux (with Pro badge), Inertia (with frontend framework detection)
-- **Admin:** Filament
-- **Tooling:** Laravel Herd local `.test` URL (clickable)
-
-Built-in palette: purple tones (`#9898e0` accent on near-black background).
+PHP runtime version, then packages from `composer.lock`: frameworks (Laravel, Lumen, Symfony, CakePHP, Slim), Laravel stack add-ons (Octane, Boost, Reverb, Livewire, Flux, Inertia with frontend detection), Filament, and Laravel Herd `.test` URL (clickable). Built-in palette: purple tones.
 
 #### `javascript` — JavaScript / Node.js ecosystem
 
 **Signal:** `package.json`
 
-Segments: any detected packages from `package.json` with installed versions from `node_modules`:
-- **React:** Next.js, React, Remix
-- **Mobile:** Expo, React Native
-- **Vue:** Nuxt, Vue
-- **Svelte:** SvelteKit, Svelte
-- **Other:** Angular, Astro, Electron
-- **Build:** Vite (suppressed when implied by Nuxt/SvelteKit/Astro)
-- **Language:** TypeScript
-
-Built-in palette: yellow tones (`#f7df1e` accent on near-black background).
+Installed versions from `node_modules` for: Next.js, React, Remix, Expo, React Native, Nuxt, Vue, SvelteKit, Svelte, Angular, Astro, Electron, Vite (suppressed when implied by meta-framework), TypeScript. Built-in palette: yellow tones.
 
 #### `go` — Go ecosystem
 
-**Signal:** `go.mod`
-
-Segments: Go version from `go.mod`, workspace flag when `go.work` is present.
-
-Built-in palette: cyan tones (`#29bcd8` accent on dark navy background).
+**Signal:** `go.mod` — Go version, workspace flag when `go.work` is present. Built-in palette: cyan tones.
 
 #### `shell` — Shell / Bash ecosystem
 
-**Signal:** `.shellcheckrc`
+**Signal:** `.shellcheckrc` (also activates when any `.sh` file exists at the project root)
 
-Segments: target shell and running Bash version. Target shell defaults to `bash`; reads the `shell=` directive from `.shellcheckrc` when present (e.g. `sh`, `dash`). ShellCheck version shown as a second segment when `shellcheck` is on `PATH`.
-
-The bar activates when any `.sh` file exists at the project root — users without a `.shellcheckrc` can add the bar explicitly:
-
-```json
-{ "bars": [{ "script": "shell" }] }
-```
-
-Built-in palette: green tones (`#4eb144` accent on dark forest-green background).
+Target shell (reads `shell=` from `.shellcheckrc`; defaults to `bash`), running Bash version, ShellCheck version when on `PATH`. Built-in palette: green tones.
 
 #### `python` — Python ecosystem
 
 **Signal:** `pyproject.toml`, `requirements.txt`, `Pipfile`, `setup.py`
 
-Segments: Python runtime, package manager (Poetry/PDM/Hatch/Pipenv), detected framework with version (Django, FastAPI, or Flask — from `poetry.lock`, `Pipfile.lock`, or `requirements.txt`).
-
-Built-in palette: yellow accent (`#ffd740`) on dark blue background.
+Python runtime, package manager (Poetry/PDM/Hatch/Pipenv), detected framework with version (Django, FastAPI, or Flask). Built-in palette: yellow accent on dark blue.
 
 #### `rust` — Rust ecosystem
 
-**Signal:** `Cargo.toml`
-
-Segments: Rust, edition from `Cargo.toml`, workspace flag.
-
-Built-in palette: orange-red tones (`#d05a38` accent on dark charcoal background).
+**Signal:** `Cargo.toml` — Rust, edition, workspace flag. Built-in palette: orange-red tones.
 
 #### `ruby` — Ruby ecosystem
 
-**Signal:** `Gemfile`
-
-Segments: Ruby version (from `.ruby-version` or `ruby -e`), detected framework with version from `Gemfile.lock` (Rails, Sinatra, Hanami).
-
-Built-in palette: red tones (`#e05060` accent on dark crimson background).
+**Signal:** `Gemfile` — Ruby version, framework from `Gemfile.lock` (Rails, Sinatra, Hanami). Built-in palette: red tones.
 
 #### `java` — Java ecosystem
 
 **Signal:** `pom.xml`, `build.gradle`, `build.gradle.kts`
 
-Segments: build tool (Maven or Gradle) with Java version, detected framework (Spring Boot, Quarkus, or Micronaut) with version.
-
-Built-in palette: orange tones (`#ed8b00` accent on near-black amber background).
+Build tool (Maven or Gradle) with Java version, framework (Spring Boot, Quarkus, Micronaut) with version. Built-in palette: orange tones.
 
 #### `swift` — Swift ecosystem
 
-**Signal:** `Package.swift`
-
-Segments: Swift tools version from `Package.swift`, Vapor version from `Package.resolved` (falls back to `Package.swift` grep).
-
-Built-in palette: red-orange tones (`#f05138` accent on dark charcoal background).
+**Signal:** `Package.swift` — Swift tools version, Vapor version from `Package.resolved`. Built-in palette: red-orange tones.
 
 #### `elixir` — Elixir ecosystem
 
-**Signal:** `mix.exs`
-
-Segments: Elixir version (from `mix.exs`, `.tool-versions`, or `.elixir-version`), Phoenix version from `mix.lock`.
-
-Built-in palette: purple tones (`#a078d8` accent on near-black background).
+**Signal:** `mix.exs` — Elixir version, Phoenix version from `mix.lock`. Built-in palette: purple tones.
 
 #### `salesforce` — Salesforce ecosystem
 
-**Signal:** `sfdx-project.json`, `.forceignore`
+**Signal:** `sfdx-project.json`
 
-Segments: SF CLI version, default target org (alias or username) with sandbox indicator when `sfdcLoginUrl` points to `test.salesforce.com`, authenticated username when it differs from the displayed alias, source API version from `sfdx-project.json`, and namespace when one is defined.
+SF CLI version, default target org with sandbox indicator, source API version, and namespace. Org resolved from project `.sf/config.json` → project `.sfdx/sfdx-config.json` → global `~/.sf/config.json`. Built-in palette: Salesforce Lightning cloud blue.
 
-Target org is resolved in priority order: project `.sf/config.json` → project `.sfdx/sfdx-config.json` → global `~/.sf/config.json`. Username is resolved from `~/.sf/alias.json` or legacy `~/.sfdx/<alias>.json`.
+#### `c-cpp` — C / C++ ecosystem
 
-Built-in palette: Salesforce Lightning brand — cloud blue `#1B96FF` accent on dark navy gradient (`#032D60` → `#0B4B8B`).
+**Signal:** `CMakeLists.txt`, `meson.build`, `configure.ac`
+
+Language variant (C, C++, or C/C++) with C++ standard, build system (CMake, Meson, or Autotools), package managers (Conan, vcpkg), testing framework (GoogleTest, Catch2, doctest, Boost.Test, CTest), static analysis/formatting (clang-tidy, cppcheck, clang-format). Built-in palette: steel blue tones.
+
+#### `dart` — Dart / Flutter ecosystem
+
+**Signal:** `pubspec.yaml`
+
+Dart SDK constraint and package name, Flutter indicator, testing (`flutter_test` suppresses `test`), lint package (very_good_analysis, flutter_lints, lints), state management (Riverpod, BLoC, Provider), Dio HTTP client. Built-in palette: Dart brand blue.
+
+#### `dotnet` — .NET ecosystem
+
+**Signal:** `global.json`, `Directory.Build.props`, `Directory.Build.targets`, `*.csproj`, `*.sln`
+
+.NET SDK version, target framework, framework (Blazor, ASP.NET Core, MAUI), testing (xUnit, NUnit, MSTest), static analysis (StyleCop, SonarAnalyzer), EF Core ORM. Built-in palette: .NET brand purple.
+
+#### `kotlin` — Kotlin ecosystem
+
+**Signal:** `build.gradle.kts` (must reference the Kotlin plugin)
+
+Kotlin version, Gradle wrapper version, framework (Ktor or Spring Boot), testing (Kotest suppresses JUnit 5), MockK, static analysis (Detekt, ktlint). Built-in palette: Kotlin purple.
+
+#### `linear` — Linear project management
+
+No auto-detection signal — add explicitly with `params.api_key` (literal, `$ENV_VAR`, or `file:~/.token`) and `params.team` (team key from your Linear workspace URL). Obtain a key from Linear → Settings → API → Personal API keys.
+
+```json
+{ "script": "linear", "refresh_minutes": 15, "params": { "api_key": "$LINEAR_API_KEY", "team": "ENG" } }
+```
+
+Default segments: `cycle` (sprint name and progress), `in_progress`, `review`, `assigned`. Opt-in via `params.segments`: `priority`, `overdue`, `due_soon` (configurable via `params.due_soon_days`, default 3), `cycle_days`, `blocked`, `mentions`. Falls back to stale cached data when offline.
+
+#### `lua` — Lua ecosystem
+
+**Signal:** `.luarc.json`, `.luarc.jsonc`, `.lua-version`, `*.rockspec`
+
+Lua version (from `.lua-version`, `.luarc.json`, or the `lua` binary), LuaRocks, framework (LÖVE, OpenResty, Lapis), testing (Busted suppresses LuaUnit), static analysis/formatting (Luacheck, StyLua). Built-in palette: steel blue tones.
 
 #### `random-facts`
 
@@ -629,7 +477,7 @@ No auto-detection signal — add explicitly via `bars`:
 { "bars": [{ "script": "random-facts", "refresh_minutes": 60 }] }
 ```
 
-Fetches a random fact from the [Useless Facts API](https://uselessfacts.jsph.pl). The result is cached so the API is only called once per interval — the fact changes after `refresh_minutes` minutes (default: 60). Falls back to a built-in set of 10 offline facts when the network is unavailable. Does not use a built-in palette — colours are always taken from the bar's `colors` config or the merged config defaults.
+Fetches a random fact from the [Useless Facts API](https://uselessfacts.jsph.pl), cached for `refresh_minutes` minutes (default: 60). Falls back to 10 built-in offline facts. Uses the bar's `colors` config or merged config defaults — no built-in palette.
 
 ---
 
@@ -656,9 +504,10 @@ All keys, their types, and which config files they belong in.
 | `segments.usage` | `{ "threshold": { "color" } }` | Usage percentage thresholds → colour |
 | `bars` | `array` | Explicit bar list — appended after auto-detected bars |
 | `bars[].script` | `string` | Bar script name or path |
-| `bars[].segments` | `array` | Inline segment bar segments |
+| `bars[].segments` | `array` | Inline segment bar (array of segment objects); or, for script bars, a JSON array of segment-name strings passed to the script as `BOTTOMLINE_BAR_SEGMENTS` |
 | `bars[].colors` | object \| `"inherit"` | Bar colour overrides — object with any of `text`, `accent`, `warning`, `danger`, `background`; or `"inherit"` to use merged config colours and suppress the bar's built-in palette |
-| `bars[].refresh_minutes` | `integer` | Cache TTL in minutes for script bars that use `bl_cache_write`. All 14 built-in language bars respect this. `0` disables caching. For auto-detected bars, defaults to `auto_bars.refresh_minutes` unless overridden. |
+| `bars[].refresh_minutes` | `integer` | Cache TTL in minutes for script bars that use `bl_cache_write`. All 17 built-in language and ecosystem bars respect this. `random-facts` also respects this (default: 60). `0` disables caching. For auto-detected bars, defaults to `auto_bars.refresh_minutes` unless overridden. |
+| `bars[].params` | `object` | Arbitrary key-value pairs passed to the bar script as `BOTTOMLINE_BAR_PARAMS` (JSON). String values support `$ENV_VAR` expansion and `file:<path>` resolution. Required by the `linear` bar (`api_key`, `team`). |
 | `auto_bars.enabled` | `boolean` | Enable auto-bar detection for this config level (default: `false`) |
 | `auto_bars.disabled` | `string[]` | Bar names to exclude from auto-detection (unioned across config levels) |
 | `auto_bars.inherit_colors` | `boolean` | When `true`, all auto-detected bars behave as `colors: "inherit"` |
@@ -725,86 +574,35 @@ See `/bottomline:create-bar` for the full guide, available environment variables
 
 ## Testing
 
-The test suite uses [bats-core](https://github.com/bats-core/bats-core). Install it with `brew install bats-core` (or see `tests/README.md` for other methods), then run from the plugin root:
+The test suite uses [bats-core](https://github.com/bats-core/bats-core) (`brew install bats-core`), run from the plugin root:
 
 ```bash
-# All tests
-bats --recursive tests/
-
-# Just unit tests
-bats tests/unit/
-
-# Just integration tests (main status line)
-bats tests/integration/config.bats tests/integration/segments.bats
-
-# Just bar tests
-bats --recursive tests/integration/bars/
+bats --recursive tests/          # all tests
+bats tests/unit/                 # unit tests (fmt_n, decode_icon)
+bats tests/integration/          # main pipeline (segments, config, themes)
+bats --recursive tests/integration/bars/  # all bar tests
 ```
 
-### Test structure
-
-```
-tests/
-├── helpers.bash                    # Shared helpers for all tests
-├── unit/
-│   ├── fmt.bats                    # fmt_n, fmt_k, fmt_remaining
-│   └── decode_icon.bats            # decode_icon hex→Unicode
-└── integration/
-    ├── segments.bats               # Main status line segment rendering
-    ├── config.bats                 # Three-layer config merge, themes, thresholds
-    └── bars/
-        ├── git.bats                # Git enrichment bar
-        ├── go.bats                 # Go bar
-        ├── php.bats                # PHP bar
-        ├── javascript.bats         # JavaScript bar
-        ├── python.bats             # Python bar
-        ├── rust.bats               # Rust bar
-        ├── ruby.bats               # Ruby bar
-        ├── java.bats               # Java bar
-        ├── swift.bats              # Swift bar
-        ├── elixir.bats             # Elixir bar
-        ├── salesforce.bats         # Salesforce bar
-        └── random-facts.bats       # Random facts bar (offline fallback)
-```
+`tests/unit/` covers pure utility functions. `tests/integration/` covers the main status line and all 19 bars, with shared fixture files under `tests/integration/bars/fixtures/`.
 
 ---
 
 ## Contributing
 
-Contributions welcome — bug reports, new bars, new themes, and improvements to existing scripts.
+Contributions welcome — bug reports, new bars, new themes, and improvements to existing scripts. New bars should follow the template in "Writing a custom bar" and the structure of an existing bar (e.g. `bars/go.sh`). New themes go in `themes/` — see `skills/create-theme/SKILL.md` for the schema.
 
-**New bar scripts** (contributing to the plugin itself) — follow the template in the "Writing a custom bar" section above and check an existing bar (e.g. `bars/go.sh`) for the expected structure. Bars should:
-
-1. Guard at the top — exit silently when the bar doesn't apply.
-2. Check `BOTTOMLINE_BAR_COLORS` before applying a language palette so config overrides are respected.
-3. Set `_bar_gradient` and call `flush "$_bar_gradient"` at the end.
-4. Support all three icon types (`nerd`, `emoji`, and the no-icon fallback).
-
-**New themes** — add a file to `themes/` following the schema in `skills/create-theme/SKILL.md`. All colour keys are optional.
-
-**Bug reports** — include the output of:
+**Bug reports** — include:
 
 ```bash
-# Set BL_DIR to wherever you installed Bottomline, e.g.:
-#   BL_DIR="$HOME/.claude/plugins/marketplaces/bottomline"   # marketplace
-#   BL_DIR="$HOME/.claude/bottomline"                        # manual clone
-BL_DIR="/path/to/bottomline"
-
+BL_DIR="$HOME/.claude/bottomline"   # or marketplace path
 echo '{}' | bash "$BL_DIR/bottomline.sh"
 jq '.' "$BL_DIR/settings.json"
 jq '.' ~/.claude/bottomline.json 2>/dev/null
-bash --version | head -1
-command -v jq && jq --version
+bash --version | head -1 && jq --version
 ```
 
 ---
 
 ## Credits
 
-Built for [Claude Code](https://claude.ai/code).
-
-The Catppuccin themes are derived from the [Catppuccin](https://github.com/catppuccin/catppuccin) colour palette by the Catppuccin contributors, licensed MIT.
-
-Random facts provided by the [Useless Facts API](https://uselessfacts.jsph.pl) by [lukePeavey](https://github.com/lukePeavey/useless-facts).
-
-Nerd Font glyph codepoints from [Nerd Fonts](https://www.nerdfonts.com/) by Ryan McIntyre and contributors, licensed MIT.
+Built for [Claude Code](https://claude.ai/code). Catppuccin themes from the [Catppuccin](https://github.com/catppuccin/catppuccin) project (MIT). Random facts from the [Useless Facts API](https://uselessfacts.jsph.pl) by [lukePeavey](https://github.com/lukePeavey/useless-facts). Nerd Font codepoints from [Nerd Fonts](https://www.nerdfonts.com/) (MIT).
