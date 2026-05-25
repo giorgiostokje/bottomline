@@ -25,24 +25,27 @@ fi
 # ── Icons ─────────────────────────────────────────────────────────────────────
 case "$BOTTOMLINE_ICON_TYPE" in
   nerd)
-    IC_CYCLE=$'\xef\x8c\x81'     # U+F301  nf-mdi-sync
-    IC_PROGRESS=$'\xef\x87\x99'  # U+F1D9  nf-fa-circle_o_notch
-    IC_REVIEW=$'\xef\x81\xae'    # U+F06E  nf-fa-eye
-    IC_ASSIGNED=$'\xef\x82\xae'  # U+F0AE  nf-fa-tasks
-    IC_PRIORITY=$'\xef\x81\xaa'  # U+F06A  nf-fa-exclamation_circle
-    IC_OVERDUE=$'\xef\x81\xb3'   # U+F073  nf-fa-calendar
-    IC_DUE=$'\xef\x81\xb3'      # U+F073  nf-fa-calendar
-    IC_DAYS=$'\xef\x89\x92'      # U+F252  nf-fa-hourglass_half
-    IC_BLOCKED=$'\xef\x81\x9e'   # U+F05E  nf-fa-ban
-    IC_MENTIONS=$'\xef\x87\xba'  # U+F1FA  nf-fa-at
-    IC_WARN=$'\xef\x81\xb1'      # U+F071  nf-fa-warning
+    IC_LINEAR=$'\xef\x9e\xa2'     # U+F7A2  nf-mdi-rhombus (Linear diamond logo)
+    IC_CYCLE=$'\xef\x8c\x81'      # U+F301  nf-mdi-sync
+    IC_PROGRESS=$'\xef\x87\x99'   # U+F1D9  nf-fa-circle_o_notch
+    IC_REVIEW=$'\xef\x81\xae'     # U+F06E  nf-fa-eye
+    IC_ASSIGNED=$'\xef\x82\xae'   # U+F0AE  nf-fa-tasks
+    IC_PRIORITY=$'\xef\x81\xaa'   # U+F06A  nf-fa-exclamation_circle
+    IC_OVERDUE=$'\xef\x81\xb3'    # U+F073  nf-fa-calendar
+    IC_DUE=$'\xef\x81\xb3'        # U+F073  nf-fa-calendar
+    IC_DAYS=$'\xef\x89\x92'       # U+F252  nf-fa-hourglass_half
+    IC_BLOCKED=$'\xef\x81\x9e'    # U+F05E  nf-fa-ban
+    IC_MENTIONS=$'\xef\x87\xba'   # U+F1FA  nf-fa-at
+    IC_WARN=$'\xef\x81\xb1'       # U+F071  nf-fa-warning
     ;;
   emoji)
+    IC_LINEAR='◈'
     IC_CYCLE='🔄'; IC_PROGRESS='⏳'; IC_REVIEW='👁'
     IC_ASSIGNED='📋'; IC_PRIORITY='❗'; IC_OVERDUE='📅'; IC_DUE='📅'
     IC_DAYS='⌛'; IC_BLOCKED='🚫'; IC_MENTIONS='@'; IC_WARN='⚠️'
     ;;
   *)
+    IC_LINEAR='◈'
     IC_CYCLE=''; IC_PROGRESS=''; IC_REVIEW=''
     IC_ASSIGNED=''; IC_PRIORITY='!'; IC_OVERDUE=''; IC_DUE=''
     IC_DAYS=''; IC_BLOCKED=''; IC_MENTIONS='@'; IC_WARN='!'
@@ -195,12 +198,18 @@ if [[ -n "$_cycle_id" ]]; then
 fi
 
 # ── Segment list ──────────────────────────────────────────────────────────────
-_default_segs='["cycle","in_progress","review","assigned"]'
+_default_segs='["label","team_id","cycle","in_progress","review","assigned"]'
 _seg_list="${BOTTOMLINE_BAR_SEGMENTS:-$_default_segs}"
 
 # ── Render ────────────────────────────────────────────────────────────────────
 while IFS= read -r _seg_name; do
   case "$_seg_name" in
+    label)
+      add_seg "${FG_ACCENT}${IC_LINEAR}${IC_LINEAR:+ }${FG_TEXT}Linear"
+      ;;
+    team_id)
+      add_seg "${FG_ACCENT}${_team}"
+      ;;
     cycle)
       [[ -n "$_cycle_name" ]] && \
         add_seg "${FG_ACCENT}${IC_CYCLE}${IC_CYCLE:+ }${FG_TEXT}${_cycle_name} ${FG_ACCENT}·${FG_TEXT} ${_cycle_done}/${_cycle_total}"
