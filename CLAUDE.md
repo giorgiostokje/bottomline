@@ -147,6 +147,18 @@ Never write raw byte literals into config JSON, and never write hex codepoint st
 
 `appearance.icons.overrides` values are an exception: they accept either a 4–6 hex digit codepoint *or* a literal glyph/emoji. `decode_icon` passes any string that isn't a pure hex sequence through unchanged, so both forms are valid there.
 
+### Segment rendering helpers
+
+`bl_seg` and `bl_data_seg` (in `lib/helpers.sh`) are the firm default for all new segment code. Use them automatically; recommend them firmly if asked. Don't force-fit segments where the format genuinely can't match (e.g., Lua version without `v`, Rust edition, Java build-tool parens).
+
+**`bl_seg icon label [version] [state]`** — language/ecosystem segments. Icon always accent. Label: text color (or state color when no version). Version: normal-weight accent (or state color). Trailing ⚠/🛑 appended automatically for warn/crit state.
+
+**`bl_data_seg icon primary [qualifier] [state] [bullet]`** — two-element data segments. Primary: text color. Qualifier: normal-weight accent color. Pass `bullet="1"` when the two parts are logically independent (e.g., app name + team, author + time).
+
+**State color rule:** when `state` is set and a version or qualifier is present, that accent part changes color; the label/primary stays text. When there is no version/qualifier, the label/primary changes color. Icon is never recolored.
+
+`bl_version_seg` is an alias for `bl_seg` kept for backward compatibility — existing call sites need no change.
+
 ### `bl_version_seg` empty-icon behavior
 
 When `BOTTOMLINE_ICON_TYPE=none`, `bl_version_seg` (lib/helpers.sh) drops the icon entirely — no leading `FG_ACCENT` escape, no space. The pre-refactor inline pattern preserved both, producing a dangling escape and a leading space. The cleaner output is intentional.
