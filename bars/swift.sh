@@ -97,22 +97,16 @@ add_seg "$swift_seg"
 $has_vapor && bl_version_seg "$IC_VAPOR" Vapor "$vapor_version"
 
 # Slot 3: Hummingbird (alongside Vapor if both present)
-$has_hummingbird \
-  && add_seg "${FG_ACCENT}${IC_WEB} ${FG_TEXT}Hummingbird"
+$has_hummingbird   && bl_seg "$IC_WEB" Hummingbird
 
 # Slot 5: Testing (layering: Quick > XCTest; Swift Testing standalone)
-$has_quick \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Quick"
-$has_swift_testing \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Swift Testing"
-$has_xctest \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}XCTest"
+$has_quick         && bl_seg "$IC_TEST" Quick
+$has_swift_testing && bl_seg "$IC_TEST" "Swift Testing"
+$has_xctest        && bl_seg "$IC_TEST" XCTest
 
 # Slot 6: Tooling (order: SwiftLint → SwiftFormat → Alamofire)
-$has_swiftlint \
-  && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}SwiftLint"
-$has_swiftformat \
-  && add_seg "${FG_ACCENT}${IC_FMT} ${FG_TEXT}SwiftFormat"
+$has_swiftlint     && bl_seg "$IC_LINT" SwiftLint
+$has_swiftformat   && bl_seg "$IC_FMT" SwiftFormat
 $has_alamofire && bl_version_seg "$IC_NET" Alamofire "$alamofire_version"
 
 bl_bar_finish "$_bar_gradient"

@@ -76,6 +76,6 @@ $has_bats && bl_version_seg "$IC_TEST" bats "$bats_version"
 
 # Slot 6: Tooling
 [[ -n "$sc_version" ]] && bl_version_seg "$IC_SC" ShellCheck "$sc_version"
-$has_make && add_seg "${FG_ACCENT}${IC_MAKE} ${FG_TEXT}make"
+$has_make && bl_seg "$IC_MAKE" make
 
 bl_bar_finish "$_bar_gradient"

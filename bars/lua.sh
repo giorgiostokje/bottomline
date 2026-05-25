@@ -116,23 +116,17 @@ fi
   add_seg "$lua_seg"
 
   # ── Slot 2: Package manager ───────────────────────────────────────────────────
-  if $has_luarocks; then
-    rocks_seg="${FG_ACCENT}${IC_PKG} ${FG_TEXT}LuaRocks"
-    [[ -n "$luarocks_version" ]] && rocks_seg+=" ${N}${FG_ACCENT}${luarocks_version}"
-    add_seg "$rocks_seg"
-  fi
+  $has_luarocks && bl_seg "$IC_PKG" LuaRocks "$luarocks_version"
 
   # ── Slot 3: Framework ─────────────────────────────────────────────────────────
-  if [[ -n "$framework" ]]; then
-    add_seg "${FG_ACCENT}${IC_GAME} ${FG_TEXT}${framework}"
-  fi
+  [[ -n "$framework" ]] && bl_seg "$IC_GAME" "$framework"
 
   # ── Slot 5: Testing ───────────────────────────────────────────────────────────
-  $has_busted   && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Busted"
-  $has_luaunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}LuaUnit"
+  $has_busted   && bl_seg "$IC_TEST" Busted
+  $has_luaunit  && bl_seg "$IC_TEST" LuaUnit
 
   # ── Slot 6: Tooling ───────────────────────────────────────────────────────────
-  $has_luacheck && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}Luacheck"
-  $has_stylua   && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}StyLua"
+  $has_luacheck && bl_seg "$IC_LINT" Luacheck
+  $has_stylua   && bl_seg "$IC_LINT" StyLua
 
 bl_bar_finish "$_bar_gradient"

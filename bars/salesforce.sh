@@ -104,7 +104,7 @@ fi
 
 # 3. Authenticated username — only when it differs from the displayed alias
 if [[ -n "$username" && "$username" != "$target_org" ]]; then
-  seg "${FG_ACCENT}${IC_USER} ${FG_TEXT}${username}"
+  bl_seg "$IC_USER" "$username"
 fi
 
 # 4. Source API version
