@@ -29,11 +29,15 @@ fi
 
 offline_suffix=''
 if [[ -z "$fact" ]]; then
-  fact=$(curl -sf --max-time 3 \
+  _curl_raw=$(curl -sf --max-time 3 \
     'https://uselessfacts.jsph.pl/api/v2/facts/random?language=en' \
-    2>/dev/null | jq -r '.text // empty' 2>/dev/null)
+    2>/dev/null)
+  _curl_exit=$?
+  bl_log debug random-facts "curl exit=${_curl_exit}"
+  fact=$(printf '%s' "$_curl_raw" | jq -r '.text // empty' 2>/dev/null)
 
   if [[ -z "$fact" ]]; then
+    bl_log warn random-facts "no response (curl exit=${_curl_exit}), using offline fallback"
     offline_suffix=" ${FG_ACCENT}(offline)"
     offline_facts=(
       "Cleopatra lived closer in time to the Moon landing than to the Great Pyramid."
