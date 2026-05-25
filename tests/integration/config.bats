@@ -125,3 +125,62 @@ teardown() { teardown_fake_home; }
   # danger = #e05a4e = RGB(224,90,78)
   [[ "$BL_OUTPUT_RAW" == *$'\e[38;2;224;90;78m'* ]]
 }
+
+# ---------------------------------------------------------------------------
+# bars script-keyed merge
+# ---------------------------------------------------------------------------
+
+# Helper: create a minimal bar script at <dir>/.claude/bottomline/bars/<name>.sh
+# Usage: _make_bar PROJ_DIR NAME BODY
+_make_bar() {
+  local dir="$1" name="$2" body="$3"
+  mkdir -p "$dir/.claude/bottomline/bars"
+  printf '#!/usr/bin/env bash\n%s\n' "$body" > "$dir/.claude/bottomline/bars/${name}.sh"
+  chmod +x "$dir/.claude/bottomline/bars/${name}.sh"
+}
+
+@test "bars: user-only entry survives when project defines a different bar" {
+  # Without script-keyed merge: project's bars array wins entirely →
+  # testbar never runs → USERBAR_MARK absent.
+  # With script-keyed merge: testbar (user-only) is appended → renders.
+  local proj_dir
+  proj_dir=$(mktemp -d)
+  _make_bar "$proj_dir" "testbar" 'printf "USERBAR_MARK\n"'
+  printf '{"bars":[{"script":"nonexistent-xyz123"}]}' \
+    > "$proj_dir/.claude/bottomline.json"
+  printf '{"bars":[{"script":"testbar"}]}' \
+    > "$FAKE_HOME/.claude/bottomline.json"
+  local json tmpjson
+  json=$(jq -n --arg d "$proj_dir" '{"workspace":{"current_dir":$d}}')
+  tmpjson=$(mktemp)
+  printf '%s' "$json" > "$tmpjson"
+  BL_OUTPUT_RAW=$(HOME="$FAKE_HOME" bash "$BOTTOMLINE_ROOT/bottomline.sh" < "$tmpjson")
+  BL_OUTPUT=$(printf '%s' "$BL_OUTPUT_RAW" | strip_ansi)
+  rm -f "$tmpjson"
+  rm -rf "$proj_dir"
+  [[ "$BL_OUTPUT" == *"USERBAR_MARK"* ]]
+}
+
+@test "bars: user-level field survives in deep-merged entry" {
+  # User sets a bar with a custom color tag; project sets the same bar without it.
+  # Without merge: project's entry has no custom env → default accent.
+  # With merge: user's colors block deep-merges into project's entry.
+  # The bar reports BOTTOMLINE_ACCENT_HEX so we can observe the merge result.
+  local proj_dir
+  proj_dir=$(mktemp -d)
+  _make_bar "$proj_dir" "testbar" \
+    'printf "ACCENT:%s\n" "${BOTTOMLINE_ACCENT_HEX:-unset}"'
+  printf '{"bars":[{"script":"testbar"}]}' \
+    > "$proj_dir/.claude/bottomline.json"
+  printf '{"bars":[{"script":"testbar","colors":{"accent":"#abcdef"}}]}' \
+    > "$FAKE_HOME/.claude/bottomline.json"
+  local json tmpjson
+  json=$(jq -n --arg d "$proj_dir" '{"workspace":{"current_dir":$d}}')
+  tmpjson=$(mktemp)
+  printf '%s' "$json" > "$tmpjson"
+  BL_OUTPUT_RAW=$(HOME="$FAKE_HOME" bash "$BOTTOMLINE_ROOT/bottomline.sh" < "$tmpjson")
+  BL_OUTPUT=$(printf '%s' "$BL_OUTPUT_RAW" | strip_ansi)
+  rm -f "$tmpjson"
+  rm -rf "$proj_dir"
+  [[ "$BL_OUTPUT" == *"ACCENT:#abcdef"* ]]
+}
