@@ -115,24 +115,63 @@ bl_icon_set() {
   esac
 }
 
-# bl_version_seg <icon> <label> [version]
-# Emits an "icon label [vX.Y.Z]" segment. Always renders the label (and icon
-# if non-empty). Appends version only if non-empty.
-# Note: in icon-type=none mode, this helper drops the icon entirely
-# (no leading FG_ACCENT escape or space), unlike the pre-refactor
-# inline pattern which preserved them. The cleaner output is
-# intentional.
-bl_version_seg() {
-  local icon="$1" label="$2" version="$3"
+# bl_seg <icon> <label> [version] [state]
+# Universal segment helper. Icon always accent regardless of state.
+# state="warn": label (or version if present) turns FG_WARN; appends ⚠.
+# state="crit": label (or version if present) turns FG_CRIT; appends 🛑.
+# Empty icon: no leading FG_ACCENT escape (icon-type=none behaviour).
+bl_seg() {
+  local icon="$1" label="$2" version="${3:-}" state="${4:-}"
+  local lc="$FG_TEXT" vc="$FG_ACCENT" trail=""
+  if [[ "$state" == "warn" ]]; then
+    if [[ -z "$version" ]]; then lc="$FG_WARN"; else vc="$FG_WARN"; fi
+    trail=" ${FG_WARN}⚠"
+  elif [[ "$state" == "crit" ]]; then
+    if [[ -z "$version" ]]; then lc="$FG_CRIT"; else vc="$FG_CRIT"; fi
+    trail=" ${FG_CRIT}🛑"
+  fi
   local seg
   if [[ -n "$icon" ]]; then
-    seg="${FG_ACCENT}${icon} ${FG_TEXT}${label}"
+    seg="${FG_ACCENT}${icon} ${lc}${label}"
   else
-    seg="${FG_TEXT}${label}"
+    seg="${lc}${label}"
   fi
-  [[ -n "$version" ]] && seg+=" ${N}${FG_ACCENT}v${version}"
+  [[ -n "$version" ]] && seg+=" ${N}${vc}v${version}"
+  seg+="$trail"
   add_seg "$seg"
 }
+
+# bl_data_seg <icon> <primary> [qualifier] [state] [bullet]
+# Two-element data segment. Primary is FG_TEXT; qualifier is normal-weight FG_ACCENT.
+# bullet="1": insert "·" separator (use when primary and qualifier are logically independent).
+# state/trail rules same as bl_seg.
+bl_data_seg() {
+  local icon="$1" primary="$2" qualifier="${3:-}" state="${4:-}" bullet="${5:-}"
+  local pc="$FG_TEXT" qc="$FG_ACCENT" trail=""
+  if [[ "$state" == "warn" ]]; then
+    if [[ -z "$qualifier" ]]; then pc="$FG_WARN"; else qc="$FG_WARN"; fi
+    trail=" ${FG_WARN}⚠"
+  elif [[ "$state" == "crit" ]]; then
+    if [[ -z "$qualifier" ]]; then pc="$FG_CRIT"; else qc="$FG_CRIT"; fi
+    trail=" ${FG_CRIT}🛑"
+  fi
+  local seg
+  if [[ -n "$icon" ]]; then
+    seg="${FG_ACCENT}${icon} ${pc}${primary}"
+  else
+    seg="${pc}${primary}"
+  fi
+  if [[ -n "$qualifier" ]]; then
+    [[ "$bullet" == "1" ]] && seg+=" ${N}${qc}·"
+    seg+=" ${N}${qc}${qualifier}"
+  fi
+  seg+="$trail"
+  add_seg "$seg"
+}
+
+# bl_version_seg <icon> <label> [version]
+# Alias kept for backward compatibility. Delegates to bl_seg with no state.
+bl_version_seg() { bl_seg "$1" "$2" "${3:-}"; }
 
 # bl_log <level> <script> <message>
 # Appends a timestamped entry to the log file when BOTTOMLINE_LOG_LEVEL is set
