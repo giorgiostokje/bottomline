@@ -80,6 +80,7 @@ fi
 _gql='query BottomlineLinear($team: String!) {
   teams(filter: { key: { eq: $team } }) {
     nodes {
+      name
       activeCycle {
         id name endsAt
         completedIssueCountHistory
@@ -134,6 +135,7 @@ fi
 
 # ── Data extraction ───────────────────────────────────────────────────────────
 _cycle_id=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].activeCycle.id // empty')
+_team_name=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].name // empty')
 _cycle_name=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].activeCycle.name // empty')
 _cycle_done=$(printf '%s' "$_response" | jq -r '(.data.teams.nodes[0].activeCycle.completedIssueCountHistory // []) | if length > 0 then last else 0 end')
 _cycle_total=$(printf '%s' "$_response" | jq -r '(.data.teams.nodes[0].activeCycle.issueCountHistory // []) | if length > 0 then last else 0 end')
@@ -209,6 +211,10 @@ while IFS= read -r _seg_name; do
       ;;
     team_id)
       add_seg "${FG_ACCENT}${_team}"
+      ;;
+    team)
+      [[ -n "$_team_name" ]] && \
+        add_seg "${FG_TEXT}${_team_name}"
       ;;
     cycle)
       [[ -n "$_cycle_name" ]] && \
