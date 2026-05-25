@@ -150,7 +150,7 @@ Expected: the two new tests FAIL (unknown segment names produce no output).
 
 - [ ] **Step 3: Add `IC_LINEAR` icon constant to `bars/linear.sh`**
 
-In the icon `case` block (lines 26–50), add `IC_LINEAR` as the first entry in each branch:
+In the icon `case` block (lines 26–50), replace the entire block with the following:
 
 ```bash
 case "$BOTTOMLINE_ICON_TYPE" in
@@ -320,12 +320,59 @@ git commit -m "feat(linear): add team segment (display name from API)"
 ### Task 4: Add text labels to count segments (TDD)
 
 **Files:**
+- Create: `tests/integration/bars/fixtures/linear_due_soon.json`
 - Modify: `tests/integration/bars/linear.bats`
 - Modify: `bars/linear.sh`
 
-- [ ] **Step 1: Write seven failing label tests**
+- [ ] **Step 1: Create `linear_due_soon.json` fixture**
 
-Add a new section at the bottom of `linear.bats`:
+This fixture is identical to `linear_success.json` (post-Task-1) except the one overdue issue's `dueDate` is changed to a far-future date. Combined with `due_soon_days=99999` in the test, this makes it reliably count as "due soon" without relying on the current date.
+
+Write `tests/integration/bars/fixtures/linear_due_soon.json`:
+
+```json
+{
+  "data": {
+    "teams": {
+      "nodes": [
+        {
+          "name": "Bottomline Engineering",
+          "activeCycle": {
+            "id": "cycle-abc",
+            "name": "Cycle 42",
+            "completedIssueCountHistory": [12, 14, 15],
+            "issueCountHistory": [22, 23, 23],
+            "endsAt": "2030-12-31T00:00:00.000Z"
+          }
+        }
+      ]
+    },
+    "viewer": {
+      "id": "viewer-abc",
+      "assignedIssues": {
+        "nodes": [
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 2, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 3, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 3, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 3, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 3, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 3, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Progress" }, "priority": 3, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Review"   }, "priority": 1, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Review"   }, "priority": 1, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "started", "name": "In Review"   }, "priority": 1, "dueDate": null, "cycle": { "id": "cycle-abc" }, "relations": { "nodes": [] } },
+          { "state": { "type": "backlog",  "name": "Backlog"     }, "priority": 4, "dueDate": "2199-12-31", "cycle": null, "relations": { "nodes": [] } }
+        ]
+      }
+    },
+    "notificationsUnreadCount": 5
+  }
+}
+```
+
+- [ ] **Step 2: Write eight failing label tests**
+
+Add a new section at the bottom of `linear.bats`. The `due_soon` test passes `due_soon_days=99999` in params so the window is ~273 years — wide enough to capture the year-2199 date in the fixture:
 
 ```bash
 # ── Segment labels ─────────────────────────────────────────────────────────────
@@ -360,6 +407,12 @@ Add a new section at the bottom of `linear.bats`:
   [[ "$BAR_OUTPUT" == *"overdue"* ]]
 }
 
+@test "linear: due_soon segment includes 'due soon' label" {
+  _mock_curl_fixture "linear_due_soon.json"
+  bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG","due_soon_days":99999}' '["due_soon"]'
+  [[ "$BAR_OUTPUT" == *"due soon"* ]]
+}
+
 @test "linear: blocked segment includes 'blocked' label" {
   _mock_curl_fixture "linear_success.json"
   bar_run linear "" 0 '{"api_key":"lin_test","team":"ENG"}' '["blocked"]'
@@ -373,17 +426,81 @@ Add a new section at the bottom of `linear.bats`:
 }
 ```
 
-- [ ] **Step 2: Run to confirm the new tests fail**
+- [ ] **Step 3: Update seven existing count assertions to stricter format**
+
+The existing tests check for bare counts like `*" 7 "*`. After labels are added the segment outputs `7 wip`, and in some flush positions (e.g. single-segment output) the old pattern no longer matches. Update each assertion now so they fail before the implementation and pass after.
+
+Find the following tests in `linear.bats` and replace their assertion lines:
+
+**"linear: renders in_progress count (7)"** — replace assertion:
+```bash
+# Before
+[[ "$BAR_OUTPUT" == *" 7 "* ]] || [[ "$BAR_OUTPUT" == *" 7|"* ]]
+# After
+[[ "$BAR_OUTPUT" == *"7 wip"* ]]
+```
+
+**"linear: renders review count (3)"** — replace assertion:
+```bash
+# Before
+[[ "$BAR_OUTPUT" == *" 3 "* ]] || [[ "$BAR_OUTPUT" == *" 3|"* ]]
+# After
+[[ "$BAR_OUTPUT" == *"3 review"* ]]
+```
+
+**"linear: renders assigned count (11)"** — replace assertion:
+```bash
+# Before
+[[ "$BAR_OUTPUT" == *" 11 "* ]] || [[ "$BAR_OUTPUT" == *" 11|"* ]]
+# After
+[[ "$BAR_OUTPUT" == *"11 open"* ]]
+```
+
+**"linear: priority segment shows count of urgent/high issues (4)"** — replace assertion:
+```bash
+# Before
+[[ "$BAR_OUTPUT" == *" 4 "* ]] || [[ "$BAR_OUTPUT" == *" 4|"* ]]
+# After
+[[ "$BAR_OUTPUT" == *"4 urgent"* ]]
+```
+
+**"linear: overdue segment shows count of past-due issues (1)"** — replace assertion:
+```bash
+# Before
+[[ "$BAR_OUTPUT" == *" 1 "* ]] || [[ "$BAR_OUTPUT" == *" 1|"* ]]
+# After
+[[ "$BAR_OUTPUT" == *"1 overdue"* ]]
+```
+
+**"linear: blocked segment shows count of blocked issues (1)"** — replace assertion:
+```bash
+# Before
+[[ "$BAR_OUTPUT" == *" 1 "* ]] || [[ "$BAR_OUTPUT" == *" 1|"* ]]
+# After
+[[ "$BAR_OUTPUT" == *"1 blocked"* ]]
+```
+
+**"linear: mentions segment shows unread notification count (5)"** — replace assertion:
+```bash
+# Before
+[[ "$BAR_OUTPUT" == *" 5 "* ]] || [[ "$BAR_OUTPUT" == *" 5|"* ]]
+# After
+[[ "$BAR_OUTPUT" == *"5 unread"* ]]
+```
+
+The negative assertion in "BOTTOMLINE_BAR_SEGMENTS filters to listed segments only" (`!= *" 7 "*`) is unaffected — the segment is excluded from output entirely, so neither old nor new pattern would match.
+
+- [ ] **Step 4: Run to confirm tests fail**
 
 ```bash
 bats tests/integration/bars/linear.bats
 ```
 
-Expected: the 7 new label tests FAIL; all existing tests still pass.
+Expected: 15 tests fail — 8 new label tests + 7 updated count assertions. All other tests pass.
 
-- [ ] **Step 3: Update count segment renders in `bars/linear.sh`**
+- [ ] **Step 5: Update count segment renders in `bars/linear.sh`**
 
-Find each case in the `case "$_seg_name" in` block and update the `add_seg` call to append the text label. Replace the six cases exactly as shown (only the `add_seg` string changes — the guard condition is unchanged):
+Find each case in the `case "$_seg_name" in` block and update the `add_seg` call to append the text label. Replace these cases exactly (only the `add_seg` string changes — the guard condition is unchanged):
 
 ```bash
     in_progress)
@@ -426,7 +543,7 @@ Find each case in the `case "$_seg_name" in` block and update the `add_seg` call
 
 (`cycle_days` is shown for completeness — it already has text and is unchanged.)
 
-- [ ] **Step 4: Run all tests**
+- [ ] **Step 6: Run all tests**
 
 ```bash
 bats tests/integration/bars/linear.bats
@@ -434,10 +551,10 @@ bats tests/integration/bars/linear.bats
 
 Expected: all tests pass.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add bars/linear.sh tests/integration/bars/linear.bats
+git add bars/linear.sh tests/integration/bars/fixtures/linear_due_soon.json tests/integration/bars/linear.bats
 git commit -m "feat(linear): add text labels to count segments (wip, review, open, etc.)"
 ```
 
@@ -551,7 +668,7 @@ git commit -m "docs(linear): update segments table and terminal mock for clarity
 | `assigned` shows "N open" | Task 4 |
 | `priority` shows "N urgent" | Task 4 |
 | `overdue` shows "N overdue" | Task 4 |
-| `due_soon` shows "N due soon" | Task 4 |
+| `due_soon` shows "N due soon" | Task 4 (uses `linear_due_soon.json` fixture + `due_soon_days=99999`) |
 | `blocked` shows "N blocked" | Task 4 |
 | `mentions` shows "N unread" | Task 4 |
 | Fixture team name added | Task 1 Step 1 |
