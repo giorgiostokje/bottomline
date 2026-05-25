@@ -55,18 +55,7 @@ _params="${BOTTOMLINE_BAR_PARAMS:-{}}"
 _api_key=$(printf '%s' "$_params" | jq -r '.api_key // empty')
 _team=$(printf '%s' "$_params" | jq -r '.team // empty')
 
-# ── Validation (short-circuit: first failure exits) ───────────────────────────
-if [[ -z "$_api_key" ]]; then
-  add_seg "${FG_WARN}${IC_WARN} Linear: missing api_key"
-  flush "$_bar_gradient"
-  exit 0
-fi
-
-if [[ -z "$_team" ]]; then
-  add_seg "${FG_WARN}${IC_WARN} Linear: missing team"
-  flush "$_bar_gradient"
-  exit 0
-fi
+[[ -z "$_api_key" || -z "$_team" ]] && exit 0
 
 # ── Caching setup ─────────────────────────────────────────────────────────────
 _bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-0}"

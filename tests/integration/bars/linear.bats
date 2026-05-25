@@ -35,20 +35,19 @@ SCRIPT
 
 # ── Error handling ─────────────────────────────────────────────────────────────
 
-@test "linear: missing api_key renders error segment" {
+@test "linear: missing api_key produces no output" {
   bar_run linear "" 0 '{"team":"ENG"}'
-  [[ "$BAR_OUTPUT" == *"missing api_key"* ]]
+  [[ -z "$BAR_OUTPUT" ]]
 }
 
-@test "linear: missing team renders error segment" {
+@test "linear: missing team produces no output" {
   bar_run linear "" 0 '{"api_key":"lin_test"}'
-  [[ "$BAR_OUTPUT" == *"missing team"* ]]
+  [[ -z "$BAR_OUTPUT" ]]
 }
 
-@test "linear: missing api_key takes priority over missing team" {
+@test "linear: missing both params produces no output" {
   bar_run linear "" 0 '{}'
-  [[ "$BAR_OUTPUT" == *"missing api_key"* ]]
-  [[ "$BAR_OUTPUT" != *"missing team"* ]]
+  [[ -z "$BAR_OUTPUT" ]]
 }
 
 @test "linear: auth error from API renders auth failed segment" {
