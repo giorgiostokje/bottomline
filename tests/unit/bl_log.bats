@@ -109,6 +109,7 @@ teardown() {
   BOTTOMLINE_LOG_LEVEL=debug
   bl_log debug mybar "test"
   local perms
-  perms=$(stat -f '%Lp' "$LOG_FILE" 2>/dev/null || stat -c '%a' "$LOG_FILE" 2>/dev/null)
+  perms=$(stat -f '%Lp' "$LOG_FILE" 2>/dev/null)
+  [[ -z "$perms" ]] && perms=$(stat -c '%a' "$LOG_FILE" 2>/dev/null)
   [ "$perms" = "600" ]
 }
