@@ -135,7 +135,7 @@ fi
 
 if [[ -n "$boost_version" ]]; then
   if [[ "$boost_json_exists" == "false" || "$boost_agents_ok" == "true" ]]; then
-    add_seg "${FG_ACCENT}${IC_BOOST} ${FG_TEXT}Boost ${FG_ACCENT}v${boost_version}"
+    add_seg "${FG_ACCENT}${IC_BOOST} ${FG_TEXT}Boost ${N}${FG_ACCENT}v${boost_version}"
   else
     add_seg "${FG_ACCENT}${IC_BOOST} ${FG_WARN}Boost ${FG_WARN}v${boost_version} ${IC_WARN}"
   fi
@@ -151,7 +151,7 @@ fi
 if [[ -n "$livewire_version" && -n "$flux_version" ]]; then
   local_pro=''
   [[ "$flux_pro" == "true" ]] && local_pro=" ${FG_ACCENT}${IC_PRO}"
-  add_seg "${FG_ACCENT}${IC_FLUX} ${FG_TEXT}Flux ${FG_ACCENT}v${flux_version}${local_pro}"
+  add_seg "${FG_ACCENT}${IC_FLUX} ${FG_TEXT}Flux ${N}${FG_ACCENT}v${flux_version}${local_pro}"
 fi
 
 # ── Inertia ───────────────────────────────────────────────────────────────────

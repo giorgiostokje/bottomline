@@ -94,7 +94,7 @@ if [[ -n "$rubocop_version" ]]; then
   if [[ "$rubocop_version" == "present" ]]; then
     add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop"
   else
-    add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop ${FG_ACCENT}v${rubocop_version}"
+    add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}RuboCop ${N}${FG_ACCENT}v${rubocop_version}"
   fi
 fi
 $has_sidekiq && bl_version_seg "$IC_QUEUE" Sidekiq "$sidekiq_version"

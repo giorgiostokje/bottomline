@@ -115,14 +115,14 @@ js_seg() {
   local vsuf=''
   if [[ -n "$pkg_name" ]]; then
     local version; version=$(npm_version "$pkg_name")
-    [[ -n "$version" ]] && vsuf=" ${FG_ACCENT}v${version}"
+    [[ -n "$version" ]] && vsuf=" ${N}${FG_ACCENT}v${version}"
   fi
   seg "${FG_ACCENT}${icon} ${FG_TEXT}${label}${vsuf}"
 }
 
 # Slot 1: Runtime
 [[ -n "$node_version" ]] \
-  && seg "${FG_ACCENT}${IC_NODE} ${FG_TEXT}Node ${FG_ACCENT}v${node_version}"
+  && seg "${FG_ACCENT}${IC_NODE} ${FG_TEXT}Node ${N}${FG_ACCENT}v${node_version}"
 
 # Slot 2: Package manager
 [[ -n "$pkg_mgr" ]] \

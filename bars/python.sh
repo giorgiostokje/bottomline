@@ -149,7 +149,7 @@ $has_mypy       && mypy_version=$(pkg_version "mypy")
 
 # ── Python runtime ────────────────────────────────────────────────────────────
 python_seg="${FG_ACCENT}${IC_PYTHON} ${FG_TEXT}Python"
-[[ -n "$py_version" ]] && python_seg+=" ${FG_ACCENT}v${py_version}"
+[[ -n "$py_version" ]] && python_seg+=" ${N}${FG_ACCENT}v${py_version}"
 [[ -n "$tool_label" ]] && python_seg+=" ${FG_ACCENT}[${FG_TEXT}${tool_icon}${tool_label}${FG_ACCENT}]"
 add_seg "$python_seg"
 

@@ -49,6 +49,8 @@ R="$BOTTOMLINE_RESET"
 # shellcheck disable=SC2034
 B="$BOTTOMLINE_BOLD"
 # shellcheck disable=SC2034
+N=$'\e[22m'
+# shellcheck disable=SC2034
 SEP="$BOTTOMLINE_SEP"
 # shellcheck disable=SC2034  # used by scripts that source this file
 FG_TEXT=$(make_fg   "$(hex_to_rgb "$BOTTOMLINE_TEXT_HEX")")
@@ -128,6 +130,6 @@ bl_version_seg() {
   else
     seg="${FG_TEXT}${label}"
   fi
-  [[ -n "$version" ]] && seg+=" ${FG_ACCENT}v${version}"
+  [[ -n "$version" ]] && seg+=" ${N}${FG_ACCENT}v${version}"
   add_seg "$seg"
 }

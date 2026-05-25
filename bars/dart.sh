@@ -96,7 +96,7 @@ fi
 
 # ── Segments ──────────────────────────────────────────────────────────────────
 dart_seg="${FG_ACCENT}${IC_DART} ${FG_TEXT}Dart"
-[[ -n "$sdk_version" ]] && dart_seg+=" ${FG_ACCENT}>=${sdk_version}"
+[[ -n "$sdk_version" ]] && dart_seg+=" ${N}${FG_ACCENT}>=${sdk_version}"
 [[ -n "$pkg_name" ]]    && dart_seg+=" ${FG_TEXT}${pkg_name}"
 add_seg "$dart_seg"
 

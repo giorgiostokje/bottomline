@@ -132,13 +132,13 @@ fi
 
 # ── Slot 1: Runtime ───────────────────────────────────────────────────────────
 lang_seg="${FG_ACCENT}${IC_CPLUSPLUS} ${FG_TEXT}${lang}"
-[[ -n "$lang_standard" ]] && lang_seg+=" ${FG_ACCENT}${lang_standard}"
+[[ -n "$lang_standard" ]] && lang_seg+=" ${N}${FG_ACCENT}${lang_standard}"
 add_seg "$lang_seg"
 
 # ── Slot 2: Build system ──────────────────────────────────────────────────────
 if [[ -n "$build_system" ]]; then
   build_seg="${FG_ACCENT}${IC_BUILD} ${FG_TEXT}${build_system}"
-  [[ -n "$build_version" ]] && build_seg+=" ${FG_ACCENT}${build_version}"
+  [[ -n "$build_version" ]] && build_seg+=" ${N}${FG_ACCENT}${build_version}"
   add_seg "$build_seg"
 fi
 

@@ -90,7 +90,7 @@ fi
 
 # ── Swift runtime ─────────────────────────────────────────────────────────────
 swift_seg="${FG_ACCENT}${IC_SWIFT} ${FG_TEXT}Swift"
-[[ -n "$tools_version" ]] && swift_seg+=" ${FG_ACCENT}tools v${tools_version}"
+[[ -n "$tools_version" ]] && swift_seg+=" ${N}${FG_ACCENT}tools v${tools_version}"
 add_seg "$swift_seg"
 
 # ── Vapor ─────────────────────────────────────────────────────────────────────

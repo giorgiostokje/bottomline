@@ -10,6 +10,8 @@
 R=$'\e[0m'
 # shellcheck disable=SC2034
 B=$'\e[1m'
+# shellcheck disable=SC2034
+N=$'\e[22m'
 
 # ── Pure utilities ────────────────────────────────────────────────────────────
 _BL_DIR="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"

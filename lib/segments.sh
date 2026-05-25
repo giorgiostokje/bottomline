@@ -97,7 +97,7 @@ build_tokens_in() {
   local base=$(( sum_in + sum_cache_create ))
   (( base + sum_cache_read <= 0 )) && return
   local tok; tok="${FG_ACCENT}${IC_TOKENS_IN} ${FG_TEXT}$(fmt_n "$base")"
-  (( sum_cache_read > 0 )) && tok+="${FG_ACCENT}+$(fmt_n "$sum_cache_read")"
+  (( sum_cache_read > 0 )) && tok+="${N}${FG_ACCENT}+$(fmt_n "$sum_cache_read")"
   add_seg "$tok"
 }
 
@@ -111,7 +111,7 @@ build_usage_5h() {
   local five_int; five_int=$(printf '%.0f' "$five_pct")
   threshold_resolve "$CFG_USAGE_THR" "$five_int"
   local lbl="${FG_ACCENT}${IC_USAGE_5H} ${THR_COLOR_ANSI}${five_int}%"
-  [[ -n "$five_rem" ]] && lbl+=" ${FG_ACCENT}$(fmt_remaining "$five_rem")" || lbl+="${FG_ACCENT}/5h"
+  [[ -n "$five_rem" ]] && lbl+=" ${N}${FG_ACCENT}$(fmt_remaining "$five_rem")" || lbl+="${N}${FG_ACCENT}/5h"
   add_seg "$lbl"
 }
 
@@ -120,7 +120,7 @@ build_usage_7d() {
   local week_int; week_int=$(printf '%.0f' "$week_pct")
   threshold_resolve "$CFG_USAGE_THR" "$week_int"
   local lbl="${FG_ACCENT}${IC_USAGE_7D} ${THR_COLOR_ANSI}${week_int}%"
-  [[ -n "$week_rem" ]] && lbl+=" ${FG_ACCENT}$(fmt_remaining "$week_rem")" || lbl+="${FG_ACCENT}/7d"
+  [[ -n "$week_rem" ]] && lbl+=" ${N}${FG_ACCENT}$(fmt_remaining "$week_rem")" || lbl+="${N}${FG_ACCENT}/7d"
   add_seg "$lbl"
 }
 

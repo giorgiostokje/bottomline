@@ -138,11 +138,11 @@ fi
 # ── Build tool ────────────────────────────────────────────────────────────────
 if $has_maven; then
   java_seg="${FG_ACCENT}${IC_MAVEN} ${FG_TEXT}Maven"
-  [[ -n "$java_version" ]] && java_seg+=" ${FG_ACCENT}(Java ${java_version})"
+  [[ -n "$java_version" ]] && java_seg+=" ${N}${FG_ACCENT}(Java ${java_version})"
   add_seg "$java_seg"
 elif $has_gradle; then
   java_seg="${FG_ACCENT}${IC_GRADLE} ${FG_TEXT}Gradle"
-  [[ -n "$java_version" ]] && java_seg+=" ${FG_ACCENT}(Java ${java_version})"
+  [[ -n "$java_version" ]] && java_seg+=" ${N}${FG_ACCENT}(Java ${java_version})"
   add_seg "$java_seg"
 fi
 

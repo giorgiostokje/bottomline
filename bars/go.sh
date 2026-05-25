@@ -77,14 +77,14 @@ fi
   # ── Segments (canonical slot order) ───────────────────────────────────────────
   # Slot 1: Runtime
   go_seg="${FG_ACCENT}${IC_GO} ${FG_TEXT}Go"
-  [[ -n "$go_version" ]] && go_seg+=" ${FG_ACCENT}v${go_version}"
+  [[ -n "$go_version" ]] && go_seg+=" ${N}${FG_ACCENT}v${go_version}"
   $is_workspace && go_seg+=" ${FG_ACCENT}${IC_WORKSPACE}${FG_TEXT} workspace"
   add_seg "$go_seg"
 
   # Slot 3: Framework
   if [[ -n "$framework" ]]; then
     fw_seg="${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework_display}"
-    [[ -n "$framework_version" ]] && fw_seg+=" ${FG_ACCENT}v${framework_version}"
+    [[ -n "$framework_version" ]] && fw_seg+=" ${N}${FG_ACCENT}v${framework_version}"
     add_seg "$fw_seg"
   fi
 
@@ -96,7 +96,7 @@ fi
   # static analysis first
   if $has_golangci; then
     lint_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}golangci-lint"
-    [[ -n "$golangci_version" ]] && lint_seg+=" ${FG_ACCENT}v${golangci_version}"
+    [[ -n "$golangci_version" ]] && lint_seg+=" ${N}${FG_ACCENT}v${golangci_version}"
     add_seg "$lint_seg"
   fi
   # ORM second

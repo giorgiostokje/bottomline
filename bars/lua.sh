@@ -106,13 +106,13 @@ fi
 
   # ── Slot 1: Runtime ───────────────────────────────────────────────────────────
   lua_seg="${FG_ACCENT}${IC_LUA} ${FG_TEXT}Lua"
-  [[ -n "$lua_version" ]] && lua_seg+=" ${FG_ACCENT}${lua_version}"
+  [[ -n "$lua_version" ]] && lua_seg+=" ${N}${FG_ACCENT}${lua_version}"
   add_seg "$lua_seg"
 
   # ── Slot 2: Package manager ───────────────────────────────────────────────────
   if $has_luarocks; then
     rocks_seg="${FG_ACCENT}${IC_PKG} ${FG_TEXT}LuaRocks"
-    [[ -n "$luarocks_version" ]] && rocks_seg+=" ${FG_ACCENT}${luarocks_version}"
+    [[ -n "$luarocks_version" ]] && rocks_seg+=" ${N}${FG_ACCENT}${luarocks_version}"
     add_seg "$rocks_seg"
   fi
 
