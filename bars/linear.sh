@@ -77,6 +77,7 @@ if [[ "$_bl_ttl" -gt 0 && -f "$_cache_file" ]]; then
 fi
 
 # ── API call ──────────────────────────────────────────────────────────────────
+# shellcheck disable=SC2016
 _gql='query BottomlineLinear($team: String!) {
   teams(filter: { key: { eq: $team } }) {
     nodes {
