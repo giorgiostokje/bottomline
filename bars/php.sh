@@ -114,8 +114,7 @@ if command -v herd > /dev/null 2>&1; then
 fi
 
 # ── PHP runtime ───────────────────────────────────────────────────────────────
-[[ -n "$php_version" ]] \
-  && add_seg "${FG_ACCENT}${IC_PHP} ${FG_TEXT}PHP ${FG_ACCENT}${php_version}"
+[[ -n "$php_version" ]] && bl_seg "$IC_PHP" PHP "$php_version"
 
 # ── Framework ─────────────────────────────────────────────────────────────────
 [[ -n "$laravel_version" ]] \
@@ -135,9 +134,9 @@ fi
 
 if [[ -n "$boost_version" ]]; then
   if [[ "$boost_json_exists" == "false" || "$boost_agents_ok" == "true" ]]; then
-    add_seg "${FG_ACCENT}${IC_BOOST} ${FG_TEXT}Boost ${N}${FG_ACCENT}v${boost_version}"
+    bl_seg "$IC_BOOST" Boost "$boost_version"
   else
-    add_seg "${FG_ACCENT}${IC_BOOST} ${FG_WARN}Boost ${FG_WARN}v${boost_version} ${IC_WARN}"
+    bl_seg "$IC_BOOST" Boost "$boost_version" warn
   fi
 fi
 

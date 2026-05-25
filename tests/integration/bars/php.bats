@@ -153,3 +153,35 @@ teardown() { teardown_fake_proj; }
   [[ "$BAR_OUTPUT" == *"CS Fixer"* ]]
   [[ "$BAR_OUTPUT" == *"3.0.0"* ]]
 }
+
+@test "php: PHP version segment includes v prefix" {
+  printf '{"name":"test/app"}\n' > "$FAKE_PROJ/composer.json"
+  local _bin; _bin=$(mktemp -d)
+  printf '#!/bin/sh\nprintf "8.2"\n' > "$_bin/php"
+  chmod +x "$_bin/php"
+  PATH="$_bin:$PATH" bar_run php "$FAKE_PROJ"
+  rm -rf "$_bin"
+  [[ "$BAR_OUTPUT" == *"PHP"* ]]
+  [[ "$BAR_OUTPUT" == *"v8.2"* ]]
+}
+
+@test "php: Boost renders normally (no boost.json)" {
+  printf '{"name":"test/app"}\n' > "$FAKE_PROJ/composer.json"
+  printf '%s\n' '{"packages":[{"name":"laravel/boost","version":"v1.0.0"}],"packages-dev":[]}' \
+    > "$FAKE_PROJ/composer.lock"
+  bar_run php "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Boost"* ]]
+  [[ "$BAR_OUTPUT" == *"v1.0.0"* ]]
+  [[ "$BAR_OUTPUT" != *"⚠"* ]]
+}
+
+@test "php: Boost renders with warning when boost.json missing claude_code agent" {
+  printf '{"name":"test/app"}\n' > "$FAKE_PROJ/composer.json"
+  printf '%s\n' '{"packages":[{"name":"laravel/boost","version":"v1.0.0"}],"packages-dev":[]}' \
+    > "$FAKE_PROJ/composer.lock"
+  printf '{"agents":[]}\n' > "$FAKE_PROJ/boost.json"
+  bar_run php "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Boost"* ]]
+  [[ "$BAR_OUTPUT" == *"v1.0.0"* ]]
+  [[ "$BAR_OUTPUT" == *"⚠"* ]]
+}
