@@ -85,11 +85,7 @@ fi
   add_seg "$go_seg"
 
   # Slot 3: Framework
-  if [[ -n "$framework" ]]; then
-    fw_seg="${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework_display}"
-    [[ -n "$framework_version" ]] && fw_seg+=" ${N}${FG_ACCENT}v${framework_version}"
-    add_seg "$fw_seg"
-  fi
+  [[ -n "$framework" ]] && bl_seg "$IC_WEB" "$framework_display" "$framework_version"
 
   # Slot 5: Testing
   $has_ginkgo  && bl_version_seg "$IC_TEST" Ginkgo  "$ginkgo_version"
@@ -97,11 +93,7 @@ fi
 
   # Slot 6: Tooling
   # static analysis first
-  if $has_golangci; then
-    lint_seg="${FG_ACCENT}${IC_LINT} ${FG_TEXT}golangci-lint"
-    [[ -n "$golangci_version" ]] && lint_seg+=" ${N}${FG_ACCENT}v${golangci_version}"
-    add_seg "$lint_seg"
-  fi
+  $has_golangci && bl_seg "$IC_LINT" golangci-lint "$golangci_version"
   # ORM second
   $has_gorm && bl_version_seg "$IC_DB" GORM "$gorm_version"
 

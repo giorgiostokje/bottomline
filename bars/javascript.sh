@@ -112,21 +112,16 @@ if ! $has_biome; then [[ -f "$PROJ/biome.json" ]] && has_biome=true; fi
 # Build a segment with icon, label, and optional version from node_modules.
 js_seg() {
   local icon="$1" label="$2" pkg_name="$3"
-  local vsuf=''
-  if [[ -n "$pkg_name" ]]; then
-    local version; version=$(npm_version "$pkg_name")
-    [[ -n "$version" ]] && vsuf=" ${N}${FG_ACCENT}v${version}"
-  fi
-  seg "${FG_ACCENT}${icon} ${FG_TEXT}${label}${vsuf}"
+  local version=''
+  [[ -n "$pkg_name" ]] && version=$(npm_version "$pkg_name")
+  bl_seg "$icon" "$label" "$version"
 }
 
 # Slot 1: Runtime
-[[ -n "$node_version" ]] \
-  && seg "${FG_ACCENT}${IC_NODE} ${FG_TEXT}Node ${N}${FG_ACCENT}v${node_version}"
+[[ -n "$node_version" ]] && bl_seg "$IC_NODE" Node "$node_version"
 
 # Slot 2: Package manager
-[[ -n "$pkg_mgr" ]] \
-  && seg "${FG_ACCENT}${IC_PKG} ${FG_TEXT}${pkg_mgr}"
+[[ -n "$pkg_mgr" ]] && bl_seg "$IC_PKG" "$pkg_mgr"
 
 # ── React ecosystem ───────────────────────────────────────────────────────────
 $has_next  && js_seg "$IC_NEXT"  "Next.js" "next"
