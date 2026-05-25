@@ -77,7 +77,9 @@ _gql='query BottomlineLinear($team: String!) {
   teams(filter: { key: { eq: $team } }) {
     nodes {
       activeCycle {
-        id name completedIssueCount issueCount endsAt
+        id name endsAt
+        completedIssueCountHistory
+        issueCountHistory
       }
     }
   }
@@ -94,10 +96,8 @@ _gql='query BottomlineLinear($team: String!) {
         relations { nodes { type relatedIssue { state { type } } } }
       }
     }
-    notifications(filter: { readAt: { null: true } }) {
-      nodes { id }
-    }
   }
+  notificationsUnreadCount
 }'
 
 _body=$(jq -n --arg q "$_gql" --arg t "$_team" \
@@ -123,7 +123,7 @@ fi
 
 _errors=$(printf '%s' "$_response" | jq -r 'if ((.errors // []) | length) > 0 then "yes" else "" end' 2>/dev/null)
 if [[ -n "$_errors" ]]; then
-  add_seg "${FG_WARN}${IC_WARN} Linear: auth failed"
+  add_seg "${FG_WARN}${IC_WARN} Linear: API error"
   flush "$_bar_gradient"
   exit 0
 fi
@@ -131,10 +131,10 @@ fi
 # ── Data extraction ───────────────────────────────────────────────────────────
 _cycle_id=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].activeCycle.id // empty')
 _cycle_name=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].activeCycle.name // empty')
-_cycle_done=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].activeCycle.completedIssueCount // 0')
-_cycle_total=$(printf '%s' "$_response" | jq -r '.data.teams.nodes[0].activeCycle.issueCount // 0')
+_cycle_done=$(printf '%s' "$_response" | jq -r '(.data.teams.nodes[0].activeCycle.completedIssueCountHistory // []) | if length > 0 then last else 0 end')
+_cycle_total=$(printf '%s' "$_response" | jq -r '(.data.teams.nodes[0].activeCycle.issueCountHistory // []) | if length > 0 then last else 0 end')
 _issues=$(printf '%s' "$_response" | jq -c '.data.viewer.assignedIssues.nodes // []')
-_notif_count=$(printf '%s' "$_response" | jq '.data.viewer.notifications.nodes | length')
+_notif_count=$(printf '%s' "$_response" | jq '.data.notificationsUnreadCount // 0')
 _today=$(date +%Y-%m-%d)   # used by overdue/due_soon opt-in segments
 
 _count_in_progress=$(printf '%s' "$_issues" | jq \
