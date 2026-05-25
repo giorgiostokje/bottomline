@@ -139,17 +139,17 @@ commit_time=$(shorten_rel_time "$commit_time_raw")
 
 # Branch — warning color when in detached HEAD state
 if $is_detached; then
-  add_seg "${FG_WARN}${IC_BRANCH} ${FG_TEXT}${branch}"
+  bl_seg "$IC_BRANCH" "$branch" "" warn
 else
-  add_seg "${FG_ACCENT}${IC_BRANCH} ${FG_TEXT}${branch}"
+  bl_seg "$IC_BRANCH" "$branch"
 fi
 
 # Worktree — only shown when inside a linked worktree
-[[ -n "$worktree_name" ]] && add_seg "${FG_ACCENT}${IC_WORKTREE} ${FG_TEXT}${worktree_name}"
+[[ -n "$worktree_name" ]] && bl_seg "$IC_WORKTREE" "$worktree_name"
 
 # Changes — always shown; warning when dirty, accent when clean
 if (( change_count == 0 )); then
-  add_seg "${FG_ACCENT}${IC_CLEAN} ${FG_TEXT}clean"
+  bl_seg "$IC_CLEAN" clean
 else
   add_seg "${FG_ACCENT}${IC_CHANGES} ${FG_TEXT}+${stat_insertions} ${FG_ACCENT}-${stat_deletions}"
 fi
@@ -176,7 +176,7 @@ fi
 
 # Last commit — author first name and abbreviated age
 if [[ -n "$commit_author" && -n "$commit_time" ]]; then
-  add_seg "${FG_ACCENT}${IC_COMMIT} ${FG_TEXT}${commit_author} ${FG_ACCENT}·${FG_TEXT} ${commit_time}"
+  bl_data_seg "$IC_COMMIT" "$commit_author" "$commit_time" "" "1"
 fi
 
 # ── GitHub ────────────────────────────────────────────────────────────────────
