@@ -44,8 +44,11 @@ bl_mtime_fingerprint() {
 }
 
 # ── Convenience variables from BOTTOMLINE_* env vars ─────────────────────────
+# shellcheck disable=SC2034  # used by scripts that source this file
 R="$BOTTOMLINE_RESET"
+# shellcheck disable=SC2034
 B="$BOTTOMLINE_BOLD"
+# shellcheck disable=SC2034
 SEP="$BOTTOMLINE_SEP"
 # shellcheck disable=SC2034  # used by scripts that source this file
 FG_TEXT=$(make_fg   "$(hex_to_rgb "$BOTTOMLINE_TEXT_HEX")")
@@ -88,6 +91,7 @@ bl_bar_init() {
 # Otherwise captures flush output, caches it if _bl_ttl > 0, and prints it.
 bl_bar_finish() {
   local gradient_json="$1"
+  # shellcheck disable=SC2154  # _sc declared in lib/ansi.sh
   (( ${#_sc[@]} == 0 )) && return 0
   local out
   out=$(flush "$gradient_json")

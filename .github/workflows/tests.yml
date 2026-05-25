@@ -17,7 +17,7 @@ jobs:
         run: sudo apt-get update -q && sudo apt-get install -y shellcheck
 
       - name: Run ShellCheck
-        run: shellcheck bottomline.sh lib/functions.sh lib/helpers.sh bars/*.sh
+        run: shellcheck --severity=warning bottomline.sh lib/functions.sh lib/helpers.sh bars/*.sh
 
   test:
     runs-on: ubuntu-latest

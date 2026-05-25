@@ -6,7 +6,9 @@
 #   <plugin-dir>/settings.json         — shipped defaults
 
 # ── ANSI helpers ──────────────────────────────────────────────────────────────
+# shellcheck disable=SC2034  # read by flush() in lib/ansi.sh
 R=$'\e[0m'
+# shellcheck disable=SC2034
 B=$'\e[1m'
 
 # ── Pure utilities ────────────────────────────────────────────────────────────

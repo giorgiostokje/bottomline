@@ -25,7 +25,6 @@ fi
 # ── Icons ─────────────────────────────────────────────────────────────────────
 case "$BOTTOMLINE_ICON_TYPE" in
   nerd)
-    IC_LINEAR=$'\xee\x9c\xb7'    # U+E737  nf-dev-linear
     IC_CYCLE=$'\xef\x8c\x81'     # U+F301  nf-mdi-sync
     IC_PROGRESS=$'\xef\x87\x99'  # U+F1D9  nf-fa-circle_o_notch
     IC_REVIEW=$'\xef\x81\xae'    # U+F06E  nf-fa-eye
@@ -39,12 +38,12 @@ case "$BOTTOMLINE_ICON_TYPE" in
     IC_WARN=$'\xef\x81\xb1'      # U+F071  nf-fa-warning
     ;;
   emoji)
-    IC_LINEAR='🔷'; IC_CYCLE='🔄'; IC_PROGRESS='⏳'; IC_REVIEW='👁'
+    IC_CYCLE='🔄'; IC_PROGRESS='⏳'; IC_REVIEW='👁'
     IC_ASSIGNED='📋'; IC_PRIORITY='❗'; IC_OVERDUE='📅'; IC_DUE='📅'
     IC_DAYS='⌛'; IC_BLOCKED='🚫'; IC_MENTIONS='@'; IC_WARN='⚠️'
     ;;
   *)
-    IC_LINEAR=''; IC_CYCLE=''; IC_PROGRESS=''; IC_REVIEW=''
+    IC_CYCLE=''; IC_PROGRESS=''; IC_REVIEW=''
     IC_ASSIGNED=''; IC_PRIORITY='!'; IC_OVERDUE=''; IC_DUE=''
     IC_DAYS=''; IC_BLOCKED=''; IC_MENTIONS='@'; IC_WARN='!'
     ;;
