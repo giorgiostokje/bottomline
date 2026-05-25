@@ -122,7 +122,6 @@ source "$BOTTOMLINE_ROOT/lib/helpers.sh"
 # --- *) fallback (null input) — post-Phase-1 expected behaviour ---
 
 @test "expand_bg: null input emits n_out copies of #0F0F0F after Phase 1 fix" {
-  skip "fixed in Phase 1"
   run expand_bg 'null' 5
   [ "$status" -eq 0 ]
   count=$(printf '%s' "$output" | jq 'length')
