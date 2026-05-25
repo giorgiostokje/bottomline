@@ -114,13 +114,18 @@ _response=$(curl -s -X POST "https://api.linear.app/graphql" \
   --connect-timeout 5 \
   --max-time 10 \
   --data "$_body" 2>/dev/null)
+_curl_exit=$?
+bl_log debug linear "curl exit=${_curl_exit} response_len=${#_response}"
+[[ -n "$_response" ]] && bl_log debug linear "response: ${_response:0:500}"
 
 # ── Error handling ────────────────────────────────────────────────────────────
 if [[ -z "$_response" ]]; then
   if [[ -n "$_stale_cache" ]]; then
+    bl_log warn linear "no response (curl exit=${_curl_exit}), using stale cache"
     cat "$_stale_cache"
     exit 0
   fi
+  bl_log error linear "no response (curl exit=${_curl_exit}) and no stale cache"
   add_seg "${FG_WARN}${IC_WARN} Linear: offline"
   flush "$_bar_gradient"
   exit 0
@@ -128,6 +133,8 @@ fi
 
 _errors=$(printf '%s' "$_response" | jq -r 'if ((.errors // []) | length) > 0 then "yes" else "" end' 2>/dev/null)
 if [[ -n "$_errors" ]]; then
+  _error_msgs=$(printf '%s' "$_response" | jq -r '[.errors[].message] | join("; ")' 2>/dev/null)
+  bl_log warn linear "API errors: ${_error_msgs}"
   add_seg "${FG_WARN}${IC_WARN} Linear: API error"
   flush "$_bar_gradient"
   exit 0
