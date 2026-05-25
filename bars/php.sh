@@ -121,7 +121,7 @@ if [[ -f "$lock" ]]; then
       filament/filament)         filament_version="${version#v}" ;;
       pestphp/pest)              pest_version="${version#v}"     ;;
       phpunit/phpunit)           phpunit_version="${version#v}"  ;;
-      nunomaduro/larastan)       larastan_version="${version#v}" ;;
+      nunomaduro/larastan|larastan/larastan) larastan_version="${version#v}" ;;
       phpstan/phpstan)           phpstan_version="${version#v}"  ;;
       laravel/pint)              pint_version="${version#v}"     ;;
       friendsofphp/php-cs-fixer) csfixer_version="${version#v}"  ;;

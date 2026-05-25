@@ -109,6 +109,24 @@ teardown() { teardown_fake_proj; }
   [[ "$BAR_OUTPUT" == *"2.9.0"* ]]
 }
 
+@test "php: renders Larastan (larastan/larastan) instead of PHPStan when both are present" {
+  printf '{"name":"test/app"}\n' > "$FAKE_PROJ/composer.json"
+  printf '%s\n' '{"packages":[],"packages-dev":[{"name":"larastan/larastan","version":"v3.0.0"},{"name":"phpstan/phpstan","version":"v2.0.0"}]}' \
+    > "$FAKE_PROJ/composer.lock"
+  bar_run php "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Larastan"* ]]
+  [[ "$BAR_OUTPUT" != *"PHPStan"* ]]
+}
+
+@test "php: renders Larastan (larastan/larastan) with version" {
+  printf '{"name":"test/app"}\n' > "$FAKE_PROJ/composer.json"
+  printf '%s\n' '{"packages":[],"packages-dev":[{"name":"larastan/larastan","version":"v3.0.0"}]}' \
+    > "$FAKE_PROJ/composer.lock"
+  bar_run php "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Larastan"* ]]
+  [[ "$BAR_OUTPUT" == *"3.0.0"* ]]
+}
+
 @test "php: renders Pint instead of PHP-CS-Fixer when both are present" {
   printf '{"name":"test/app"}\n' > "$FAKE_PROJ/composer.json"
   printf '%s\n' '{"packages":[],"packages-dev":[{"name":"laravel/pint","version":"v1.18.0"},{"name":"friendsofphp/php-cs-fixer","version":"v3.0.0"}]}' \
