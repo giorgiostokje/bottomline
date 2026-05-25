@@ -143,20 +143,20 @@ if [[ -n "$build_system" ]]; then
 fi
 
 # ── Slot 4: Package managers ──────────────────────────────────────────────────
-$has_conan && add_seg "${FG_ACCENT}${IC_PKG} ${FG_TEXT}Conan"
-$has_vcpkg && add_seg "${FG_ACCENT}${IC_PKG} ${FG_TEXT}vcpkg"
+$has_conan && bl_seg "$IC_PKG" Conan
+$has_vcpkg && bl_seg "$IC_PKG" vcpkg
 
 # ── Slot 5: Testing ───────────────────────────────────────────────────────────
-$has_gtest    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}GoogleTest"
-$has_catch2   && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Catch2"
-$has_doctest  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}doctest"
-$has_boosttest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}Boost.Test"
-$has_ctest    && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}CTest"
+$has_gtest     && bl_seg "$IC_TEST" GoogleTest
+$has_catch2    && bl_seg "$IC_TEST" Catch2
+$has_doctest   && bl_seg "$IC_TEST" doctest
+$has_boosttest && bl_seg "$IC_TEST" Boost.Test
+$has_ctest     && bl_seg "$IC_TEST" CTest
 
 # ── Slot 6: Tooling ───────────────────────────────────────────────────────────
 # Static analysis first, then formatter
-$has_clangtidy   && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}clang-tidy"
-$has_cppcheck    && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}cppcheck"
-$has_clangformat && add_seg "${FG_ACCENT}${IC_LINT} ${FG_TEXT}clang-format"
+$has_clangtidy    && bl_seg "$IC_LINT" clang-tidy
+$has_cppcheck     && bl_seg "$IC_LINT" cppcheck
+$has_clangformat  && bl_seg "$IC_LINT" clang-format
 
 bl_bar_finish "$_bar_gradient"

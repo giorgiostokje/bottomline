@@ -91,13 +91,12 @@ bl_version_seg "$IC_DOTNET" .NET "$sdk_version"
 [[ -n "$target_framework" ]] && add_seg "${FG_TEXT}${target_framework}"
 
 # Slot 3: Framework
-[[ -n "$framework" ]] \
-  && add_seg "${FG_ACCENT}${IC_WEB} ${FG_TEXT}${framework}"
+[[ -n "$framework" ]] && bl_seg "$IC_WEB" "$framework"
 
 # Slot 5: Testing
-$has_xunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}xUnit"
-$has_nunit  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}NUnit"
-$has_mstest && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}MSTest"
+$has_xunit  && bl_seg "$IC_TEST" xUnit
+$has_nunit  && bl_seg "$IC_TEST" NUnit
+$has_mstest && bl_seg "$IC_TEST" MSTest
 
 # Slot 6: Tooling
 $has_stylecop && bl_version_seg "$IC_LINT" StyleCop "$stylecop_version"

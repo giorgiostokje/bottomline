@@ -100,13 +100,11 @@ dart_seg="${FG_ACCENT}${IC_DART} ${FG_TEXT}Dart"
 [[ -n "$pkg_name" ]]    && dart_seg+=" ${FG_TEXT}${pkg_name}"
 add_seg "$dart_seg"
 
-$is_flutter && add_seg "${FG_ACCENT}${IC_FLUTTER} ${FG_TEXT}Flutter"
+$is_flutter && bl_seg "$IC_FLUTTER" Flutter
 
 # Slot 5: Testing
-$has_flutter_test \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}flutter_test"
-$has_test \
-  && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}test"
+$has_flutter_test && bl_seg "$IC_TEST" flutter_test
+$has_test         && bl_seg "$IC_TEST" test
 
 # Slot 6: Tooling
 # static analysis first

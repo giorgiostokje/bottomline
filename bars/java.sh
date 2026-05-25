@@ -152,9 +152,9 @@ $has_quarkus && bl_version_seg "$IC_QUARKUS" "Quarkus" "$quarkus_version"
 $has_micronaut && bl_version_seg "$IC_MICRONAUT" "Micronaut" "$micronaut_version"
 
 # Slot 5: Testing
-$has_junit5 && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}JUnit 5"
-$has_junit4 && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}JUnit 4"
-$has_testng && add_seg "${FG_ACCENT}${IC_TEST} ${FG_TEXT}TestNG"
+$has_junit5 && bl_seg "$IC_TEST" "JUnit 5"
+$has_junit4 && bl_seg "$IC_TEST" "JUnit 4"
+$has_testng && bl_seg "$IC_TEST" TestNG
 
 # Slot 6: Tooling
 $has_checkstyle && bl_version_seg "$IC_LINT" Checkstyle "$checkstyle_version"
