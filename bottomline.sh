@@ -646,10 +646,8 @@ if [[ "$_auto_bars_enabled" != "false" && -n "$cdir" ]]; then
       [[ "$_inherit_colors" == "true" ]] && \
         _bar_entry=$(printf '%s' "$_bar_entry" | jq -c '.colors = "inherit"')
       _global_rm=$(printf '%s' "$MERGED_CFG" | jq -r '.auto_bars.refresh_minutes // empty' 2>/dev/null)
-      _override_rm=$(printf '%s' "$MERGED_CFG" | jq -r --arg n "$_bar_name" \
-        '.auto_bars.overrides[$n].refresh_minutes // empty' 2>/dev/null)
       _entry_rm=$(printf '%s' "$_auto_bars_cfg" | jq -r ".[$_ei].refresh_minutes // empty" 2>/dev/null)
-      _resolved_rm="${_override_rm:-${_entry_rm:-$_global_rm}}"
+      _resolved_rm="${_entry_rm:-$_global_rm}"
       [[ -n "$_resolved_rm" ]] && \
         _bar_entry=$(printf '%s' "$_bar_entry" | jq -c --arg rm "$_resolved_rm" \
           '.refresh_minutes = ($rm | tonumber)')
@@ -663,7 +661,7 @@ if [[ "$_auto_bars_enabled" != "false" && -n "$cdir" ]]; then
 
   unset -f _is_explicit _is_disabled
   unset _auto _auto_bars_cfg _entry_count _ei _bar_name _matched _sig _disabled _inherit_colors \
-        _global_rm _override_rm _entry_rm _resolved_rm _bar_entry
+        _global_rm _entry_rm _resolved_rm _bar_entry
 fi
 unset _auto_bars_enabled
 
