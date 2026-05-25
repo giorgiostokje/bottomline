@@ -5,8 +5,6 @@
 #   ~/.claude/bottomline.json          — user overrides
 #   <plugin-dir>/settings.json         — shipped defaults
 
-input=$(cat)
-
 # ── ANSI helpers ──────────────────────────────────────────────────────────────
 R=$'\e[0m'
 B=$'\e[1m'
@@ -23,61 +21,22 @@ source "$_BL_DIR/lib/config.sh"
 source "$_BL_DIR/lib/colors.sh"
 # shellcheck source=lib/icons.sh
 source "$_BL_DIR/lib/icons.sh"
+# shellcheck source=lib/state.sh
+source "$_BL_DIR/lib/state.sh"
+# shellcheck source=lib/segments.sh
+source "$_BL_DIR/lib/segments.sh"
+# shellcheck source=lib/auto-bars.sh
+source "$_BL_DIR/lib/auto-bars.sh"
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-j()    { printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null; }
-
-secs_until_reset() {
-  local val="$1"; [[ -z "$val" ]] && return
-  local now; now=$(date '+%s')
-  local target
-  if [[ "$val" =~ ^[0-9]+$ ]]; then
-    (( val < 700000 )) && { (( val > 0 )) && printf '%d' "$val"; return; }
-    target=$val
-  else
-    target=$(date -j -f '%Y-%m-%dT%H:%M:%SZ' "$val" '+%s' 2>/dev/null) \
-         || target=$(date -d "$val" '+%s' 2>/dev/null)
-  fi
-  [[ -z "$target" ]] && return
-  local rem=$(( target - now )); (( rem > 0 )) && printf '%d' "$rem"
-}
-
-# ── Init subsystems ──────────────────────────────────────────────────────────
-cdir=$(j '.workspace.current_dir'); [[ -z "$cdir" ]] && cdir=$(j '.cwd')
-
+# ── Read state & init subsystems ─────────────────────────────────────────────
+bl_read_state
 bl_load_config
 bl_init_colors
 bl_init_icons
+bl_render_main_line
+bl_apply_auto_bars
 
-# ── Gauge ─────────────────────────────────────────────────────────────────────
-gauge() {
-  local used=$1 total=$2 width=${3:-10}
-  [[ -z "$used" || -z "$total" || "$total" -le 0 ]] && return
-  local filled=$(( used * width / total ))
-  (( filled > width )) && filled=$width; (( filled < 0 )) && filled=0
-  (( used > 0 && filled < 1 )) && filled=1
-  local bar='' i
-  for ((i=0; i<width; i++)); do
-    (( i < filled )) && bar+="${FG_ACCENT}▰" || bar+="${FG_TEXT}▱"
-  done
-  printf '%s' "$bar"
-}
-
-# ── Threshold resolver ────────────────────────────────────────────────────────
-# Thresholds must be sorted descending by .above.
-# Sets globals: THR_COLOR_ANSI, THR_ICON (icon string for current icons.type, empty if none)
-threshold_resolve() {
-  local thresholds="$1" value="$2"
-  THR_COLOR_ANSI="$FG_TEXT"; THR_ICON=''
-  while IFS=$'\t' read -r above color icon_val; do
-    (( value >= above )) || continue
-    THR_COLOR_ANSI="$(resolve_color "${color:-text}")"
-    THR_ICON=$(decode_icon "$icon_val")
-    return
-  done < <(printf '%s' "$thresholds" \
-    | jq -r --arg t "$CFG_ICON_TYPE" \
-      'to_entries | sort_by(.key | tonumber) | reverse | .[] | [(.key | tonumber), (.value.color // "text"), (.value.icon[$t] // "")] | @tsv' 2>/dev/null)
-}
+# ── Bar helpers (used by bar execution loop) ─────────────────────────────────
 
 # Resolve a bar script value to an executable path.
 # Names containing "/" are treated as literal paths (~ expanded).
@@ -131,287 +90,6 @@ _bl_resolve_param_val() {
     printf '%s' "$v"
   fi
 }
-
-# ── Extract JSON input fields ─────────────────────────────────────────────────
-model=$(j '.model.display_name')
-transcript=$(j '.transcript_path')
-effort=$(j '.effort.level')
-
-cw_size=200000
-hint=$(j '.context_window.context_window_size // empty')
-[[ -n "$hint" && "$hint" -gt 0 ]] 2>/dev/null && cw_size=$hint
-
-ctx_used=0; sum_in=0; sum_out=0; sum_cache_read=0; sum_cache_create=0
-if [[ -n "$transcript" && -f "$transcript" ]]; then
-  read -r ctx_used sum_in sum_out sum_cache_read sum_cache_create <<<"$(
-    jq -rs '
-      [ .[] | select(.type=="assistant") | .message.usage // empty ] as $u
-      | ($u | last) as $last
-      | [
-          (( ($last.input_tokens // 0) + ($last.cache_read_input_tokens // 0)
-           + ($last.cache_creation_input_tokens // 0) ) | floor),
-          ([ $u[].input_tokens // 0 ]                    | add // 0),
-          ([ $u[].output_tokens // 0 ]                   | add // 0),
-          ([ $u[].cache_read_input_tokens // 0 ]          | add // 0),
-          ([ $u[].cache_creation_input_tokens // 0 ]      | add // 0)
-        ] | @tsv
-    ' "$transcript" 2>/dev/null
-  )"
-  ctx_used=${ctx_used:-0}; sum_in=${sum_in:-0}; sum_out=${sum_out:-0}
-  sum_cache_read=${sum_cache_read:-0}; sum_cache_create=${sum_cache_create:-0}
-fi
-
-branch='' branch_url=''
-if [[ -n "$cdir" && -d "$cdir" ]]; then
-  branch=$(git -C "$cdir" symbolic-ref --short -q HEAD 2>/dev/null)
-  if [[ -n "$branch" ]]; then
-    remote_url=$(git -C "$cdir" config --get remote.origin.url 2>/dev/null)
-    if [[ -n "$remote_url" ]]; then
-      case "$remote_url" in
-        git@*)
-          host=${remote_url#git@}; host=${host%%:*}
-          path=${remote_url#*:};   path=${path%.git}
-          branch_url="https://${host}/${path}/tree/${branch}" ;;
-        https://*|http://*)
-          path=${remote_url%.git}
-          case "$path" in
-            *github.com*|*gitlab.com*|*bitbucket.org*)
-              branch_url="${path}/tree/${branch}" ;;
-          esac ;;
-      esac
-    fi
-  fi
-fi
-
-short_dir="$cdir"
-[[ -n "$HOME" ]] && short_dir="${cdir/#$HOME/~}"
-dir_label="${short_dir##*/}"; [[ -z "$dir_label" ]] && dir_label="$short_dir"
-
-five_pct=$(j '.rate_limits.five_hour.used_percentage')
-week_pct=$(j '.rate_limits.seven_day.used_percentage')
-five_raw=$(j '.rate_limits.five_hour.reset_at // .rate_limits.five_hour.resets_at // .rate_limits.five_hour.resets_in // empty')
-week_raw=$(j '.rate_limits.seven_day.reset_at // .rate_limits.seven_day.resets_at // .rate_limits.seven_day.resets_in // empty')
-five_rem=$(secs_until_reset "$five_raw")
-week_rem=$(secs_until_reset "$week_raw")
-
-# ── Segment builders ──────────────────────────────────────────────────────────
-
-build_model() {
-  [[ -z "$model" ]] && return
-  add_seg "${FG_ACCENT}${IC_MODEL} ${FG_TEXT}${model}"
-}
-
-build_effort() {
-  [[ -z "$effort" ]] && return
-  local ef_entry ef_color ef_icon
-  ef_entry=$(printf '%s' "$CFG_EFFORT" \
-    | jq -c --arg e "$effort" '.[$e] // {}' 2>/dev/null)
-  ef_color=$(printf '%s' "$ef_entry" | jq -r '.color // "text"' 2>/dev/null)
-  ef_icon=$(printf '%s' "$ef_entry"  | jq -r --arg t "$CFG_ICON_TYPE" '.icon[$t] // empty' 2>/dev/null)
-  [[ -n "$ef_icon" ]] && ef_icon=$(decode_icon "$ef_icon")
-  [[ -z "$ef_color" ]] && ef_color="text"
-  local ef_c; ef_c="$(resolve_color "$ef_color")"
-  local suffix=''
-  [[ -n "$ef_icon" ]] && suffix=" ${ef_c}${ef_icon}"
-  add_seg "${FG_ACCENT}${IC_EFFORT} ${ef_c}${effort}${suffix}"
-}
-
-build_context() {
-  (( cw_size <= 0 )) && return
-  local bar; bar=$(gauge "$ctx_used" "$cw_size" 10)
-  threshold_resolve "$CFG_CTX_THR" "$ctx_used"
-  local suffix=''; [[ -n "$THR_ICON" ]] && suffix=" ${THR_COLOR_ANSI}${THR_ICON}"
-  add_seg "${FG_ACCENT}${IC_CONTEXT} ${bar} ${THR_COLOR_ANSI}$(fmt_k "$ctx_used")/$(fmt_k "$cw_size")${suffix}"
-}
-
-build_directory() {
-  [[ -z "$cdir" ]] && return
-  local content="${FG_ACCENT}${IC_DIRECTORY} ${FG_TEXT}${dir_label}"
-  add_seg "$(link "file://${cdir}" "$content")"
-}
-
-build_branch() {
-  [[ -z "$branch" ]] && return
-  local br_entry br_color br_icon
-  br_entry=$(printf '%s' "$CFG_BRANCH" | jq -c --arg b "$branch" '.[$b] // {}' 2>/dev/null)
-  br_color=$(printf '%s' "$br_entry" | jq -r '.color // "text"' 2>/dev/null)
-  br_icon=$(printf '%s' "$br_entry"  | jq -r --arg t "$CFG_ICON_TYPE" '.icon[$t] // empty' 2>/dev/null)
-  [[ -n "$br_icon" ]] && br_icon=$(decode_icon "$br_icon")
-  [[ -z "$br_color" ]] && br_color="text"
-  local br_c; br_c="$(resolve_color "$br_color")"
-  local suffix=''
-  [[ -n "$br_icon" ]] && suffix=" ${br_c}${br_icon}"
-  local content="${FG_ACCENT}${IC_GIT_BRANCH} ${br_c}${branch}${suffix}"
-  [[ -n "$branch_url" ]] && content="$(link "$branch_url" "$content")"
-  add_seg "$content"
-}
-
-build_tokens_in() {
-  local base=$(( sum_in + sum_cache_create ))
-  (( base + sum_cache_read <= 0 )) && return
-  local tok; tok="${FG_ACCENT}${IC_TOKENS_IN} ${FG_TEXT}$(fmt_n "$base")"
-  (( sum_cache_read > 0 )) && tok+="${FG_ACCENT}+$(fmt_n "$sum_cache_read")"
-  add_seg "$tok"
-}
-
-build_tokens_out() {
-  (( sum_out <= 0 )) && return
-  add_seg "${FG_ACCENT}${IC_TOKENS_OUT} ${FG_TEXT}$(fmt_n "$sum_out")"
-}
-
-build_usage_5h() {
-  [[ -z "$five_pct" ]] && return
-  local five_int; five_int=$(printf '%.0f' "$five_pct")
-  threshold_resolve "$CFG_USAGE_THR" "$five_int"
-  local lbl="${FG_ACCENT}${IC_USAGE_5H} ${THR_COLOR_ANSI}${five_int}%"
-  [[ -n "$five_rem" ]] && lbl+=" ${FG_ACCENT}$(fmt_remaining "$five_rem")" || lbl+="${FG_ACCENT}/5h"
-  add_seg "$lbl"
-}
-
-build_usage_7d() {
-  [[ -z "$week_pct" ]] && return
-  local week_int; week_int=$(printf '%.0f' "$week_pct")
-  threshold_resolve "$CFG_USAGE_THR" "$week_int"
-  local lbl="${FG_ACCENT}${IC_USAGE_7D} ${THR_COLOR_ANSI}${week_int}%"
-  [[ -n "$week_rem" ]] && lbl+=" ${FG_ACCENT}$(fmt_remaining "$week_rem")" || lbl+="${FG_ACCENT}/7d"
-  add_seg "$lbl"
-}
-
-build_cost() {
-  (( sum_in + sum_out + sum_cache_read + sum_cache_create <= 0 )) && return
-  local price_in price_out price_cache_read price_cache_write
-  case "$model" in
-    *Opus*)
-      price_in=15; price_out=75; price_cache_read=1.5; price_cache_write=18.75 ;;
-    *Haiku*)
-      price_in=0.80; price_out=4; price_cache_read=0.08; price_cache_write=1.0 ;;
-    *)
-      price_in=3; price_out=15; price_cache_read=0.30; price_cache_write=3.75 ;;
-  esac
-  local cost_fmt
-  cost_fmt=$(awk \
-    -v in_tok="$sum_in"  -v out_tok="$sum_out" \
-    -v cr="$sum_cache_read" -v cw="$sum_cache_create" \
-    -v pi="$price_in"    -v po="$price_out" \
-    -v pcr="$price_cache_read" -v pcw="$price_cache_write" \
-    'BEGIN {
-      c = (in_tok*pi + out_tok*po + cr*pcr + cw*pcw) / 1000000
-      if (c < 0.005) printf "< $0.01"
-      else           printf "$%.2f", c
-    }')
-  add_seg "${FG_ACCENT}${IC_COST} ${FG_TEXT}${cost_fmt}"
-}
-
-# ── Render items in configured order ─────────────────────────────────────────
-_is_seg_hidden() {
-  [[ -z "$CFG_HIDDEN" || "$CFG_HIDDEN" == "null" ]] && return 1
-  printf '%s' "$CFG_HIDDEN" | jq -e --arg n "$1" 'any(.[]; . == $n)' > /dev/null 2>&1
-}
-
-_items_out=$(printf '%s' "$CFG_ITEMS" | jq -r '.[]' 2>/dev/null)
-[[ -z "$_items_out" ]] && _items_out="model
-effort
-context
-directory
-git_branch
-tokens_in
-tokens_out
-usage_5h
-usage_7d"
-
-while IFS= read -r _item; do
-  [[ -z "$_item" ]] && continue
-  _is_seg_hidden "$_item" && continue
-  case "$_item" in
-    model)     build_model     ;;
-    effort)    build_effort    ;;
-    context)   build_context   ;;
-    directory) build_directory ;;
-    git_branch)  build_branch      ;;
-    tokens_in)   build_tokens_in  ;;
-    tokens_out)  build_tokens_out ;;
-    usage_5h)    build_usage_5h   ;;
-    usage_7d)  build_usage_7d  ;;
-    cost)      build_cost      ;;
-  esac
-done <<< "$_items_out"
-unset -f _is_seg_hidden
-unset _item _items_out
-
-flush "$CFG_BG"
-
-# ── Project-aware bar auto-detection ─────────────────────────────────────────
-# Bar scripts are prepended automatically when their signal files are found in
-# the project root, unless the bar is already listed in the bars config.
-# The list of bars and their detection signals is defined in auto_bars (in
-# settings.json), so it can be extended or reordered at any config level.
-_auto_bars_enabled=$(printf '%s' "$MERGED_CFG" | jq -r 'if .auto_bars.enabled == false then "false" else "true" end' 2>/dev/null)
-if [[ "$_auto_bars_enabled" != "false" && -n "$cdir" ]]; then
-  [[ -z "$CFG_BARS" || "$CFG_BARS" == "null" ]] && CFG_BARS='[]'
-
-  _auto_bars_cfg=$(cfg_json '.auto_bars.scripts')
-  [[ -z "$_auto_bars_cfg" || "$_auto_bars_cfg" == "null" ]] && _auto_bars_cfg='[]'
-
-  # auto_bars.disabled accumulates across all config levels (union) so that a
-  # project can add its own exclusions without re-listing the user's exclusions.
-  _d_s=$(jq -c '.auto_bars.disabled // empty' "$SETTINGS_CFG" 2>/dev/null)
-  _d_u=''; [[ -f "$USER_CFG" ]]  && _d_u=$(jq -c '.auto_bars.disabled // empty' "$USER_CFG"  2>/dev/null)
-  _d_p=''; [[ -n "$PROJ_CFG" ]] && _d_p=$(jq -c '.auto_bars.disabled // empty' "$PROJ_CFG" 2>/dev/null)
-  _disabled=$(jq -n \
-    --argjson s "${_d_s:-[]}" --argjson u "${_d_u:-[]}" --argjson p "${_d_p:-[]}" \
-    '($s + $u + $p) | unique' 2>/dev/null || printf '[]')
-  unset _d_s _d_u _d_p
-
-  _inherit_colors=$(printf '%s' "$MERGED_CFG" | jq -r '.auto_bars.inherit_colors // false' 2>/dev/null)
-  [[ "$_inherit_colors" != "true" ]] && _inherit_colors="false"
-
-  _is_explicit() {
-    printf '%s' "$CFG_BARS" \
-      | jq -e --arg n "$1" 'any(.[]; .script == $n)' > /dev/null 2>&1
-  }
-  _is_disabled() {
-    printf '%s' "$_disabled" \
-      | jq -e --arg n "$1" 'any(.[]; . == $n)' > /dev/null 2>&1
-  }
-
-  _auto='[]'
-  _entry_count=$(printf '%s' "$_auto_bars_cfg" | jq 'length' 2>/dev/null || echo 0)
-
-  for (( _ei=0; _ei<_entry_count; _ei++ )); do
-    _bar_name=$(printf '%s' "$_auto_bars_cfg" | jq -r ".[$_ei].script // empty" 2>/dev/null)
-    [[ -z "$_bar_name" ]] && continue
-    _is_explicit "$_bar_name" && continue
-    _is_disabled "$_bar_name" && continue
-
-    _matched=false
-    while IFS= read -r _sig; do
-      [[ -z "$_sig" ]] && continue
-      for _f in "$cdir"/$_sig; do [[ -e "$_f" ]] && { _matched=true; break 2; }; done
-    done < <(printf '%s' "$_auto_bars_cfg" | jq -r ".[$_ei].signals[]? // empty" 2>/dev/null)
-
-    if "$_matched"; then
-      _bar_entry=$(printf '%s' "$_auto_bars_cfg" | jq -c ".[$_ei] | del(.signals)")
-      [[ "$_inherit_colors" == "true" ]] && \
-        _bar_entry=$(printf '%s' "$_bar_entry" | jq -c '.colors = "inherit"')
-      _global_rm=$(printf '%s' "$MERGED_CFG" | jq -r '.auto_bars.refresh_minutes // empty' 2>/dev/null)
-      _entry_rm=$(printf '%s' "$_auto_bars_cfg" | jq -r ".[$_ei].refresh_minutes // empty" 2>/dev/null)
-      _resolved_rm="${_entry_rm:-$_global_rm}"
-      [[ -n "$_resolved_rm" ]] && \
-        _bar_entry=$(printf '%s' "$_bar_entry" | jq -c --arg rm "$_resolved_rm" \
-          '.refresh_minutes = ($rm | tonumber)')
-      _auto=$(printf '%s' "$_auto" | jq --argjson e "$_bar_entry" '. + [$e]')
-    fi
-  done
-
-  if [[ "$_auto" != "[]" ]]; then
-    CFG_BARS=$(printf '%s' "$_auto" | jq --argjson cfg "$CFG_BARS" '. + $cfg')
-  fi
-
-  unset -f _is_explicit _is_disabled
-  unset _auto _auto_bars_cfg _entry_count _ei _bar_name _matched _sig _disabled _inherit_colors \
-        _global_rm _entry_rm _resolved_rm _bar_entry
-fi
-unset _auto_bars_enabled
 
 # ── Bars ──────────────────────────────────────────────────────────────────────
 bar_count=$(printf '%s' "$CFG_BARS" | jq 'length' 2>/dev/null || echo 0)

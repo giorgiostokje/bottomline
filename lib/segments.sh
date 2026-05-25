@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+# lib/segments.sh — main status line: build_* functions, gauge, threshold
+# resolution, the dispatch loop, and the trailing flush.
+#
+# Inputs : (all CFG_* set by lib/config.sh),
+#          FG_TEXT, FG_ACCENT, FG_WARN, FG_CRIT (set by lib/colors.sh),
+#          IC_MODEL, IC_EFFORT, IC_CONTEXT, IC_DIRECTORY, IC_GIT_BRANCH,
+#          IC_TOKENS_IN, IC_TOKENS_OUT, IC_USAGE_5H, IC_USAGE_7D,
+#          IC_COST (set by lib/icons.sh),
+#          model, effort, cw_size, ctx_used, sum_in, sum_out,
+#          sum_cache_read, sum_cache_create, branch, branch_url,
+#          cdir, dir_label, five_pct, week_pct, five_rem, week_rem
+#          (all set by lib/state.sh)
+# Outputs: writes ANSI to stdout via flush; mutates _sc array (from lib/ansi.sh)
+# Exports: gauge, threshold_resolve (internal),
+#          build_* (internal), bl_render_main_line (public entry)
+
+gauge() {
+  local used=$1 total=$2 width=${3:-10}
+  [[ -z "$used" || -z "$total" || "$total" -le 0 ]] && return
+  local filled=$(( used * width / total ))
+  (( filled > width )) && filled=$width; (( filled < 0 )) && filled=0
+  (( used > 0 && filled < 1 )) && filled=1
+  local bar='' i
+  for ((i=0; i<width; i++)); do
+    (( i < filled )) && bar+="${FG_ACCENT}▰" || bar+="${FG_TEXT}▱"
+  done
+  printf '%s' "$bar"
+}
+
+# Thresholds must be sorted descending by .above.
+# Sets globals: THR_COLOR_ANSI, THR_ICON (icon string for current icons.type, empty if none)
+threshold_resolve() {
+  local thresholds="$1" value="$2"
+  THR_COLOR_ANSI="$FG_TEXT"; THR_ICON=''
+  while IFS=$'\t' read -r above color icon_val; do
+    (( value >= above )) || continue
+    THR_COLOR_ANSI="$(resolve_color "${color:-text}")"
+    THR_ICON=$(decode_icon "$icon_val")
+    return
+  done < <(printf '%s' "$thresholds" \
+    | jq -r --arg t "$CFG_ICON_TYPE" \
+      'to_entries | sort_by(.key | tonumber) | reverse | .[] | [(.key | tonumber), (.value.color // "text"), (.value.icon[$t] // "")] | @tsv' 2>/dev/null)
+}
+
+build_model() {
+  [[ -z "$model" ]] && return
+  add_seg "${FG_ACCENT}${IC_MODEL} ${FG_TEXT}${model}"
+}
+
+build_effort() {
+  [[ -z "$effort" ]] && return
+  local ef_entry ef_color ef_icon
+  ef_entry=$(printf '%s' "$CFG_EFFORT" \
+    | jq -c --arg e "$effort" '.[$e] // {}' 2>/dev/null)
+  ef_color=$(printf '%s' "$ef_entry" | jq -r '.color // "text"' 2>/dev/null)
+  ef_icon=$(printf '%s' "$ef_entry"  | jq -r --arg t "$CFG_ICON_TYPE" '.icon[$t] // empty' 2>/dev/null)
+  [[ -n "$ef_icon" ]] && ef_icon=$(decode_icon "$ef_icon")
+  [[ -z "$ef_color" ]] && ef_color="text"
+  local ef_c; ef_c="$(resolve_color "$ef_color")"
+  local suffix=''
+  [[ -n "$ef_icon" ]] && suffix=" ${ef_c}${ef_icon}"
+  add_seg "${FG_ACCENT}${IC_EFFORT} ${ef_c}${effort}${suffix}"
+}
+
+build_context() {
+  (( cw_size <= 0 )) && return
+  local bar; bar=$(gauge "$ctx_used" "$cw_size" 10)
+  threshold_resolve "$CFG_CTX_THR" "$ctx_used"
+  local suffix=''; [[ -n "$THR_ICON" ]] && suffix=" ${THR_COLOR_ANSI}${THR_ICON}"
+  add_seg "${FG_ACCENT}${IC_CONTEXT} ${bar} ${THR_COLOR_ANSI}$(fmt_k "$ctx_used")/$(fmt_k "$cw_size")${suffix}"
+}
+
+build_directory() {
+  [[ -z "$cdir" ]] && return
+  local content="${FG_ACCENT}${IC_DIRECTORY} ${FG_TEXT}${dir_label}"
+  add_seg "$(link "file://${cdir}" "$content")"
+}
+
+build_branch() {
+  [[ -z "$branch" ]] && return
+  local br_entry br_color br_icon
+  br_entry=$(printf '%s' "$CFG_BRANCH" | jq -c --arg b "$branch" '.[$b] // {}' 2>/dev/null)
+  br_color=$(printf '%s' "$br_entry" | jq -r '.color // "text"' 2>/dev/null)
+  br_icon=$(printf '%s' "$br_entry"  | jq -r --arg t "$CFG_ICON_TYPE" '.icon[$t] // empty' 2>/dev/null)
+  [[ -n "$br_icon" ]] && br_icon=$(decode_icon "$br_icon")
+  [[ -z "$br_color" ]] && br_color="text"
+  local br_c; br_c="$(resolve_color "$br_color")"
+  local suffix=''
+  [[ -n "$br_icon" ]] && suffix=" ${br_c}${br_icon}"
+  local content="${FG_ACCENT}${IC_GIT_BRANCH} ${br_c}${branch}${suffix}"
+  [[ -n "$branch_url" ]] && content="$(link "$branch_url" "$content")"
+  add_seg "$content"
+}
+
+build_tokens_in() {
+  local base=$(( sum_in + sum_cache_create ))
+  (( base + sum_cache_read <= 0 )) && return
+  local tok; tok="${FG_ACCENT}${IC_TOKENS_IN} ${FG_TEXT}$(fmt_n "$base")"
+  (( sum_cache_read > 0 )) && tok+="${FG_ACCENT}+$(fmt_n "$sum_cache_read")"
+  add_seg "$tok"
+}
+
+build_tokens_out() {
+  (( sum_out <= 0 )) && return
+  add_seg "${FG_ACCENT}${IC_TOKENS_OUT} ${FG_TEXT}$(fmt_n "$sum_out")"
+}
+
+build_usage_5h() {
+  [[ -z "$five_pct" ]] && return
+  local five_int; five_int=$(printf '%.0f' "$five_pct")
+  threshold_resolve "$CFG_USAGE_THR" "$five_int"
+  local lbl="${FG_ACCENT}${IC_USAGE_5H} ${THR_COLOR_ANSI}${five_int}%"
+  [[ -n "$five_rem" ]] && lbl+=" ${FG_ACCENT}$(fmt_remaining "$five_rem")" || lbl+="${FG_ACCENT}/5h"
+  add_seg "$lbl"
+}
+
+build_usage_7d() {
+  [[ -z "$week_pct" ]] && return
+  local week_int; week_int=$(printf '%.0f' "$week_pct")
+  threshold_resolve "$CFG_USAGE_THR" "$week_int"
+  local lbl="${FG_ACCENT}${IC_USAGE_7D} ${THR_COLOR_ANSI}${week_int}%"
+  [[ -n "$week_rem" ]] && lbl+=" ${FG_ACCENT}$(fmt_remaining "$week_rem")" || lbl+="${FG_ACCENT}/7d"
+  add_seg "$lbl"
+}
+
+build_cost() {
+  (( sum_in + sum_out + sum_cache_read + sum_cache_create <= 0 )) && return
+  local price_in price_out price_cache_read price_cache_write
+  case "$model" in
+    *Opus*)
+      price_in=15; price_out=75; price_cache_read=1.5; price_cache_write=18.75 ;;
+    *Haiku*)
+      price_in=0.80; price_out=4; price_cache_read=0.08; price_cache_write=1.0 ;;
+    *)
+      price_in=3; price_out=15; price_cache_read=0.30; price_cache_write=3.75 ;;
+  esac
+  local cost_fmt
+  cost_fmt=$(awk \
+    -v in_tok="$sum_in"  -v out_tok="$sum_out" \
+    -v cr="$sum_cache_read" -v cw="$sum_cache_create" \
+    -v pi="$price_in"    -v po="$price_out" \
+    -v pcr="$price_cache_read" -v pcw="$price_cache_write" \
+    'BEGIN {
+      c = (in_tok*pi + out_tok*po + cr*pcr + cw*pcw) / 1000000
+      if (c < 0.005) printf "< $0.01"
+      else           printf "$%.2f", c
+    }')
+  add_seg "${FG_ACCENT}${IC_COST} ${FG_TEXT}${cost_fmt}"
+}
+
+bl_render_main_line() {
+  _is_seg_hidden() {
+    [[ -z "$CFG_HIDDEN" || "$CFG_HIDDEN" == "null" ]] && return 1
+    printf '%s' "$CFG_HIDDEN" | jq -e --arg n "$1" 'any(.[]; . == $n)' > /dev/null 2>&1
+  }
+
+  _items_out=$(printf '%s' "$CFG_ITEMS" | jq -r '.[]' 2>/dev/null)
+  [[ -z "$_items_out" ]] && _items_out="model
+effort
+context
+directory
+git_branch
+tokens_in
+tokens_out
+usage_5h
+usage_7d"
+
+  while IFS= read -r _item; do
+    [[ -z "$_item" ]] && continue
+    _is_seg_hidden "$_item" && continue
+    case "$_item" in
+      model)     build_model     ;;
+      effort)    build_effort    ;;
+      context)   build_context   ;;
+      directory) build_directory ;;
+      git_branch)  build_branch      ;;
+      tokens_in)   build_tokens_in  ;;
+      tokens_out)  build_tokens_out ;;
+      usage_5h)    build_usage_5h   ;;
+      usage_7d)  build_usage_7d  ;;
+      cost)      build_cost      ;;
+    esac
+  done <<< "$_items_out"
+  unset -f _is_seg_hidden
+  unset _item _items_out
+
+  flush "$CFG_BG"
+}
