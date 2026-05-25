@@ -176,4 +176,4 @@ Any time a bar is **added** or its **segments change**, update every applicable 
 
 ### `dmerge/2` is duplicated
 
-The `dmerge/2` jq function is copy-pasted verbatim into both `bottomline.sh` (config loading) and `skills/debug/SKILL.md` (the merged-config inspection snippet). If the algorithm changes, update both.
+The `dmerge/2` jq function is copy-pasted verbatim into both `lib/config.sh` (config loading) and `skills/debug/SKILL.md` (the merged-config inspection snippet). If the algorithm changes, update both.

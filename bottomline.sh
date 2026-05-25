@@ -10,18 +10,6 @@ input=$(cat)
 # ── ANSI helpers ──────────────────────────────────────────────────────────────
 R=$'\e[0m'
 B=$'\e[1m'
-SEP=$'\xee\x82\xb4'   # U+E0B4 rounded right chevron (default; overridden by segments.separator)
-
-# ── Nerd Font icon bytes ──────────────────────────────────────────────────────
-NF_MODEL=$'\xef\x8b\x9b'   NF_BOLT=$'\xef\x83\xa7'   NF_CTX=$'\xef\x82\xae'
-NF_DIR=$'\xef\x81\xbc'     NF_GIT=$'\xee\x82\xa0'    NF_UP=$'\xef\x81\xa2'
-NF_DOWN=$'\xef\x81\xa3'    NF_CLOCK=$'\xef\x80\x97'  NF_CAL=$'\xef\x81\xb3'
-NF_COST=$'\xef\x83\x96'    NF_WARN=$'\xef\x81\xb1'   NF_DANGER=$'\xef\x81\x9e'
-
-# ── Emoji fallback icons ──────────────────────────────────────────────────────
-EM_MODEL='🖥'  EM_BOLT='⚡'  EM_CTX='◈'   EM_DIR='📁'  EM_GIT='⎇'
-EM_UP='↑'      EM_DOWN='↓'  EM_CLOCK='⏱' EM_CAL='📅'  EM_COST='💰'
-EM_WARN='⚠'   EM_DANGER='🛑'
 
 # ── Pure utilities ────────────────────────────────────────────────────────────
 _BL_DIR="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
@@ -29,6 +17,12 @@ _BL_DIR="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 source "$_BL_DIR/lib/functions.sh"
 # shellcheck source=lib/ansi.sh
 source "$_BL_DIR/lib/ansi.sh"
+# shellcheck source=lib/config.sh
+source "$_BL_DIR/lib/config.sh"
+# shellcheck source=lib/colors.sh
+source "$_BL_DIR/lib/colors.sh"
+# shellcheck source=lib/icons.sh
+source "$_BL_DIR/lib/icons.sh"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 j()    { printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null; }
@@ -48,164 +42,12 @@ secs_until_reset() {
   local rem=$(( target - now )); (( rem > 0 )) && printf '%d' "$rem"
 }
 
-# ── Config loading ────────────────────────────────────────────────────────────
+# ── Init subsystems ──────────────────────────────────────────────────────────
 cdir=$(j '.workspace.current_dir'); [[ -z "$cdir" ]] && cdir=$(j '.cwd')
 
-SETTINGS_CFG="$_BL_DIR/settings.json"
-USER_CFG="$HOME/.claude/bottomline.json"
-PROJ_CFG=""
-[[ -n "$cdir" && -f "$cdir/.claude/bottomline.json" ]] && PROJ_CFG="$cdir/.claude/bottomline.json"
-
-# Deep-merge all three config layers: settings < user < project.
-# Objects are merged recursively — a partial object in a higher-priority file
-# fills in only the keys it defines; the rest fall through from lower layers.
-# Arrays and scalars: the highest-priority non-null value wins entirely.
-_s_json=$(jq '.' "$SETTINGS_CFG" 2>/dev/null || printf '{}')
-_u_json='null'; [[ -f "$USER_CFG" ]]  && _u_json=$(jq '.' "$USER_CFG"  2>/dev/null || printf 'null')
-_p_json='null'; [[ -n "$PROJ_CFG" ]]  && _p_json=$(jq '.' "$PROJ_CFG"  2>/dev/null || printf 'null')
-
-MERGED_CFG=$(jq -n \
-  --argjson s "$_s_json" --argjson u "$_u_json" --argjson p "$_p_json" '
-    def dmerge(a; b):
-      if b == null then a
-      elif (a | type) == "object" and (b | type) == "object"
-      then reduce (b | keys_unsorted[]) as $k (a; .[$k] = dmerge(a[$k]; b[$k]))
-      elif (a | type) == "array" and (b | type) == "array"
-           and (a | length > 0 and (.[0] | type == "object" and has("script")))
-           and (b | length > 0 and (.[0] | type == "object" and has("script")))
-      then
-        (b | map({(.script): .}) | add // {}) as $bi |
-        (a | map(. as $ae | dmerge($ae; $bi[$ae.script]))) +
-        (b | map(select(.script as $s | (a | map(.script) | index($s)) == null)))
-      else b
-      end;
-    dmerge(dmerge($s; $u); $p)
-  ' 2>/dev/null || printf '{}')
-unset _s_json _u_json _p_json
-
-cfg_str()  { printf '%s' "$MERGED_CFG" | jq -r "$1 // empty" 2>/dev/null; }
-cfg_json() { printf '%s' "$MERGED_CFG" | jq -c "$1 // empty" 2>/dev/null; }
-
-# ── Read config (defaults live in <plugin-dir>/settings.json) ────────────────
-CFG_TEXT_HEX=$(cfg_str  '.appearance.colors.text')
-CFG_ACCENT_HEX=$(cfg_str '.appearance.colors.accent')
-CFG_WARN_HEX=$(cfg_str  '.appearance.colors.warning')
-CFG_CRIT_HEX=$(cfg_str  '.appearance.colors.danger')
-CFG_BG=$(cfg_json        '.appearance.colors.background')
-CFG_EFFORT=$(cfg_json  '.segments.effort')
-CFG_CTX_THR=$(cfg_json '.segments.context')
-CFG_BRANCH=$(cfg_json  '.segments.git_branch')
-CFG_USAGE_THR=$(cfg_json '.segments.usage')
-CFG_ITEMS=$(cfg_json     '.segments.enabled')
-CFG_HIDDEN=$(cfg_json    '.segments.disabled')
-CFG_ICON_TYPE=$(cfg_str  '.appearance.icons.type')
-CFG_ICON_OVR=$(cfg_json  '.appearance.icons.overrides')
-CFG_BARS=$(cfg_json    '.bars')
-CFG_SEP_RAW=$(cfg_str  '.segments.separator')
-
-# ── Theme ─────────────────────────────────────────────────────────────────────
-# When a theme is set in any config file (project > user > settings), its
-# colors take priority over all per-file color settings.
-_theme_name=$(cfg_str '.appearance.theme')
-if [[ -n "$_theme_name" ]]; then
-  _theme_file="$_BL_DIR/themes/${_theme_name}.json"
-  if [[ -f "$_theme_file" ]]; then
-    _v=$(jq -r '.colors.text       // empty' "$_theme_file" 2>/dev/null); [[ -n "$_v" ]] && CFG_TEXT_HEX="$_v"
-    _v=$(jq -r '.colors.accent     // empty' "$_theme_file" 2>/dev/null); [[ -n "$_v" ]] && CFG_ACCENT_HEX="$_v"
-    _v=$(jq -r '.colors.warning    // empty' "$_theme_file" 2>/dev/null); [[ -n "$_v" ]] && CFG_WARN_HEX="$_v"
-    _v=$(jq -r '.colors.danger     // empty' "$_theme_file" 2>/dev/null); [[ -n "$_v" ]] && CFG_CRIT_HEX="$_v"
-    _v=$(jq -c '.colors.background // empty' "$_theme_file" 2>/dev/null); [[ -n "$_v" ]] && CFG_BG="$_v"
-  fi
-  unset _theme_file _v
-fi
-unset _theme_name
-
-# ── Resolve colors ────────────────────────────────────────────────────────────
-RGB_TEXT=$(hex_to_rgb   "$CFG_TEXT_HEX")
-RGB_ACCENT=$(hex_to_rgb "$CFG_ACCENT_HEX")
-RGB_WARN=$(hex_to_rgb   "$CFG_WARN_HEX")
-RGB_CRIT=$(hex_to_rgb   "$CFG_CRIT_HEX")
-
-FG_TEXT=$(make_fg "$RGB_TEXT")
-FG_ACCENT=$(make_fg "$RGB_ACCENT")
-FG_WARN=$(make_fg "$RGB_WARN")
-FG_CRIT=$(make_fg "$RGB_CRIT")
-
-# Resolve a named color reference or hex string back to its hex value.
-resolve_color_hex() {
-  case "$1" in
-    text)         printf '%s' "$CFG_TEXT_HEX"   ;;
-    accent)       printf '%s' "$CFG_ACCENT_HEX" ;;
-    warn|warning) printf '%s' "$CFG_WARN_HEX"   ;;
-    crit|danger)  printf '%s' "$CFG_CRIT_HEX"   ;;
-    *)            printf '%s' "$1" ;;
-  esac
-}
-
-# Resolve a named/hex color spec to an ANSI fg escape
-resolve_color() {
-  case "$1" in
-    text)            printf '%s' "$FG_TEXT"   ;;
-    accent)          printf '%s' "$FG_ACCENT" ;;
-    warn|warning)    printf '%s' "$FG_WARN"   ;;
-    crit|danger)     printf '%s' "$FG_CRIT"   ;;
-    \#*)             make_fg "$(hex_to_rgb "$1")" ;;
-    *)               printf '%s' "$FG_TEXT"   ;;
-  esac
-}
-
-# ── Background: C_R[0..7] C_G[0..7] C_B[0..7] ───────────────────────────────
-CFG_BG_EXP=$(expand_bg "$CFG_BG" 8)
-declare -a C_R C_G C_B
-for _i in $(seq 0 7); do
-  _hex=$(printf '%s' "$CFG_BG_EXP" | jq -r ".[$_i]" 2>/dev/null)
-  [[ -z "$_hex" ]] && _hex='#0F0F0F'
-  read -r "C_R[$_i]" "C_G[$_i]" "C_B[$_i]" <<< "$(hex_to_rgb "$_hex")"
-done
-unset _i _hex
-
-# ── Icons ─────────────────────────────────────────────────────────────────────
-get_icon() {
-  local name="$1" override
-  override=$(printf '%s' "$CFG_ICON_OVR" | jq -r --arg n "$name" '.[$n] // empty' 2>/dev/null)
-  # tokens_in/tokens_out fall back to the shared 'tokens' override key
-  if [[ -z "$override" && ("$name" == tokens_in || "$name" == tokens_out) ]]; then
-    override=$(printf '%s' "$CFG_ICON_OVR" | jq -r '.tokens // empty' 2>/dev/null)
-  fi
-  [[ -n "$override" ]] && decode_icon "$override" && return
-  case "$CFG_ICON_TYPE" in
-    nerd)
-      case "$name" in
-        model)      printf '%s' "$NF_MODEL"  ;; effort)    printf '%s' "$NF_BOLT"   ;;
-        context)    printf '%s' "$NF_CTX"    ;; directory) printf '%s' "$NF_DIR"    ;;
-        git_branch) printf '%s' "$NF_GIT"    ;; tokens_in) printf '%s' "$NF_UP"     ;;
-        tokens_out) printf '%s' "$NF_DOWN"   ;; usage_5h)  printf '%s' "$NF_CLOCK"  ;;
-        usage_7d)   printf '%s' "$NF_CAL"    ;; cost)      printf '%s' "$NF_COST"   ;;
-        warn)       printf '%s' "$NF_WARN"   ;; danger)    printf '%s' "$NF_DANGER" ;;
-        *)          printf '%s' "$name"      ;;
-      esac ;;
-    emoji)
-      case "$name" in
-        model)      printf '%s' "$EM_MODEL"  ;; effort)    printf '%s' "$EM_BOLT"   ;;
-        context)    printf '%s' "$EM_CTX"    ;; directory) printf '%s' "$EM_DIR"    ;;
-        git_branch) printf '%s' "$EM_GIT"    ;; tokens_in) printf '%s' "$EM_UP"     ;;
-        tokens_out) printf '%s' "$EM_DOWN"   ;; usage_5h)  printf '%s' "$EM_CLOCK"  ;;
-        usage_7d)   printf '%s' "$EM_CAL"    ;; cost)      printf '%s' "$EM_COST"   ;;
-        warn)       printf '%s' "$EM_WARN"   ;; danger)    printf '%s' "$EM_DANGER" ;;
-        *)          printf '%s' "$name"      ;;
-      esac ;;
-    none) printf '' ;;
-  esac
-}
-
-IC_MODEL=$(get_icon model)         IC_EFFORT=$(get_icon effort)       IC_CONTEXT=$(get_icon context)
-IC_DIRECTORY=$(get_icon directory) IC_GIT_BRANCH=$(get_icon git_branch)
-IC_TOKENS_IN=$(get_icon tokens_in) IC_TOKENS_OUT=$(get_icon tokens_out)
-IC_USAGE_5H=$(get_icon usage_5h)   IC_USAGE_7D=$(get_icon usage_7d)
-IC_COST=$(get_icon cost)           IC_DANGER=$(get_icon danger)
-
-# Resolve segments.separator — reuses decode_icon for hex codepoint support.
-[[ -n "$CFG_SEP_RAW" ]] && SEP=$(decode_icon "$CFG_SEP_RAW")
+bl_load_config
+bl_init_colors
+bl_init_icons
 
 # ── Gauge ─────────────────────────────────────────────────────────────────────
 gauge() {
