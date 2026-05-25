@@ -24,7 +24,10 @@ Three files are deep-merged at runtime (highest priority first):
 
 **Merge rules:** Objects are merged recursively — a partial object in a
 higher-priority file fills in only the keys it defines. Arrays and scalars:
-the highest-priority non-null value wins entirely.
+the highest-priority non-null value wins entirely. **Exception:** non-empty
+arrays whose elements are objects with a `script` field are merged by
+`script` key — matched entries are deep-merged, unmatched entries from
+either layer survive. An empty array (`[]`) still wins outright.
 
 Always make changes in `$HOME/.claude/bottomline.json` (user) or
 `<project>/.claude/bottomline.json` (project). Never edit `settings.json`.
@@ -313,22 +316,35 @@ is already present.
 **`linear` — required params and refresh interval**
 
 `linear` calls the Linear GraphQL API and requires two params before it can render.
-Write the `linear` bar config to the **project-level** config (`.claude/bottomline.json`), not the user-level config — the `team` key is project-specific.
+The `api_key` is personal and belongs at **user level**; the `team` key is
+project-specific and belongs at **project level**. With script-keyed merging, the
+two entries are combined into one bar entry at runtime.
 
 Before adding it, ask the user for:
 
-1. **API key** — from Linear → Settings → API → Personal API keys. Prompt:
-   > "What is your Linear personal API key? You can store it as a literal value in the config, or in a key file (e.g. `file:~/.linear_token`) to keep it out of the JSON."
+1. **API key** — from Linear → Settings → API → Personal API keys.
 
-   **Recommended — key file:**
+   Recommend `file:~/.linear_api_key` as the storage method — it keeps the secret out of JSON config files. Ask:
+   > "Would you like me to create `~/.linear_api_key` with your API key? This is the recommended approach — the file is read at render time and never appears in your config JSON."
 
+   - **Yes** — ask for the key value, then create the file and use `"file:~/.linear_api_key"` as the stored value:
+     ```bash
+     printf '%s' "lin_api_YOUR_KEY_HERE" > "$HOME/.linear_api_key"
+     chmod 600 "$HOME/.linear_api_key"
+     ```
+     Write `"api_key": "file:~/.linear_api_key"` to the user config.
+
+   - **No** — ask: "Would you like to paste the key directly into the config, or reference an environment variable (e.g. `$LINEAR_API_KEY`)?" Use their answer as the `api_key` value.
+
+   Regardless of choice, **always write the user config immediately** after resolving the key:
    ```bash
-   printf 'lin_api_YOUR_KEY_HERE' > "$HOME/.linear_token"
-   chmod 600 "$HOME/.linear_token"
+   tmp=$(mktemp) \
+     && jq --arg key "API_KEY_VALUE" \
+          '.bars += [{"script":"linear","params":{"api_key":$key}}]' \
+          "$HOME/.claude/bottomline.json" > "$tmp" \
+     && mv "$tmp" "$HOME/.claude/bottomline.json"
    ```
-
-   Then set `"api_key": "file:~/.linear_token"` in the params. The file is read at render
-   time; no restart needed after rotating the key.
+   Replace `API_KEY_VALUE` with the resolved value (`"file:~/.linear_api_key"`, a literal key, or `"$LINEAR_API_KEY"`).
 
 2. **Team key** — the short identifier for the team (e.g. `ENG`, `MOBILE`). Prompt:
    > "What is your Linear team key? This is the short uppercase identifier visible in your Linear workspace URL."
@@ -336,26 +352,34 @@ Before adding it, ask the user for:
 3. **Refresh interval** — how often to call the API. Prompt:
    > "How often should Linear data refresh? Suggested: every 15 minutes."
 
-Then add the bar with the chosen values:
-
-*Adding for the first time:*
+Then always write `team` and `refresh_minutes` to the **project config** immediately:
 ```bash
 tmp=$(mktemp) \
-  && jq --arg key "API_KEY_VALUE" --arg team "TEAM_KEY" --argjson rm MINUTES \
-       '.bars += [{"script":"linear","refresh_minutes":$rm,"params":{"api_key":$key,"team":$team}}]' \
+  && jq --arg team "TEAM_KEY" --argjson rm MINUTES \
+       '.bars += [{"script":"linear","params":{"team":$team},"refresh_minutes":$rm}]' \
        ".claude/bottomline.json" > "$tmp" \
   && mv "$tmp" ".claude/bottomline.json"
 ```
 
-Replace `API_KEY_VALUE`, `TEAM_KEY`, and `MINUTES` with the user's choices.
+Replace `TEAM_KEY` and `MINUTES` with the user's choices.
+At runtime, script-keyed merging combines both entries: `api_key` from user level + `team` and `refresh_minutes` from project level.
 
-*Updating an existing entry:*
+*Updating `refresh_minutes` on an existing entry (project config):*
 ```bash
 tmp=$(mktemp) \
   && jq --argjson rm MINUTES \
        '.bars |= map(if .script == "linear" then .refresh_minutes = $rm else . end)' \
        ".claude/bottomline.json" > "$tmp" \
   && mv "$tmp" ".claude/bottomline.json"
+```
+
+*Updating `api_key` on an existing entry (user config):*
+```bash
+tmp=$(mktemp) \
+  && jq --arg key "NEW_KEY" \
+       '.bars |= map(if .script == "linear" then .params.api_key = $key else . end)' \
+       "$HOME/.claude/bottomline.json" > "$tmp" \
+  && mv "$tmp" "$HOME/.claude/bottomline.json"
 ```
 
 ## Going Further
