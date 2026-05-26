@@ -129,10 +129,23 @@ Every language/ecosystem bar in `bars/` follows this canonical 6-slot order. Slo
 
 **Static analysis / formatter layering** — same rule applies to analysis and formatting tools:
 
-| Stack | Base         | Layer     | Rule                                        |
-|-------|--------------|-----------|---------------------------------------------|
-| PHP   | PHPStan      | Larastan  | Larastan detected → show Larastan only      |
-| PHP   | PHP-CS-Fixer | Pint      | Pint detected → show Pint only              |
+| Stack      | Base         | Layer     | Rule                                        |
+|------------|--------------|-----------|---------------------------------------------|
+| PHP        | PHPStan      | Larastan  | Larastan detected → show Larastan only      |
+| PHP        | PHP-CS-Fixer | Pint      | Pint detected → show Pint only              |
+| Python     | isort        | ruff      | ruff detected → suppress isort (ruff handles import sorting) |
+
+**Single-purpose tool preference** — when two tools serve the same job and cannot meaningfully coexist, prefer one:
+
+| Stack      | Tool A  | Tool B    | Rule                                              |
+|------------|---------|-----------|---------------------------------------------------|
+| Java       | Flyway  | Liquibase | Flyway detected → suppress Liquibase (same DB migration job) |
+
+**Framework adapter suppression** — when a meta-framework wraps an adapter internally, suppress the adapter:
+
+| Stack      | Adapter | Meta-framework | Rule                                              |
+|------------|---------|----------------|---------------------------------------------------|
+| JavaScript | Express | NestJS         | NestJS detected → suppress Express                |
 
 Frameworks that serve **different jobs** (unit vs E2E, linting vs formatting, test vs type-check) are *not* suppressed — show all present.
 
