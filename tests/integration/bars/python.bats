@@ -76,3 +76,90 @@ teardown() { teardown_fake_proj; }
   bar_run python "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"Celery"* ]]
 }
+
+@test "python: renders uv label when uv.lock exists" {
+  printf '[project]\nname = "x"\n' > "$FAKE_PROJ/pyproject.toml"
+  touch "$FAKE_PROJ/uv.lock"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"uv"* ]]
+}
+
+@test "python: renders uv label when [tool.uv] in pyproject.toml" {
+  printf '[project]\nname = "x"\n[tool.uv]\n' > "$FAKE_PROJ/pyproject.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"uv"* ]]
+}
+
+@test "python: uv takes priority over Poetry when uv.lock present" {
+  printf '[tool.poetry]\nname = "myapp"\nversion = "0.1.0"\n' > "$FAKE_PROJ/pyproject.toml"
+  touch "$FAKE_PROJ/uv.lock"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"uv"* ]]
+  [[ "$BAR_OUTPUT" != *"Poetry"* ]]
+}
+
+@test "python: renders Pydantic when in dependencies" {
+  printf '[project]\nname = "x"\ndependencies = ["pydantic"]\n' > "$FAKE_PROJ/pyproject.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Pydantic"* ]]
+}
+
+@test "python: renders HTTPX when in dependencies" {
+  printf '[project]\nname = "x"\ndependencies = ["httpx"]\n' > "$FAKE_PROJ/pyproject.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"HTTPX"* ]]
+}
+
+@test "python: renders black when in dependencies" {
+  printf '[project]\nname = "x"\ndependencies = ["black"]\n' > "$FAKE_PROJ/pyproject.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"black"* ]]
+}
+
+@test "python: renders black when [tool.black] in pyproject.toml" {
+  printf '[project]\nname = "x"\n[tool.black]\nline-length = 100\n' > "$FAKE_PROJ/pyproject.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"black"* ]]
+}
+
+@test "python: renders isort when in dependencies without ruff" {
+  printf '[project]\nname = "x"\ndependencies = ["isort"]\n' > "$FAKE_PROJ/pyproject.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"isort"* ]]
+}
+
+@test "python: suppresses isort when ruff is present" {
+  printf '[project]\nname = "x"\ndependencies = ["isort", "ruff"]\n' > "$FAKE_PROJ/pyproject.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" != *"isort"* ]]
+  [[ "$BAR_OUTPUT" == *"ruff"* ]]
+}
+
+@test "python: renders Alembic when in dependencies" {
+  printf '[project]\nname = "x"\ndependencies = ["alembic"]\n' > "$FAKE_PROJ/pyproject.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Alembic"* ]]
+}
+
+@test "python: renders isort when [tool.isort] in pyproject.toml without ruff" {
+  printf '[project]\nname = "x"\n[tool.isort]\nprofile = "black"\n' > "$FAKE_PROJ/pyproject.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"isort"* ]]
+}
+
+@test "python: suppresses isort when ruff.toml present" {
+  printf '[project]\nname = "x"\ndependencies = ["isort"]\n' > "$FAKE_PROJ/pyproject.toml"
+  printf 'line-length = 100\n' > "$FAKE_PROJ/ruff.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" != *"isort"* ]]
+}
+
+@test "python: Alembic appears after SQLAlchemy when both present" {
+  printf '[project]\nname = "x"\ndependencies = ["sqlalchemy", "alembic"]\n' > "$FAKE_PROJ/pyproject.toml"
+  bar_run python "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"SQLAlchemy"* ]]
+  [[ "$BAR_OUTPUT" == *"Alembic"* ]]
+  sa_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo "SQLAlchemy" | head -1 | cut -d: -f1)
+  al_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo "Alembic" | head -1 | cut -d: -f1)
+  [ "$al_pos" -gt "$sa_pos" ]
+}
