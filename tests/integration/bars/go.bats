@@ -78,3 +78,74 @@ teardown() { teardown_fake_proj; }
   bar_run go "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"golangci-lint"* ]]
 }
+
+@test "go: renders Cobra when in go.mod" {
+  printf 'module x\n\ngo 1.22\n\nrequire github.com/spf13/cobra v1.8.0\n' > "$FAKE_PROJ/go.mod"
+  bar_run go "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Cobra"* ]]
+}
+
+@test "go: shows Cobra alongside web framework" {
+  printf 'module x\n\ngo 1.22\n\nrequire (\n  github.com/gin-gonic/gin v1.10.0\n  github.com/spf13/cobra v1.8.0\n)\n' > "$FAKE_PROJ/go.mod"
+  bar_run go "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Gin"*"Cobra"* ]]
+}
+
+@test "go: renders ent when in go.mod" {
+  printf 'module x\n\ngo 1.22\n\nrequire entgo.io/ent v0.14.0\n' > "$FAKE_PROJ/go.mod"
+  bar_run go "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"ent"* ]]
+}
+
+@test "go: ent appears after GORM" {
+  printf 'module x\n\ngo 1.22\n\nrequire (\n  gorm.io/gorm v1.25.0\n  entgo.io/ent v0.14.0\n)\n' > "$FAKE_PROJ/go.mod"
+  bar_run go "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"GORM"*"ent"* ]]
+}
+
+@test "go: renders sqlc when sqlc.yaml present" {
+  printf 'module x\n\ngo 1.22\n' > "$FAKE_PROJ/go.mod"
+  printf 'version: "2"\n' > "$FAKE_PROJ/sqlc.yaml"
+  bar_run go "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"sqlc"* ]]
+}
+
+@test "go: renders sqlc when sqlc.yml present" {
+  printf 'module x\n\ngo 1.22\n' > "$FAKE_PROJ/go.mod"
+  printf 'version: "2"\n' > "$FAKE_PROJ/sqlc.yml"
+  bar_run go "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"sqlc"* ]]
+}
+
+@test "go: renders sqlc when module in go.mod" {
+  printf 'module x\n\ngo 1.22\n\nrequire github.com/sqlc-dev/sqlc v1.27.0\n' > "$FAKE_PROJ/go.mod"
+  bar_run go "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"sqlc"* ]]
+}
+
+@test "go: sqlc appears after ent" {
+  printf 'module x\n\ngo 1.22\n\nrequire (\n  entgo.io/ent v0.14.0\n  github.com/sqlc-dev/sqlc v1.27.0\n)\n' > "$FAKE_PROJ/go.mod"
+  bar_run go "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"ent"*"sqlc"* ]]
+}
+
+@test "go: renders buf when buf.yaml present" {
+  printf 'module x\n\ngo 1.22\n' > "$FAKE_PROJ/go.mod"
+  printf 'version: v2\n' > "$FAKE_PROJ/buf.yaml"
+  bar_run go "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"buf"* ]]
+}
+
+@test "go: renders buf when buf.gen.yaml present" {
+  printf 'module x\n\ngo 1.22\n' > "$FAKE_PROJ/go.mod"
+  printf 'version: v2\n' > "$FAKE_PROJ/buf.gen.yaml"
+  bar_run go "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"buf"* ]]
+}
+
+@test "go: buf appears after sqlc" {
+  printf 'module x\n\ngo 1.22\n\nrequire github.com/sqlc-dev/sqlc v1.27.0\n' > "$FAKE_PROJ/go.mod"
+  printf 'version: v2\n' > "$FAKE_PROJ/buf.yaml"
+  bar_run go "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"sqlc"*"buf"* ]]
+}

@@ -19,6 +19,8 @@ bl_icon_set IC_WEB       $'\xef\x83\xac' '🌐'  # U+F0EC  nf-fa-exchange
 bl_icon_set IC_TEST      $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
 bl_icon_set IC_DB        $'\xef\x87\x80' '🗄'  # U+F1C0  nf-fa-database
 bl_icon_set IC_LINT      $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check
+bl_icon_set IC_CLI       $'\xef\x84\xa1' '⌨'   # U+F121  nf-fa-keyboard
+bl_icon_set IC_PROTO     $'\xef\x80\xa2' '📡'   # U+F022  nf-fa-signal
 
 
 # ── Read go.mod ───────────────────────────────────────────────────────────────
@@ -59,11 +61,36 @@ grep -q 'github.com/stretchr/testify' "$PROJ/go.mod" 2>/dev/null && has_testify=
 # Layering: Ginkgo suppresses testify
 $has_ginkgo && has_testify=false
 
+has_cobra=false
+cobra_version=''
+grep -q 'github.com/spf13/cobra' "$PROJ/go.mod" 2>/dev/null && has_cobra=true \
+  && cobra_version=$(grep 'github.com/spf13/cobra' "$PROJ/go.mod" 2>/dev/null \
+     | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
+
 has_gorm=false
 gorm_version=''
 grep -q 'gorm.io/gorm' "$PROJ/go.mod" 2>/dev/null && has_gorm=true \
   && gorm_version=$(grep 'gorm.io/gorm' "$PROJ/go.mod" 2>/dev/null \
      | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
+
+has_ent=false
+ent_version=''
+grep -q 'entgo.io/ent' "$PROJ/go.mod" 2>/dev/null && has_ent=true \
+  && ent_version=$(grep 'entgo.io/ent' "$PROJ/go.mod" 2>/dev/null \
+     | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
+
+has_sqlc=false
+sqlc_version=''
+if [[ -f "$PROJ/sqlc.yaml" || -f "$PROJ/sqlc.yml" ]]; then
+  has_sqlc=true
+elif grep -q 'github.com/sqlc-dev/sqlc' "$PROJ/go.mod" 2>/dev/null; then
+  has_sqlc=true
+  sqlc_version=$(grep 'github.com/sqlc-dev/sqlc' "$PROJ/go.mod" 2>/dev/null \
+    | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
+fi
+
+has_buf=false
+[[ -f "$PROJ/buf.yaml" || -f "$PROJ/buf.gen.yaml" ]] && has_buf=true
 
 has_golangci=false
 golangci_version=''
@@ -86,6 +113,7 @@ fi
 
   # Slot 3: Framework
   [[ -n "$framework" ]] && bl_seg "$IC_WEB" "$framework_display" "$framework_version"
+  $has_cobra && bl_seg "$IC_CLI" Cobra "$cobra_version"
 
   # Slot 5: Testing
   $has_ginkgo  && bl_version_seg "$IC_TEST" Ginkgo  "$ginkgo_version"
@@ -96,5 +124,8 @@ fi
   $has_golangci && bl_seg "$IC_LINT" golangci-lint "$golangci_version"
   # ORM second
   $has_gorm && bl_version_seg "$IC_DB" GORM "$gorm_version"
+  $has_ent && bl_version_seg "$IC_DB" ent "$ent_version"
+  $has_sqlc && bl_version_seg "$IC_DB" sqlc "$sqlc_version"
+  $has_buf && bl_seg "$IC_PROTO" buf
 
 bl_bar_finish "$_bar_gradient"
