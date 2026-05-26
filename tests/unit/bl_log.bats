@@ -109,6 +109,10 @@ teardown() {
   BOTTOMLINE_LOG_LEVEL=debug
   bl_log debug mybar "test"
   local mode
-  mode=$(stat -f '%Lp' "$LOG_FILE" 2>/dev/null || stat -c '%a' "$LOG_FILE" 2>/dev/null)
+  if stat -c '%a' "$LOG_FILE" >/dev/null 2>&1; then
+    mode=$(stat -c '%a' "$LOG_FILE")
+  else
+    mode=$(stat -f '%Lp' "$LOG_FILE")
+  fi
   [ "$mode" = "600" ]
 }
