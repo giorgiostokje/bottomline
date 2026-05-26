@@ -72,3 +72,38 @@ teardown() { teardown_fake_proj; }
   PATH="$FAKE_PROJ:$PATH" bar_run rust "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"Clippy"* ]]
 }
+
+@test "rust: renders Clap when present in Cargo.toml" {
+  printf '[package]\nname="x"\nedition="2021"\n\n[dependencies]\nclap = "4"\n' > "$FAKE_PROJ/Cargo.toml"
+  bar_run rust "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Clap"* ]]
+}
+
+@test "rust: Clap and web framework both render (not mutually exclusive)" {
+  printf '[package]\nname="x"\nedition="2021"\n\n[dependencies]\naxum = "0.7"\nclap = "4"\n' > "$FAKE_PROJ/Cargo.toml"
+  bar_run rust "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"axum"* ]]
+  [[ "$BAR_OUTPUT" == *"Clap"* ]]
+}
+
+@test "rust: renders Tonic when present in Cargo.toml" {
+  printf '[package]\nname="x"\nedition="2021"\n\n[dependencies]\ntonic = "0.12"\n' > "$FAKE_PROJ/Cargo.toml"
+  bar_run rust "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Tonic"* ]]
+}
+
+@test "rust: renders SeaORM when present in Cargo.toml" {
+  printf '[package]\nname="x"\nedition="2021"\n\n[dependencies]\nsea-orm = "1.0"\n' > "$FAKE_PROJ/Cargo.toml"
+  bar_run rust "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"SeaORM"* ]]
+}
+
+@test "rust: multiple ORMs render simultaneously in order" {
+  printf '[package]\nname="x"\nedition="2021"\n\n[dependencies]\nsea-orm = "1.0"\ndiesel = "2"\n' > "$FAKE_PROJ/Cargo.toml"
+  bar_run rust "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"diesel"* ]]
+  [[ "$BAR_OUTPUT" == *"SeaORM"* ]]
+  d_pos=$(printf '%s' "$BAR_OUTPUT" | awk '{print index($0,"diesel")}')
+  s_pos=$(printf '%s' "$BAR_OUTPUT" | awk '{print index($0,"SeaORM")}')
+  (( d_pos < s_pos ))
+}

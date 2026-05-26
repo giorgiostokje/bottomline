@@ -31,6 +31,8 @@ bl_icon_set IC_TEST      $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil (test ru
 bl_icon_set IC_RUNTIME   $'\xef\x83\xa4' '⚡'  # U+F0E4  nf-fa-tachometer (async runtime)
 bl_icon_set IC_DB        $'\xef\x87\x80' '🗄'  # U+F1C0  nf-fa-database (ORM)
 bl_icon_set IC_LINT      $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check (linter)
+bl_icon_set IC_CLI       $'\xef\x84\xa1' '⌨'    # U+F121  nf-fa-terminal (CLI framework)
+bl_icon_set IC_PROTO     $'\xef\x80\xa2' '📡'   # U+F022  nf-fa-broadcast (gRPC)
 
 
 # ── Read Cargo.toml ───────────────────────────────────────────────────────────
@@ -63,14 +65,30 @@ tokio_version=''
 grep -Eq '^tokio[[:space:]]*=' "$toml" 2>/dev/null && has_tokio=true
 $has_tokio && tokio_version=$(cargo_lock_version "tokio")
 
-orm=''
-orm_version=''
-for o in sqlx diesel; do
-  if grep -Eq "^${o}[[:space:]]*=" "$toml" 2>/dev/null; then
-    orm="$o"; break
-  fi
-done
-[[ -n "$orm" ]] && orm_version=$(cargo_lock_version "$orm")
+has_tonic=false
+tonic_version=''
+grep -Eq '^tonic[[:space:]]*=' "$toml" 2>/dev/null && has_tonic=true
+$has_tonic && tonic_version=$(cargo_lock_version "tonic")
+
+has_clap=false
+clap_version=''
+grep -Eq '^clap[[:space:]]*=' "$toml" 2>/dev/null && has_clap=true
+$has_clap && clap_version=$(cargo_lock_version "clap")
+
+has_sqlx=false
+sqlx_version=''
+grep -Eq '^sqlx[[:space:]]*=' "$toml" 2>/dev/null && has_sqlx=true
+$has_sqlx && sqlx_version=$(cargo_lock_version "sqlx")
+
+has_diesel=false
+diesel_version=''
+grep -Eq '^diesel[[:space:]]*=' "$toml" 2>/dev/null && has_diesel=true
+$has_diesel && diesel_version=$(cargo_lock_version "diesel")
+
+has_seaorm=false
+seaorm_version=''
+grep -Eq '^sea-orm[[:space:]]*=' "$toml" 2>/dev/null && has_seaorm=true
+$has_seaorm && seaorm_version=$(cargo_lock_version "sea-orm")
 
 # nextest: lockfile dep OR config OR binary
 has_nextest=false
@@ -101,13 +119,19 @@ add_seg "$rust_seg"
 
 # Slot 3: Framework
 [[ -n "$framework" ]] && bl_version_seg "$IC_WEB" "$framework_display" "$framework_version"
+$has_clap && bl_version_seg "$IC_CLI" Clap "$clap_version"
+
+# Slot 4: Add-ons
+$has_tokio && bl_version_seg "$IC_RUNTIME" Tokio "$tokio_version"
+$has_tonic && bl_version_seg "$IC_PROTO" Tonic "$tonic_version"
 
 # Slot 5: Testing
 $has_nextest && bl_version_seg "$IC_TEST" nextest "$nextest_version"
 
 # Slot 6: Tooling
 $has_clippy && bl_version_seg "$IC_LINT" Clippy ""
-$has_tokio && bl_version_seg "$IC_RUNTIME" Tokio "$tokio_version"
-[[ -n "$orm" ]] && bl_version_seg "$IC_DB" "$orm" "$orm_version"
+$has_sqlx && bl_version_seg "$IC_DB" sqlx "$sqlx_version"
+$has_diesel && bl_version_seg "$IC_DB" diesel "$diesel_version"
+$has_seaorm && bl_version_seg "$IC_DB" SeaORM "$seaorm_version"
 
 bl_bar_finish "$_bar_gradient"
