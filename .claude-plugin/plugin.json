@@ -1,6 +1,6 @@
 {
   "name": "bottomline",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "A modular status line for Claude Code, pre-packed with themes, statistics and skills.",
   "author": {
     "name": "Giorgio Stokje",
