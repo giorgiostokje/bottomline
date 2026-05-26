@@ -47,6 +47,7 @@ bl_icon_set IC_TEST      $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
 bl_icon_set IC_GEAR      $'\xef\x82\x85' '⚙'   # U+F085  nf-fa-cogs (codegen)
 bl_icon_set IC_LINT      $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check
 bl_icon_set IC_BUG       $'\xef\x86\x88' '🐞'  # U+F188  nf-fa-bug
+bl_icon_set IC_DB        $'\xef\x87\x80' '🗄'  # U+F1C0  nf-fa-database
 
 
 # ── Detect framework and version ──────────────────────────────────────────────
@@ -103,6 +104,10 @@ has_lombok=false
 has_checkstyle=false
 has_spotbugs=false
 has_pmd=false
+has_mockito=false
+has_hibernate=false
+has_flyway=false
+has_liquibase=false
 
 for _bf in "${_build_files[@]}"; do
   grep -q 'junit-jupiter' "$_bf" 2>/dev/null && has_junit5=true
@@ -112,11 +117,17 @@ for _bf in "${_build_files[@]}"; do
   grep -q 'checkstyle' "$_bf" 2>/dev/null && has_checkstyle=true
   grep -q 'spotbugs' "$_bf" 2>/dev/null && has_spotbugs=true
   grep -Eq 'maven-pmd-plugin|"net.sourceforge.pmd' "$_bf" 2>/dev/null && has_pmd=true
+  grep -Eq 'mockito-core|mockito-junit-jupiter' "$_bf" 2>/dev/null && has_mockito=true
+  grep -Eq 'hibernate-core|spring-boot-starter-data-jpa' "$_bf" 2>/dev/null && has_hibernate=true
+  grep -q 'flyway-core' "$_bf" 2>/dev/null && has_flyway=true
+  grep -q 'liquibase-core' "$_bf" 2>/dev/null && has_liquibase=true
 done
 unset _bf _build_files
 
 # Layering: JUnit 5 suppresses JUnit 4
 $has_junit5 && has_junit4=false
+# Layering: Flyway suppresses Liquibase
+$has_flyway && has_liquibase=false
 
 # Extract versions for Lombok, Checkstyle, SpotBugs, PMD
 lombok_version='' checkstyle_version='' spotbugs_version='' pmd_version=''
@@ -155,11 +166,15 @@ $has_micronaut && bl_version_seg "$IC_MICRONAUT" "Micronaut" "$micronaut_version
 $has_junit5 && bl_seg "$IC_TEST" "JUnit 5"
 $has_junit4 && bl_seg "$IC_TEST" "JUnit 4"
 $has_testng && bl_seg "$IC_TEST" TestNG
+$has_mockito && bl_seg "$IC_TEST" Mockito
 
 # Slot 6: Tooling
 $has_checkstyle && bl_version_seg "$IC_LINT" Checkstyle "$checkstyle_version"
 $has_spotbugs && bl_version_seg "$IC_BUG" SpotBugs "$spotbugs_version"
 $has_pmd && bl_version_seg "$IC_LINT" PMD "$pmd_version"
 $has_lombok && bl_version_seg "$IC_GEAR" Lombok "$lombok_version"
+$has_hibernate && bl_seg "$IC_DB" Hibernate
+$has_flyway && bl_seg "$IC_DB" Flyway
+$has_liquibase && bl_seg "$IC_DB" Liquibase
 
 bl_bar_finish "$_bar_gradient"
