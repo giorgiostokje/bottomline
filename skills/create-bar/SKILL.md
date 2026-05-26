@@ -26,14 +26,16 @@ PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 # Add more guards as needed, e.g.:
 # [[ ! -f "$PROJ/go.mod" ]] && exit 0
 
+# shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
+# bl_bar_init handles: cache check, palette fallback, gradient resolution.
+# For built-in bars with a brand palette, pass fallback colours and signal files.
+# For simple custom bars, you can omit the colour args and use BOTTOMLINE_GRADIENT directly.
+bl_bar_init mybar "#e2d5c3" "#da7756" '["#2e1f14","#160f0a"]'
+
 # ── Icons ─────────────────────────────────────────────────────────────────────
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)  IC_EXAMPLE=$'\xef\x80\x80' ;;   # replace with your Nerd Font codepoint
-  emoji) IC_EXAMPLE='🔥' ;;
-  *)     IC_EXAMPLE='' ;;
-esac
+bl_icon_set IC_EXAMPLE $'\xef\x80\x80' '🔥'   # replace with your Nerd Font codepoint
 
 # ── Your segments ─────────────────────────────────────────────────────────────
 # bl_seg icon label [version] [state] — standard icon/label/version segments
@@ -43,29 +45,25 @@ my_value="hello"
 [[ -n "$my_value" ]] && bl_seg "$IC_EXAMPLE" "$my_value"
 
 # ── Flush ─────────────────────────────────────────────────────────────────────
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$BOTTOMLINE_GRADIENT"
+bl_bar_finish "$_bar_gradient"
 ```
 
-**Optional caching:** if your bar does something expensive (reads many files, calls external tools), use `bl_cache_path` / `bl_cache_write` to cache the rendered output:
+**Simple version (no brand palette, no caching):**
+
+If your bar doesn't need a brand palette and is fast enough to run on every refresh:
 
 ```bash
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "mybar" "$_bl_ttl" "$PROJ")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+#!/usr/bin/env bash
+PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
+[[ -z "$PROJ" ]] && exit 0
 
-_bl_out=$(
-  add_seg "..."
-  (( ${#_sc[@]} == 0 )) && exit 0
-  flush "$_bar_gradient"
-)
-[[ "$_bl_ttl" -gt 0 ]] && bl_cache_write "$_bl_cache" "$_bl_out"
-printf '%s' "$_bl_out"
+source "$BOTTOMLINE_LIB/helpers.sh"
+
+bl_icon_set IC_EXAMPLE $'\xef\x80\x80' '🔥'
+[[ -n "$my_value" ]] && bl_seg "$IC_EXAMPLE" "$my_value"
+
+bl_bar_finish "$BOTTOMLINE_GRADIENT"
 ```
-
-Control the TTL with `refresh_minutes` in the bar's config entry.
 
 ## Available Variables (from helpers.sh)
 
@@ -236,22 +234,16 @@ Color values accept named colors (`text`, `accent`, `warning`, `danger`) or
 hex `#rrggbb`. Background accepts a single hex string.
 
 **Built-in palette pattern** — for bars that have a language/brand identity,
-apply a palette after `source helpers.sh` but respect the `BOTTOMLINE_BAR_COLORS`
-sentinel so config overrides always win:
+use `bl_bar_init` which handles the `BOTTOMLINE_BAR_COLORS` sentinel internally:
 
 ```bash
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg "$(hex_to_rgb "#text_hex")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#accent_hex")")
-  _bar_gradient='["#bg_start","#bg_end"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
+# bl_bar_init sets FG_TEXT, FG_ACCENT, _bar_gradient; checks cache; respects config overrides.
+bl_bar_init <name> "#text_hex" "#accent_hex" '["#bg_start","#bg_end"]' "$PROJ/<signal-file>"
 ```
 
-Use `flush "$_bar_gradient"` at the end instead of `flush "$BOTTOMLINE_GRADIENT"`.
+Use `bl_bar_finish "$_bar_gradient"` at the end instead of manual `flush`.
 
 ## Testing Your Bar
 

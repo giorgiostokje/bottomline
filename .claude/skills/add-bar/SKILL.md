@@ -20,76 +20,57 @@ Follow this structure exactly. The `BOTTOMLINE_BAR_COLORS` guard is mandatory fo
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
 
+# shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-_bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  _bl_cache=$(bl_cache_path "<bar_name>" "$_bl_ttl" "$PROJ")
-  [[ -f "$_bl_cache" ]] && cat "$_bl_cache" && exit 0
-fi
+# bl_bar_init handles: cache check, palette fallback, gradient resolution.
+# Pass signal files as trailing args for mtime-based cache invalidation.
+bl_bar_init <bar_name> "<text_hex>" "<accent_hex>" '["<bg_start>","<bg_end>"]' \
+  "$PROJ/<signal-file>"
 
-[[ ! -f "$PROJ/<signal-file>" ]] && exit 0   # hard guard: AFTER cache block
+[[ ! -f "$PROJ/<signal-file>" ]] && exit 0   # hard guard: AFTER bl_bar_init
 
 # ── Icons ─────────────────────────────────────────────────────────────────────
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)  IC_LANG=$'\x..\x..\x..'  ;;   # U+XXXX  nf-* description
-  emoji) IC_LANG='<emoji>'        ;;
-  *)     IC_LANG=''               ;;
-esac
-
-# ── Palette ───────────────────────────────────────────────────────────────────
-# Apply brand colours only when the caller hasn't supplied overrides.
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg   "$(hex_to_rgb "<text_hex>")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "<accent_hex>")")
-  _bar_gradient='["<bg_start>","<bg_end>"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
+bl_icon_set IC_LANG  $'\x..\x..\x..' '<emoji>'   # U+XXXX  nf-* description
+bl_icon_set IC_PM    $'\x..\x..\x..' '<emoji>'
+bl_icon_set IC_TEST  $'\x..\x..\x..' '<emoji>'
+bl_icon_set IC_LINT  $'\x..\x..\x..' '<emoji>'
 
 # ── Gather data ───────────────────────────────────────────────────────────────
 # ... read files, run commands, build segment strings ...
 
-_bl_out=$(
-  # ── Segments ──────────────────────────────────────────────────────────────
-  # Use bl_seg for standard icon/label/[version] segments (recommended).
-  # Use bl_data_seg for two-element segments with optional bullet separator.
-  # Use add_seg directly only when the format cannot fit these helpers.
-  #
-  # For language/ecosystem bars, follow canonical slot order (required):
-  # Runtime → Package manager → Framework → Add-ons → Testing → Tooling
+# ── Segments (canonical slot order for language/ecosystem bars) ────────────────
+# Use bl_seg for standard icon/label/[version] segments (recommended).
+# Use bl_data_seg for two-element segments with optional bullet separator.
+# Use add_seg directly only when the format cannot fit these helpers.
+#
+# Slot order: Runtime → Package manager → Framework → Add-ons → Testing → Tooling
 
-  # Slot 1: Runtime
-  # [[ -n "$lang_version" ]] && bl_seg "$IC_LANG" "<Name>" "$lang_version"
+# Slot 1: Runtime
+# [[ -n "$lang_version" ]] && bl_seg "$IC_LANG" "<Name>" "$lang_version"
 
-  # Slot 2: Package manager (when not implicit)
-  # [[ -n "$pm_name" ]] && bl_seg "$IC_PM" "$pm_name"
+# Slot 2: Package manager (when not implicit)
+# [[ -n "$pm_name" ]] && bl_seg "$IC_PM" "$pm_name"
 
-  # Slot 3: Framework
-  # [[ -n "$framework_version" ]] && bl_seg "$IC_FRAMEWORK" "<Framework>" "$framework_version"
+# Slot 3: Framework
+# [[ -n "$framework_version" ]] && bl_seg "$IC_FRAMEWORK" "<Framework>" "$framework_version"
 
-  # Slot 4: Framework add-ons
-  # [[ -n "$addon_version" ]] && bl_seg "$IC_ADDON" "<Addon>" "$addon_version"
+# Slot 4: Framework add-ons
+# [[ -n "$addon_version" ]] && bl_seg "$IC_ADDON" "<Addon>" "$addon_version"
 
-  # Slot 5: Testing (REQUIRED — see CLAUDE.md)
-  # [[ -n "$test_framework" ]] && bl_seg "$IC_TEST" "$test_framework"
+# Slot 5: Testing (REQUIRED — see CLAUDE.md)
+# [[ -n "$test_framework" ]] && bl_seg "$IC_TEST" "$test_framework"
 
-  # Slot 6: Tooling (REQUIRED — sub-order: static analysis → service pkgs → ORM/DB → styling → other)
-  # [[ -n "$linter_version" ]] && bl_seg "$IC_LINT" "<Linter>" "$linter_version"
+# Slot 6: Tooling (REQUIRED — sub-order: static analysis → service pkgs → ORM/DB → styling → other)
+# [[ -n "$linter_version" ]] && bl_seg "$IC_LINT" "<Linter>" "$linter_version"
 
-  (( ${#_sc[@]} == 0 )) && exit 0
-  flush "$_bar_gradient"
-)
-if [[ "$_bl_ttl" -gt 0 ]]; then
-  bl_cache_write "$_bl_cache" "$_bl_out"
-fi
-printf '%s' "$_bl_out"
+bl_bar_finish "$_bar_gradient"
 ```
 
 Key rules:
 - Exit silently (`exit 0`) when the bar doesn't apply — never produce output for an irrelevant project.
-- Always check `(( ${#_sc[@]} == 0 )) && exit 0` before `flush` to avoid emitting an empty line.
-- Pass `"$_bar_gradient"` (not `"$BOTTOMLINE_GRADIENT"`) to `flush` — the palette block sets this correctly for both the brand and inherit cases.
+- `bl_bar_init` handles caching, palette resolution, and gradient setup. Pass signal files as trailing args for mtime-based cache invalidation.
+- `bl_bar_finish` checks for empty `_sc` (no-op) and handles cache writing. Pass `"$_bar_gradient"` (set by `bl_bar_init`).
 
 ### Logging command failures and network requests
 
@@ -157,7 +138,7 @@ Add an entry to `auto_bars.scripts`. List every signal file that indicates this 
 
 Signal files are checked relative to the project root. The bar is prepended automatically when **any** listed signal file is found there.
 
-**Placement in the list:** entries are ordered by system integration depth — languages first (deepest to shallowest: `rust`, `go`, `shell`, `swift`, `elixir`, `dotnet`, `java`, `python`, `ruby`, `javascript`, `dart`, `php`, `salesforce`), then `git` last (VCS tool, not a language). Insert the new entry at the position that best reflects where the language sits on that spectrum.
+**Placement in the list:** entries are ordered by system integration depth — languages first (deepest to shallowest: `c-cpp`, `rust`, `go`, `shell`, `swift`, `elixir`, `dotnet`, `java`, `kotlin`, `python`, `ruby`, `javascript`, `lua`, `dart`, `php`, `salesforce`), then `git` last (VCS tool, not a language). Insert the new entry at the position that best reflects where the language sits on that spectrum.
 
 `auto_bars.enabled` defaults to `false` in `settings.json`. Users opt in. Do not change the default.
 
@@ -198,13 +179,12 @@ Cover at minimum:
 
 ## Checklist
 
-- [ ] `bars/<name>.sh` written with `BOTTOMLINE_BAR_COLORS` guard
+- [ ] `bars/<name>.sh` written using `bl_bar_init` / `bl_bar_finish` / `bl_icon_set`
+- [ ] `bl_bar_init` called with bar name, fallback colours, gradient, and signal files
 - [ ] Hard guard exits silently when signal file is absent
-- [ ] cache block present — top guard (after `source`) and bottom capture (`$()` + `bl_cache_write`)
-- [ ] signal-file hard guard placed AFTER the cache block (not before `source`)
-- [ ] `(( ${#_sc[@]} == 0 )) && exit 0` before `flush`
-- [ ] `_bar_gradient` used, not `$BOTTOMLINE_GRADIENT` directly
-- [ ] Segments use bl_seg / bl_data_seg where format fits (recommended)
+- [ ] Signal-file hard guard placed AFTER `bl_bar_init` (not before `source`)
+- [ ] `bl_bar_finish "$_bar_gradient"` called at the end (handles empty check + cache write)
+- [ ] Segments use `bl_seg` / `bl_data_seg` where format fits (recommended)
 - [ ] Language/ecosystem bars: segments in canonical slot order (Runtime → PM → Framework → Add-ons → Testing → Tooling) — required for language bars
 - [ ] At least one **testing segment** (slot 5) — see "Language bar segment ordering" in CLAUDE.md
 - [ ] At least one **static analysis segment** (slot 6) — linter, type checker, or formatter

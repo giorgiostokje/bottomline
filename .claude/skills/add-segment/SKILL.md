@@ -5,11 +5,11 @@ description: Step-by-step checklist for adding a new built-in segment to the mai
 
 # Add a Built-in Segment
 
-Adding a segment requires **nine steps across five files** — steps 1–5 all modify `bottomline.sh`; steps 6–9 each touch a different file. Complete every step; skipping any leaves the segment broken or inconsistent.
+Adding a segment requires **nine steps across six files** — steps 1–3 modify `lib/icons.sh`; step 4 modifies `lib/segments.sh` and `lib/config.sh`; step 5 modifies `lib/segments.sh`; steps 6–9 each touch a different file. Complete every step; skipping any leaves the segment broken or inconsistent.
 
 ---
 
-## 1. `bottomline.sh` — icon constants
+## 1. `lib/icons.sh` — icon constants
 
 Add one `NF_*` entry (raw UTF-8 bytes of the Nerd Font codepoint) and one `EM_*` entry (emoji or ASCII fallback) alongside the existing constants:
 
@@ -22,7 +22,7 @@ Use `printf '\U<codepoint>'` or a Nerd Font reference to find the correct bytes.
 
 ---
 
-## 2. `bottomline.sh` — `get_icon()` cases
+## 2. `lib/icons.sh` — `get_icon()` cases
 
 Add a case entry for the new name in **both** the `nerd` and `emoji` blocks inside `get_icon()`:
 
@@ -43,9 +43,9 @@ emoji)
 
 ---
 
-## 3. `bottomline.sh` — resolved icon variable
+## 3. `lib/icons.sh` — resolved icon variable
 
-Add `IC_<NAME>=$(get_icon <name>)` to the block of resolved icon vars below `get_icon()`:
+Add `IC_<NAME>=$(get_icon <name>)` to the `bl_init_icons()` function, in the block of resolved icon vars:
 
 ```bash
 IC_<NAME>=$(get_icon <name>)
@@ -53,7 +53,17 @@ IC_<NAME>=$(get_icon <name>)
 
 ---
 
-## 4. `bottomline.sh` — `build_<name>()` function
+## 4. `lib/config.sh` — config variable (if needed)
+
+If the segment reads a threshold or config value from `settings.json`, declare the config var in `bl_load_config()`:
+
+```bash
+CFG_<NAME>_THR=$(cfg_json '.segments.<name>')
+```
+
+---
+
+## 5. `lib/segments.sh` — `build_<name>()` function
 
 Write the builder. Choose the pattern that fits:
 
@@ -86,17 +96,7 @@ build_<name>() {
 }
 ```
 
-If the segment reads a threshold config from `settings.json`, declare the config var near the top of the config-reading block:
-
-```bash
-CFG_<NAME>_THR=$(cfg_json '.segments.<name>')
-```
-
----
-
-## 5. `bottomline.sh` — render loop
-
-Add an entry to `_items_out` default list and to the `case` statement:
+Also add the new segment name to the `_items_out` default list and to the `case` statement in `bl_render_main_line()`:
 
 ```bash
 # _items_out default string — add "<name>" on its own line
@@ -176,11 +176,11 @@ If the segment uses a threshold config, add a third test asserting the correct c
 
 ## Checklist
 
-- [ ] `NF_<NAME>` and `EM_<NAME>` constants added
-- [ ] Both `nerd` and `emoji` cases in `get_icon()`
-- [ ] `IC_<NAME>` resolved var added
-- [ ] `build_<name>()` written; config var declared if needed
-- [ ] Added to `_items_out` default list and render `case`
+- [ ] `NF_<NAME>` and `EM_<NAME>` constants added to `lib/icons.sh`
+- [ ] Both `nerd` and `emoji` cases in `get_icon()` in `lib/icons.sh`
+- [ ] `IC_<NAME>` resolved var added to `bl_init_icons()` in `lib/icons.sh`
+- [ ] Config var declared in `bl_load_config()` in `lib/config.sh` (if needed)
+- [ ] `build_<name>()` written in `lib/segments.sh`; added to `_items_out` default and render `case`
 - [ ] `settings.json` `enabled` list updated; threshold defaults added if needed
 - [ ] `skills/configure/SKILL.md` icon override list and segment reference updated
 - [ ] `skills/debug/SKILL.md` `$vsegs` array updated
