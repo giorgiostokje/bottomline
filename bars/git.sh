@@ -151,7 +151,7 @@ fi
 if (( change_count == 0 )); then
   bl_seg "$IC_CLEAN" clean
 else
-  add_seg "${FG_ACCENT}${IC_CHANGES} ${FG_TEXT}+${stat_insertions} ${FG_ACCENT}-${stat_deletions}"
+  bl_data_seg "$IC_CHANGES" "+${stat_insertions}" "-${stat_deletions}"
 fi
 
 # Stash — icon · count · label
