@@ -277,3 +277,149 @@ EOF
   ktlint_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'ktlint' | head -1 | cut -d: -f1)
   [[ "$detekt_pos" -lt "$ktlint_pos" ]]
 }
+
+# ── Slot 4: Add-ons ──────────────────────────────────────────────────────────
+
+@test "kotlin: renders Koin when koin-core detected" {
+  cat > "$FAKE_PROJ/build.gradle.kts" <<'EOF'
+plugins {
+    kotlin("jvm") version "1.9.22"
+}
+
+dependencies {
+    implementation("io.insert-koin:koin-core:3.5.3")
+}
+EOF
+  bar_run kotlin "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Koin"* ]]
+}
+
+@test "kotlin: renders Koin when koin-android detected" {
+  cat > "$FAKE_PROJ/build.gradle.kts" <<'EOF'
+plugins {
+    kotlin("jvm") version "1.9.22"
+}
+
+dependencies {
+    implementation("io.insert-koin:koin-android:3.5.3")
+}
+EOF
+  bar_run kotlin "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Koin"* ]]
+}
+
+@test "kotlin: renders Arrow when arrow-core detected" {
+  cat > "$FAKE_PROJ/build.gradle.kts" <<'EOF'
+plugins {
+    kotlin("jvm") version "1.9.22"
+}
+
+dependencies {
+    implementation("io.arrow-kt:arrow-core:1.2.1")
+}
+EOF
+  bar_run kotlin "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Arrow"* ]]
+}
+
+@test "kotlin: renders both Koin and Arrow when both detected" {
+  cat > "$FAKE_PROJ/build.gradle.kts" <<'EOF'
+plugins {
+    kotlin("jvm") version "1.9.22"
+}
+
+dependencies {
+    implementation("io.insert-koin:koin-core:3.5.3")
+    implementation("io.arrow-kt:arrow-core:1.2.1")
+}
+EOF
+  bar_run kotlin "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Koin"* ]]
+  [[ "$BAR_OUTPUT" == *"Arrow"* ]]
+}
+
+@test "kotlin: add-ons appear between framework and testing slots" {
+  cat > "$FAKE_PROJ/build.gradle.kts" <<'EOF'
+plugins {
+    kotlin("jvm") version "1.9.22"
+}
+
+dependencies {
+    implementation("io.ktor:ktor-server-core:2.3.7")
+    implementation("io.insert-koin:koin-core:3.5.3")
+    implementation("io.arrow-kt:arrow-core:1.2.1")
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
+}
+EOF
+  bar_run kotlin "$FAKE_PROJ"
+  ktor_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'Ktor' | head -1 | cut -d: -f1)
+  koin_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'Koin' | head -1 | cut -d: -f1)
+  arrow_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'Arrow' | head -1 | cut -d: -f1)
+  kotest_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'Kotest' | head -1 | cut -d: -f1)
+  [[ "$ktor_pos" -lt "$koin_pos" ]]
+  [[ "$arrow_pos" -lt "$kotest_pos" ]]
+}
+
+# ── Slot 6: Tooling (extended) ────────────────────────────────────────────────
+
+@test "kotlin: renders Exposed when exposed-core detected" {
+  cat > "$FAKE_PROJ/build.gradle.kts" <<'EOF'
+plugins {
+    kotlin("jvm") version "1.9.22"
+}
+
+dependencies {
+    implementation("org.jetbrains.exposed:exposed-core:0.47.0")
+}
+EOF
+  bar_run kotlin "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Exposed"* ]]
+}
+
+@test "kotlin: renders kotlinx-serialization when kotlinx-serialization-json detected" {
+  cat > "$FAKE_PROJ/build.gradle.kts" <<'EOF'
+plugins {
+    kotlin("jvm") version "1.9.22"
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+}
+EOF
+  bar_run kotlin "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"kotlinx-serialization"* ]]
+}
+
+@test "kotlin: renders kotlinx-serialization when plugin.serialization detected" {
+  cat > "$FAKE_PROJ/build.gradle.kts" <<'EOF'
+plugins {
+    kotlin("jvm") version "1.9.22"
+    kotlin("plugin.serialization") version "1.9.22"
+}
+EOF
+  bar_run kotlin "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"kotlinx-serialization"* ]]
+}
+
+@test "kotlin: slot 6 sub-order is Detekt ktlint Exposed kotlinx-serialization" {
+  cat > "$FAKE_PROJ/build.gradle.kts" <<'EOF'
+plugins {
+    kotlin("jvm") version "1.9.22"
+    id("io.gitlab.arturbosch.detekt") version "1.23.4"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
+}
+
+dependencies {
+    implementation("org.jetbrains.exposed:exposed-core:0.47.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+}
+EOF
+  bar_run kotlin "$FAKE_PROJ"
+  detekt_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'Detekt' | head -1 | cut -d: -f1)
+  ktlint_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'ktlint' | head -1 | cut -d: -f1)
+  exposed_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'Exposed' | head -1 | cut -d: -f1)
+  serial_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'kotlinx-serialization' | head -1 | cut -d: -f1)
+  [[ "$detekt_pos" -lt "$ktlint_pos" ]]
+  [[ "$ktlint_pos" -lt "$exposed_pos" ]]
+  [[ "$exposed_pos" -lt "$serial_pos" ]]
+}
