@@ -174,7 +174,7 @@ if [[ -n "$larastan_version" ]]; then
   bl_version_seg "$IC_PHPSTAN" Larastan "$larastan_version"
 elif [[ -n "$phpstan_version" ]]; then
   if [[ "$phpstan_version" == 'present' ]]; then
-    add_seg "${FG_ACCENT}${IC_PHPSTAN} ${FG_TEXT}PHPStan"
+    bl_seg "$IC_PHPSTAN" "PHPStan"
   else
     bl_version_seg "$IC_PHPSTAN" PHPStan "$phpstan_version"
   fi
@@ -184,7 +184,7 @@ if [[ -n "$pint_version" ]]; then
   bl_version_seg "$IC_CSFIXER" Pint "$pint_version"
 elif [[ -n "$csfixer_version" ]]; then
   if [[ "$csfixer_version" == 'present' ]]; then
-    add_seg "${FG_ACCENT}${IC_CSFIXER} ${FG_TEXT}PHP CS Fixer"
+    bl_seg "$IC_CSFIXER" "PHP CS Fixer"
   else
     bl_version_seg "$IC_CSFIXER" "PHP CS Fixer" "$csfixer_version"
   fi
