@@ -81,6 +81,24 @@ After `source "$BOTTOMLINE_LIB/helpers.sh"` these are ready to use:
 | `B` | ANSI bold |
 | `SEP` | Separator glyph |
 
+## Logging
+
+When your bar runs external commands or makes network requests, use `bl_log` (available after `source helpers.sh`) to record outcomes. Logs are written only when the user has set `BOTTOMLINE_LOG_LEVEL` — they're a no-op otherwise.
+
+```bash
+# Three levels, in ascending severity:
+bl_log debug mybar "curl exit=${_curl_exit}"          # every call outcome — always add these
+bl_log warn  mybar "no response, using stale cache"   # recoverable — bar still renders
+bl_log error mybar "no response and no fallback"      # unrecoverable — bar exits early
+```
+
+**Rule:** add a `warn` or `error` log whenever you fall back or abort — this is how users diagnose missing segments without needing to modify the script. For `debug` logs, follow the convention by command type:
+
+| Command type | When to log `debug` |
+|---|---|
+| Version / binary invocation | Failure only — `(( _exit != 0 )) && bl_log debug …` |
+| cURL / network request | Always — log exit code and response length unconditionally |
+
 ## Segment helpers
 
 Use `bl_seg` and `bl_data_seg` (from helpers.sh) instead of constructing `add_seg` strings manually:
@@ -141,10 +159,14 @@ value=''
 
 if [[ -z "$value" ]]; then
   value=$(curl -sf --max-time 3 'https://example.com/api' 2>/dev/null)
+  _curl_exit=$?
+  bl_log debug mybar "curl exit=${_curl_exit}"
   if [[ -n "$value" ]]; then
     printf '%s' "$value" > "$_cache_file"
     find /tmp -maxdepth 1 -name 'bl_mybar_*.txt' \
       ! -name "bl_mybar_${_bucket}.txt" -delete 2>/dev/null
+  else
+    bl_log warn mybar "no response (curl exit=${_curl_exit})"
   fi
 fi
 ```

@@ -91,6 +91,40 @@ Key rules:
 - Always check `(( ${#_sc[@]} == 0 )) && exit 0` before `flush` to avoid emitting an empty line.
 - Pass `"$_bar_gradient"` (not `"$BOTTOMLINE_GRADIENT"`) to `flush` — the palette block sets this correctly for both the brand and inherit cases.
 
+### Logging command failures and network requests
+
+Use `bl_log` (available after `source helpers.sh`) for every external command that can fail and every network request. Logs are no-ops unless the user sets `BOTTOMLINE_LOG_LEVEL`.
+
+**External command (version detection, binary call):**
+
+```bash
+_tool_version=$(tool --version 2>/dev/null)
+_tool_exit=$?
+(( _tool_exit != 0 )) && bl_log debug <name> "tool --version exit=${_tool_exit}"
+```
+
+**cURL / network request:**
+
+```bash
+_response=$(curl -s -X POST "https://api.example.com/..." \
+  --max-time 10 --data "$_body" 2>/dev/null)
+_curl_exit=$?
+bl_log debug <name> "curl exit=${_curl_exit} response_len=${#_response}"
+
+if [[ -z "$_response" ]]; then
+  bl_log error <name> "no response (curl exit=${_curl_exit})"
+  # show an offline/error segment or exit 0
+  exit 0
+fi
+```
+
+Use `warn` when the bar degrades gracefully (e.g. falls back to stale cache); use `error` when it exits early with nothing to show.
+
+| Command type | When to log `debug` |
+|---|---|
+| Version / binary invocation | Failure only — `(( _exit != 0 )) && bl_log debug …` |
+| cURL / network request | Always — log exit code and response length unconditionally |
+
 
 ## Segment helpers (from helpers.sh)
 
@@ -176,6 +210,8 @@ Cover at minimum:
 - [ ] At least one **static analysis segment** (slot 6) — linter, type checker, or formatter
 - [ ] Slot 6 items ordered: static analysis → service pkgs → ORM/DB → styling → other
 - [ ] Testing framework **layering rules** applied (Pest > PHPUnit, JUnit5 > JUnit4, etc.)
+- [ ] `bl_log debug` added after every external command that can fail (version checks, binary invocations)
+- [ ] `bl_log debug` + `bl_log warn/error` added for every curl/network request
 - [ ] Detection uses the correct signal type — dep / config file / binary
 - [ ] Entry added to `auto_bars.scripts` in `settings.json`
 - [ ] `tests/integration/bars/<name>.bats` written
