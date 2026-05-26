@@ -260,8 +260,8 @@ jq '{bars: (.bars // []), auto_bars_disabled: (.auto_bars.disabled // [])}' \
 
 Start from the full built-in bar list (ordered by system integration depth,
 languages first, VCS last, opt-in bars at the end):
-`rust`, `go`, `shell`, `swift`, `elixir`, `dotnet`, `java`, `python`, `ruby`, `javascript`,
-`dart`, `php`, `salesforce`, `git`, `random-facts`, `linear`
+`c-cpp`, `rust`, `go`, `shell`, `swift`, `elixir`, `dotnet`, `java`, `kotlin`, `python`, `ruby`, `javascript`,
+`lua`, `dart`, `php`, `salesforce`, `git`, `random-facts`, `linear`
 
 Remove bars already present in the `bars` array (already configured).
 

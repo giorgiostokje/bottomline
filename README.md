@@ -385,7 +385,7 @@ PHP runtime version, then packages from `composer.lock`: frameworks (Laravel, Lu
 
 **Signal:** `package.json`
 
-Installed versions from `node_modules` for: Next.js, React, Remix, Expo, React Native, Nuxt, Vue, SvelteKit, Svelte, Angular, Astro, Electron, Vite (suppressed when implied by meta-framework), TypeScript. Built-in palette: yellow tones.
+Installed versions from `node_modules` for: Next.js, React, Remix, Expo, React Native, Nuxt, Vue, SvelteKit, Svelte, Angular, Astro, Electron, Vite (suppressed when implied by meta-framework), SolidJS, Preact, Fastify, NestJS, Express, Hono, TypeScript. Built-in palette: yellow tones.
 
 #### `go` — Go ecosystem
 
@@ -401,7 +401,7 @@ Target shell (reads `shell=` from `.shellcheckrc`; defaults to `bash`), running 
 
 **Signal:** `pyproject.toml`, `requirements.txt`, `Pipfile`, `setup.py`
 
-Python runtime, package manager (Poetry/PDM/Hatch/Pipenv), detected framework with version (Django, FastAPI, or Flask). Built-in palette: yellow accent on dark blue.
+Python runtime, package manager (uv/Poetry/PDM/Hatch/Pipenv), detected framework with version (Django, FastAPI, or Flask). Built-in palette: yellow accent on dark blue.
 
 #### `rust` — Rust ecosystem
 

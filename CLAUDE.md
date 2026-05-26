@@ -57,7 +57,7 @@ Themes sit above per-file color keys: when `appearance.theme` is set, it overrid
 ### Library split
 
 - **`lib/functions.sh`** — pure utilities with no global state: `fmt_n`, `fmt_k`, `fmt_remaining`, `decode_icon`. Sourced by `bottomline.sh` and loaded directly in unit tests (`source lib/functions.sh`).
-- **`lib/helpers.sh`** — ANSI primitives (`bg3`, `fg3`, `hex_to_rgb`), `expand_bg`, a re-implementation of `seg()`/`flush()` for bar scripts, and the cache helpers `bl_cache_path`/`bl_cache_write`. Reads color values from `BOTTOMLINE_*` env vars. Sourced by bar scripts via `source "$BOTTOMLINE_LIB/helpers.sh"`.
+- **`lib/helpers.sh`** — sources `lib/ansi.sh` (ANSI primitives: `bg3`, `fg3`, `hex_to_rgb`, `expand_bg`, `seg`, `flush`), then layers bar-side convenience: `BOTTOMLINE_*` variable resolution, `bl_bar_init`/`bl_bar_finish` (cache-check + colour-init + flush wrapper), `bl_icon_set`, `bl_seg`/`bl_data_seg`/`bl_version_seg` (segment rendering helpers), `bl_log` (timestamped logging), and the cache helpers `bl_cache_path`/`bl_cache_write`/`bl_mtime_fingerprint`. Sourced by bar scripts via `source "$BOTTOMLINE_LIB/helpers.sh"`.
 
 ### Test infrastructure
 
@@ -123,7 +123,7 @@ Every language/ecosystem bar in `bars/` follows this canonical 6-slot order. Slo
 |--------|---------------------|----------------------|--------------------------------------------|
 | PHP    | PHPUnit             | Pest                 | Pest detected → show Pest only             |
 | Dart   | `test` package      | `flutter_test`       | Flutter app → show `flutter_test` only     |
-| Swift  | XCTest              | Quick/Nimble         | Quick present → show Quick, suppress XCTest|
+| Swift  | XCTest              | Quick/Swift Testing | Quick present → show Quick, suppress XCTest; Swift Testing also suppresses XCTest |
 | Go     | go test (stdlib)    | Ginkgo               | Ginkgo present → show Ginkgo, suppress testify |
 | Java   | JUnit 4             | JUnit 5              | Both present → show JUnit 5 only           |
 
@@ -185,7 +185,7 @@ The end-user skills say "never edit `settings.json`" — that's correct for user
 Entries in `auto_bars.scripts` are ordered by **system integration depth**, languages first (deepest to shallowest), `git` last (VCS tool, not a language):
 
 ```
-rust → go → shell → swift → elixir → dotnet → java → python → ruby → javascript → dart → php → salesforce → git
+c-cpp → rust → go → shell → swift → elixir → dotnet → java → kotlin → python → ruby → javascript → lua → dart → php → salesforce → git
 ```
 
 When adding a new bar, insert it at the position that best reflects where the language sits on that spectrum. `git` must always remain last.

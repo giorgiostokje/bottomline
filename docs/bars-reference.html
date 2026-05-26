@@ -594,15 +594,17 @@ flush "$_bar_gradient"</code></pre>
 <section id="bars">
 <h2>Built-in Bars</h2>
 
-<p>Bars are stored in <code>bars/</code>. Auto-detection order in <code>settings.json</code> follows system integration depth: <code>rust → go → shell → swift → elixir → dotnet → java → python → ruby → javascript → dart → php → salesforce → git</code>. Git is always last.</p>
+<p>Bars are stored in <code>bars/</code>. Auto-detection order in <code>settings.json</code> follows system integration depth: <code>c-cpp → rust → go → shell → swift → elixir → dotnet → java → kotlin → python → ruby → javascript → lua → dart → php → salesforce → git</code>. Git is always last.</p>
 
 <h3>Caching</h3>
 <p>
-  All 14 built-in bar scripts cache their rendered ANSI output in <code>/tmp</code> using
-  <code>bl_cache_path</code> and <code>bl_cache_write</code> from <code>lib/helpers.sh</code>.
-  The cache key is the bar name, an 8-character hash of the project path, and a time bucket
+  All built-in bar scripts cache their rendered ANSI output in <code>/tmp</code> using
+  <code>bl_bar_init</code> / <code>bl_bar_finish</code> from <code>lib/helpers.sh</code>.
+  The cache key is the bar name, an 8-character hash of the project path, an 8-character
+  mtime fingerprint of the signal files passed to <code>bl_bar_init</code>, and a time bucket
   derived from <code>BOTTOMLINE_BAR_REFRESH_MINUTES</code>. A bar skips all detection and
-  serves the cached output until the bucket rolls over. Set <code>refresh_minutes: 0</code>
+  serves the cached output until the bucket rolls over or the signal files change.
+  Set <code>refresh_minutes: 0</code>
   to disable caching for a bar.
 </p>
 <p>
@@ -630,8 +632,8 @@ flush "$_bar_gradient"</code></pre>
     <tr><td>1 Runtime</td><td>C / C++ / C/C++ [standard]</td><td><code>CMakeLists.txt</code> <code>project()</code> languages + <code>CMAKE_CXX_STANDARD</code>; falls back to source file extensions.</td></tr>
     <tr><td>2 Build system</td><td>CMake vX / Meson / Autotools</td><td>Presence of <code>CMakeLists.txt</code>, <code>meson.build</code>, <code>configure.ac</code>. CMake takes precedence. Version from <code>cmake_minimum_required</code>.</td></tr>
     <tr><td>4 Add-ons</td><td>Conan / vcpkg</td><td><code>conanfile.txt</code>, <code>conanfile.py</code>, or <code>vcpkg.json</code>. Both shown when present.</td></tr>
-    <tr><td>5 Testing</td><td>GoogleTest / Catch2 / doctest / Boost.Test / CTest</td><td>Grep <code>CMakeLists.txt</code> or <code>meson.build</code>. CTest shown only as fallback when no higher-level framework found.</td></tr>
-    <tr><td>6 Tooling</td><td>clang-tidy / cppcheck / clang-format</td><td><code>.clang-tidy</code>, <code>find_program(CLANG_TIDY</code> in CMake, <code>cppcheck</code> reference in CMake, <code>.clang-format</code> file.</td></tr>
+    <tr><td>5 Testing</td><td>GoogleTest / Catch2 / doctest / Boost.Test / CTest / Benchmark</td><td>Grep <code>CMakeLists.txt</code> or <code>meson.build</code>. CTest shown only as fallback when no higher-level framework found. Benchmark from CMake, conanfile, or vcpkg.json.</td></tr>
+    <tr><td>6 Tooling</td><td>clang-tidy / cppcheck / clang-format / nlohmann/json / spdlog</td><td><code>.clang-tidy</code>, <code>find_program(CLANG_TIDY</code> in CMake, <code>cppcheck</code> reference in CMake or <code>.cppcheck</code> file, <code>.clang-format</code> file. nlohmann/json and spdlog from CMake, conanfile, or vcpkg.json.</td></tr>
   </tbody>
 </table>
 
@@ -700,10 +702,11 @@ flush "$_bar_gradient"</code></pre>
   <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
   <tbody>
     <tr><td>1 Runtime</td><td>Go vX.Y [workspace]</td><td><code>go.mod</code> first <code>go</code> directive; <code>go.work</code> for workspace flag.</td></tr>
-    <tr><td>3 Framework</td><td>Gin / echo / Fiber / chi</td><td>Grep <code>go.mod</code> for import path.</td></tr>
+    <tr><td>3 Framework</td><td>Gin / echo / Fiber / chi / Cobra</td><td>Grep <code>go.mod</code> for import path.</td></tr>
     <tr><td>5 Testing</td><td>Ginkgo / testify</td><td>Grep <code>go.mod</code>. Ginkgo suppresses testify.</td></tr>
     <tr><td>6 Tooling</td><td>golangci-lint</td><td>Binary on PATH or <code>.golangci.{yml,yaml,toml}</code>.</td></tr>
-    <tr><td>6 Tooling</td><td>GORM</td><td>Grep <code>go.mod</code> for <code>gorm.io/gorm</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>GORM / ent / sqlc</td><td>Grep <code>go.mod</code> for <code>gorm.io/gorm</code>, <code>entgo.io/ent</code>; <code>sqlc.yaml</code>/<code>sqlc.yml</code> or go.mod dep.</td></tr>
+    <tr><td>6 Tooling</td><td>buf</td><td><code>buf.yaml</code> or <code>buf.gen.yaml</code>.</td></tr>
   </tbody>
 </table>
 
@@ -1013,16 +1016,16 @@ flush "$_bar_gradient"</code></pre>
       </div>
       <div class="seg">
         <span class="seg-inner">
-          <span style="color:#f7df1e">&#xE749;</span>
-          <span style="color:#f5f0c8">&nbsp;shadcn/ui</span>
+          <span style="color:#f7df1e">&#xE628;</span>
+          <span style="color:#f5f0c8">&nbsp;TypeScript&nbsp;</span>
+          <span style="color:#f7df1e">v5.4</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
       <div class="seg">
         <span class="seg-inner">
-          <span style="color:#f7df1e">&#xE628;</span>
-          <span style="color:#f5f0c8">&nbsp;TypeScript&nbsp;</span>
-          <span style="color:#f7df1e">v5.4</span>
+          <span style="color:#f7df1e">&#xE749;</span>
+          <span style="color:#f5f0c8">&nbsp;shadcn/ui</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
@@ -1370,6 +1373,7 @@ flush "$_bar_gradient"</code></pre>
     <tr><td>1 Runtime</td><td>Swift tools vX.Y</td><td>First line of Package.swift: <code>// swift-tools-version: X.Y</code>.</td></tr>
     <tr><td>3 Framework</td><td>Vapor vX</td><td><code>Package.resolved</code> pin identity <code>vapor</code>, or grep <code>Package.swift</code>.</td></tr>
     <tr><td>3 Framework</td><td>Hummingbird</td><td><code>Package.resolved</code> pin identity <code>hummingbird</code>.</td></tr>
+    <tr><td>4 Add-ons</td><td>TCA (The Composable Architecture) / Firebase</td><td>TCA: <code>composable.architecture</code> in Package.swift. Firebase: <code>firebase</code> in Package.swift.</td></tr>
     <tr><td>5 Testing</td><td>Quick / Swift Testing / XCTest</td><td>Package.resolved for Quick and Swift Testing. XCTest: <code>.testTarget</code> in Package.swift. Layering: Quick suppresses XCTest; Swift Testing also suppresses XCTest.</td></tr>
     <tr><td>6 Tooling</td><td>SwiftLint</td><td><code>.swiftlint.{yml,yaml}</code> or <code>swiftlint</code> binary.</td></tr>
     <tr><td>6 Tooling</td><td>SwiftFormat</td><td><code>.swiftformat</code> or <code>swiftformat</code> binary.</td></tr>
@@ -2047,7 +2051,7 @@ flush "$_bar_gradient"</code></pre>
 <!-- ───────────────────────────────────────────────────────── SALESFORCE -->
 <div class="bar-card" id="bar-salesforce">
 <h3>Salesforce <code>bars/salesforce.sh</code></h3>
-<p>Renders for projects with <code>sfdx-project.json</code> or <code>.forceignore</code>. No testing framework detection (Apex testing runs server-side; no client-side framework to detect).</p>
+<p>Renders for projects with <code>sfdx-project.json</code>. No testing framework detection (Apex testing runs server-side; no client-side framework to detect).</p>
 
 <div class="palette">
   <div class="swatch-row"><span class="swatch" style="background:#c7e0f4"></span><span>text #c7e0f4</span></div>
