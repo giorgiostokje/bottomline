@@ -91,3 +91,56 @@ EOF
   bar_run elixir "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"Dialyxir"* ]]
 }
+
+@test "elixir: renders Ash when in mix.lock" {
+  printf 'defmodule X.MixProject do\nend\n' > "$FAKE_PROJ/mix.exs"
+  printf '%%{\n  "ash": {:hex, :ash, "3.0.0", "abc", [:mix], [], "hexpm", "def"},\n}\n' \
+    > "$FAKE_PROJ/mix.lock"
+  bar_run elixir "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Ash"* ]]
+}
+
+@test "elixir: renders Ash and Phoenix together" {
+  printf 'defmodule X.MixProject do\nend\n' > "$FAKE_PROJ/mix.exs"
+  printf '%%{\n  "phoenix": {:hex, :phoenix, "1.7.10", "abc", [:mix], [], "hexpm", "def"},\n  "ash": {:hex, :ash, "3.0.0", "abc", [:mix], [], "hexpm", "def"},\n}\n' \
+    > "$FAKE_PROJ/mix.lock"
+  bar_run elixir "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Phoenix"* ]]
+  [[ "$BAR_OUTPUT" == *"Ash"* ]]
+}
+
+@test "elixir: renders Absinthe when in mix.lock" {
+  printf 'defmodule X.MixProject do\nend\n' > "$FAKE_PROJ/mix.exs"
+  printf '%%{\n  "absinthe": {:hex, :absinthe, "1.7.0", "abc", [:mix], [], "hexpm", "def"},\n}\n' \
+    > "$FAKE_PROJ/mix.lock"
+  bar_run elixir "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Absinthe"* ]]
+}
+
+@test "elixir: renders Broadway when in mix.lock" {
+  printf 'defmodule X.MixProject do\nend\n' > "$FAKE_PROJ/mix.exs"
+  printf '%%{\n  "broadway": {:hex, :broadway, "1.0.0", "abc", [:mix], [], "hexpm", "def"},\n}\n' \
+    > "$FAKE_PROJ/mix.lock"
+  bar_run elixir "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Broadway"* ]]
+}
+
+@test "elixir: renders Req when in mix.lock" {
+  printf 'defmodule X.MixProject do\nend\n' > "$FAKE_PROJ/mix.exs"
+  printf '%%{\n  "req": {:hex, :req, "0.5.0", "abc", [:mix], [], "hexpm", "def"},\n}\n' \
+    > "$FAKE_PROJ/mix.lock"
+  bar_run elixir "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Req"* ]]
+}
+
+@test "elixir: Ash appears in slot 3 before slot-4 LiveView" {
+  printf 'defmodule X.MixProject do\nend\n' > "$FAKE_PROJ/mix.exs"
+  printf '%%{\n  "ash": {:hex, :ash, "3.0.0", "abc", [:mix], [], "hexpm", "def"},\n  "phoenix_live_view": {:hex, :phoenix_live_view, "1.0.0", "abc", [:mix], [], "hexpm", "def"},\n}\n' \
+    > "$FAKE_PROJ/mix.lock"
+  bar_run elixir "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Ash"* ]]
+  [[ "$BAR_OUTPUT" == *"LiveView"* ]]
+  ash_pos=$(echo "$BAR_OUTPUT" | grep -bo "Ash" | head -1 | cut -d: -f1)
+  lv_pos=$(echo "$BAR_OUTPUT" | grep -bo "LiveView" | head -1 | cut -d: -f1)
+  [[ -n "$ash_pos" && -n "$lv_pos" && "$ash_pos" -lt "$lv_pos" ]]
+}

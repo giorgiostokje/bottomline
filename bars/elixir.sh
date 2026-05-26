@@ -12,14 +12,17 @@ bl_bar_init elixir "#e8d8f8" "#a078d8" '["#180c2e","#2a1850"]' "$PROJ/mix.exs" "
 
 [[ ! -f "$PROJ/mix.exs" ]] && exit 0
 
-bl_icon_set IC_ELIXIR $'\xef\x81\xad' '💧'
-bl_icon_set IC_PHOENIX $'\xef\x86\x85' '🔥'
-bl_icon_set IC_LV     $'\xef\x84\xa1' '🔌'
-bl_icon_set IC_DB     $'\xef\x87\x80' '🗄'
-bl_icon_set IC_QUEUE  $'\xef\x83\xa2' '📨'
-bl_icon_set IC_TEST   $'\xef\x81\x80' '🧪'
-bl_icon_set IC_LINT   $'\xef\x80\x8c' '✓'
-bl_icon_set IC_TYPE   $'\xef\x80\xae' '🔎'
+bl_icon_set IC_ELIXIR   $'\xef\x81\xad' '💧'
+bl_icon_set IC_PHOENIX  $'\xef\x86\x85' '🔥'
+bl_icon_set IC_ASH      $'\xef\x81\xac' '🌋'
+bl_icon_set IC_LV       $'\xef\x84\xa1' '🔌'
+bl_icon_set IC_GRAPHQL  $'\xef\x83\xac' '◈'
+bl_icon_set IC_QUEUE    $'\xef\x83\xa2' '📨'
+bl_icon_set IC_HTTP     $'\xef\x82\xac' '🌐'
+bl_icon_set IC_DB       $'\xef\x87\x80' '🗄'
+bl_icon_set IC_TEST     $'\xef\x81\x80' '🧪'
+bl_icon_set IC_LINT     $'\xef\x80\x8c' '✓'
+bl_icon_set IC_TYPE     $'\xef\x80\xae' '🔎'
 
 
 # ── Read Elixir version constraint from mix.exs ───────────────────────────────
@@ -52,6 +55,10 @@ fi
 liveview_version=''
 ecto_version=''
 oban_version=''
+ash_version=''
+absinthe_version=''
+broadway_version=''
+req_version=''
 credo_version=''
 dialyxir_version=''
 
@@ -59,6 +66,10 @@ if [[ -f "$lock" ]]; then
   liveview_version=$(awk -F'"' '/"phoenix_live_view":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
   ecto_version=$(awk -F'"' '/"ecto_sql":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
   oban_version=$(awk -F'"' '/"oban":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
+  ash_version=$(awk -F'"' '/"ash":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
+  absinthe_version=$(awk -F'"' '/"absinthe":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
+  broadway_version=$(awk -F'"' '/"broadway":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
+  req_version=$(awk -F'"' '/"req":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
   credo_version=$(awk -F'"' '/"credo":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
   dialyxir_version=$(awk -F'"' '/"dialyxir":/{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\./){print $i; exit}}' "$lock" 2>/dev/null)
 fi
@@ -72,10 +83,16 @@ bl_version_seg "$IC_ELIXIR" Elixir "$elixir_version"
 # ── Phoenix ───────────────────────────────────────────────────────────────────
 $has_phoenix && bl_version_seg "$IC_PHOENIX" Phoenix "$phoenix_version"
 
+# ── Ash ───────────────────────────────────────────────────────────────────────
+[[ -n "$ash_version" ]] && bl_version_seg "$IC_ASH" Ash "$ash_version"
+
 # Slot 4: Add-ons
 [[ -n "$liveview_version" ]] && bl_version_seg "$IC_LV" LiveView "$liveview_version"
 [[ -n "$ecto_version" ]] && bl_version_seg "$IC_DB" Ecto "$ecto_version"
 [[ -n "$oban_version" ]] && bl_version_seg "$IC_QUEUE" Oban "$oban_version"
+[[ -n "$absinthe_version" ]] && bl_version_seg "$IC_GRAPHQL" Absinthe "$absinthe_version"
+[[ -n "$broadway_version" ]] && bl_version_seg "$IC_QUEUE" Broadway "$broadway_version"
+[[ -n "$req_version" ]] && bl_version_seg "$IC_HTTP" Req "$req_version"
 
 # Slot 5: Testing
 $has_exunit && bl_version_seg "$IC_TEST" ExUnit ""
