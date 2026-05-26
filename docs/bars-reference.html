@@ -1794,8 +1794,8 @@ flush "$_bar_gradient"</code></pre>
     <tr><td>Stash</td><td>N stash/stashes</td><td>Hidden when stash is empty.</td></tr>
     <tr><td>Ahead/behind</td><td>↑N ↓N</td><td>Hidden when no upstream or fully in sync. Behind count in warning color.</td></tr>
     <tr><td>Last commit</td><td>Author · age</td><td>Author first name only; age abbreviated (3m, 2h, 1d, etc.).</td></tr>
-    <tr><td>CI status</td><td>CI passed ✓ / CI failed ✗ / CI timed out ✗ / CI running ⟳ / CI queued ⟳</td><td>Requires <code>gh</code> CLI and a GitHub remote. Shows the most recent workflow run for the current branch. Hidden when no run found, branch is detached, or remote is not GitHub.</td></tr>
-    <tr><td>PR state</td><td>PR #N [· draft / · ✓ / · changes]</td><td>Requires <code>gh</code> CLI and an open PR for the current branch. Shows draft status, review approval (accent ✓), or change requests (warning color). Hidden when no open PR.</td></tr>
+    <tr><td>CI status</td><td>⚙ CI · passed ✓ / ⚙ CI · failed ✗ / ⚙ CI · timed out ✗ / ⚙ CI · running ⟳ / ⚙ CI · queued ⟳</td><td>Requires <code>gh</code> CLI and a GitHub remote. Shows the most recent workflow run for the current branch. Failure and timeout states render qualifier and suffix in warning color. Hidden when no run found, branch is detached, or remote is not GitHub.</td></tr>
+    <tr><td>PR state</td><td>⑂ PR #N · draft / ⑂ PR #N · approved ✓ / ⑂ PR #N · changes ✗ / ⑂ PR #N</td><td>Requires <code>gh</code> CLI and an open PR for the current branch. Shows draft status, review approval (accent ✓), or change requests (qualifier and ✗ in warning color). Hidden when no open PR.</td></tr>
   </tbody>
 </table>
 
@@ -1915,15 +1915,17 @@ flush "$_bar_gradient"</code></pre>
       </div>
       <div class="seg">
         <span class="seg-inner">
-          <span style="color:#f05033">CI&nbsp;</span>
-          <span style="color:#f0ddd8">passed&nbsp;&#xF00C;</span>
+          <span style="color:#f05033">&#xF013;&nbsp;</span>
+          <span style="color:#f0ddd8">CI&nbsp;</span>
+          <span style="color:#f05033">·&nbsp;passed&nbsp;&#xF00C;</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
       <div class="seg">
         <span class="seg-inner">
-          <span style="color:#f05033">PR&nbsp;</span>
-          <span style="color:#f0ddd8">#42&nbsp;·&nbsp;&#xF00C;</span>
+          <span style="color:#f05033">&#xF126;&nbsp;</span>
+          <span style="color:#f0ddd8">PR&nbsp;#42&nbsp;</span>
+          <span style="color:#f05033">·&nbsp;approved&nbsp;&#xF00C;</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
@@ -2134,28 +2136,28 @@ flush "$_bar_gradient"</code></pre>
           <span style="color:#5E6AD2">&#xF301;</span>
           <span style="color:#e2e2f0">&nbsp;Cycle 42&nbsp;</span>
           <span style="color:#5E6AD2">·</span>
-          <span style="color:#e2e2f0">&nbsp;18/24</span>
+          <span style="color:#5E6AD2">&nbsp;18/24</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
       <div class="seg">
         <span class="seg-inner">
           <span style="color:#5E6AD2">&#xF1D9;</span>
-          <span style="color:#e2e2f0">&nbsp;3 wip</span>
+          <span style="color:#e2e2f0">&nbsp;3</span><span style="color:#5E6AD2">&nbsp;wip</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
       <div class="seg">
         <span class="seg-inner">
           <span style="color:#5E6AD2">&#xF06E;</span>
-          <span style="color:#e2e2f0">&nbsp;1 review</span>
+          <span style="color:#e2e2f0">&nbsp;1</span><span style="color:#5E6AD2">&nbsp;review</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
       <div class="seg">
         <span class="seg-inner">
           <span style="color:#5E6AD2">&#xF0AE;</span>
-          <span style="color:#e2e2f0">&nbsp;7 open</span>
+          <span style="color:#e2e2f0">&nbsp;7</span><span style="color:#5E6AD2">&nbsp;open</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
