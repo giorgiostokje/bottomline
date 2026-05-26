@@ -12,13 +12,15 @@ bl_bar_init swift "#f5ddd8" "#f05138" '["#1c0a06","#331008"]' "$PROJ/Package.swi
 
 [[ ! -f "$PROJ/Package.swift" ]] && exit 0
 
-bl_icon_set IC_SWIFT $'\xee\x9d\x95' '🦅'
-bl_icon_set IC_VAPOR $'\xef\x83\x90' '💧'
-bl_icon_set IC_WEB   $'\xef\x83\xac' '🌐'
-bl_icon_set IC_NET   $'\xef\x82\xac' '📡'
-bl_icon_set IC_TEST  $'\xef\x81\x80' '🧪'
-bl_icon_set IC_LINT  $'\xef\x80\x8c' '✓'
-bl_icon_set IC_FMT   $'\xef\x80\xb1' '🖋'
+bl_icon_set IC_SWIFT    $'\xee\x9d\x95' '🦅'
+bl_icon_set IC_VAPOR    $'\xef\x83\x90' '💧'
+bl_icon_set IC_WEB      $'\xef\x83\xac' '🌐'
+bl_icon_set IC_NET      $'\xef\x82\xac' '📡'
+bl_icon_set IC_ARCH     $'\xef\x83\xa2' '🧩'
+bl_icon_set IC_FIREBASE $'\xef\x84\xb5' '🔥'
+bl_icon_set IC_TEST     $'\xef\x81\x80' '🧪'
+bl_icon_set IC_LINT     $'\xef\x80\x8c' '✓'
+bl_icon_set IC_FMT      $'\xef\x80\xb1' '🖋'
 
 
 # ── Read Swift tools version from Package.swift first line ────────────────────
@@ -88,6 +90,12 @@ elif command -v swiftformat > /dev/null 2>&1; then
   has_swiftformat=true
 fi
 
+has_tca=false
+grep -qiE 'composable.architecture' "$PROJ/Package.swift" 2>/dev/null && has_tca=true
+
+has_firebase=false
+grep -qi 'firebase' "$PROJ/Package.swift" 2>/dev/null && has_firebase=true
+
 # ── Swift runtime ─────────────────────────────────────────────────────────────
 swift_seg="${FG_ACCENT}${IC_SWIFT} ${FG_TEXT}Swift"
 [[ -n "$tools_version" ]] && swift_seg+=" ${N}${FG_ACCENT}tools v${tools_version}"
@@ -99,14 +107,18 @@ $has_vapor && bl_version_seg "$IC_VAPOR" Vapor "$vapor_version"
 # Slot 3: Hummingbird (alongside Vapor if both present)
 $has_hummingbird   && bl_seg "$IC_WEB" Hummingbird
 
+# Slot 4: Add-ons
+$has_alamofire && bl_version_seg "$IC_NET" Alamofire "$alamofire_version"
+$has_tca       && bl_seg "$IC_ARCH" TCA
+$has_firebase  && bl_seg "$IC_FIREBASE" Firebase
+
 # Slot 5: Testing (layering: Quick > XCTest; Swift Testing standalone)
 $has_quick         && bl_seg "$IC_TEST" Quick
 $has_swift_testing && bl_seg "$IC_TEST" "Swift Testing"
 $has_xctest        && bl_seg "$IC_TEST" XCTest
 
-# Slot 6: Tooling (order: SwiftLint → SwiftFormat → Alamofire)
+# Slot 6: Tooling (order: SwiftLint → SwiftFormat)
 $has_swiftlint     && bl_seg "$IC_LINT" SwiftLint
 $has_swiftformat   && bl_seg "$IC_FMT" SwiftFormat
-$has_alamofire && bl_version_seg "$IC_NET" Alamofire "$alamofire_version"
 
 bl_bar_finish "$_bar_gradient"

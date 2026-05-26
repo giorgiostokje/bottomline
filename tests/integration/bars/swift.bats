@@ -89,3 +89,43 @@ teardown() { teardown_fake_proj; }
   bar_run swift "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"SwiftFormat"* ]]
 }
+
+@test "swift: renders TCA when ComposableArchitecture in Package.swift" {
+  printf 'import PackageDescription\nlet package = Package(name: "x", dependencies: [.package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.0.0")])\n' > "$FAKE_PROJ/Package.swift"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"TCA"* ]]
+}
+
+@test "swift: no TCA segment when ComposableArchitecture absent" {
+  printf 'import PackageDescription\nlet package = Package(name: "x")\n' > "$FAKE_PROJ/Package.swift"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" != *"TCA"* ]]
+}
+
+@test "swift: renders Firebase when firebase-ios-sdk in Package.swift" {
+  printf 'import PackageDescription\nlet package = Package(name: "x", dependencies: [.package(url: "https://github.com/firebase/firebase-ios-sdk", from: "10.0.0")])\n' > "$FAKE_PROJ/Package.swift"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Firebase"* ]]
+}
+
+@test "swift: renders Firebase when firebase in package URL" {
+  printf 'import PackageDescription\nlet package = Package(name: "x", dependencies: [.package(url: "https://github.com/example/firebase-mypackage", from: "1.0.0")])\n' > "$FAKE_PROJ/Package.swift"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Firebase"* ]]
+}
+
+@test "swift: no Firebase segment when firebase absent" {
+  printf 'import PackageDescription\nlet package = Package(name: "x")\n' > "$FAKE_PROJ/Package.swift"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" != *"Firebase"* ]]
+}
+
+@test "swift: TCA and Firebase coexist with Alamofire" {
+  printf 'import PackageDescription\nlet package = Package(name: "x", dependencies: [.package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.0.0"), .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "10.0.0")])\n' > "$FAKE_PROJ/Package.swift"
+  printf '%s\n' '{"pins":[{"identity":"alamofire","location":"https://github.com/Alamofire/Alamofire"}]}' \
+    > "$FAKE_PROJ/Package.resolved"
+  bar_run swift "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"TCA"* ]]
+  [[ "$BAR_OUTPUT" == *"Firebase"* ]]
+  [[ "$BAR_OUTPUT" == *"Alamofire"* ]]
+}
