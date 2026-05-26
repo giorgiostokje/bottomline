@@ -111,10 +111,10 @@ fi
 [[ -n "$api_version" ]] && bl_version_seg "$IC_API" API "$api_version"
 
 # 5. Namespace (when explicitly set in the project config)
-[[ -n "$namespace" ]] && seg "${FG_TEXT}ns:${FG_ACCENT}${namespace}"
+[[ -n "$namespace" ]] && add_seg "${FG_TEXT}ns:${FG_ACCENT}${namespace}"
 
 # Slot 6: Tooling
-$has_pmd         && seg "${FG_ACCENT}${IC_PMD} ${FG_TEXT}PMD"
-$has_lwc_eslint  && seg "${FG_ACCENT}${IC_LWC} ${FG_TEXT}ESLint (LWC)"
+$has_pmd         && add_seg "${FG_ACCENT}${IC_PMD} ${FG_TEXT}PMD"
+$has_lwc_eslint  && add_seg "${FG_ACCENT}${IC_LWC} ${FG_TEXT}ESLint (LWC)"
 
 bl_bar_finish "$_bar_gradient"

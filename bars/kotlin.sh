@@ -114,29 +114,29 @@ has_exposed=false has_serial=false
   || grep -q 'plugin\.serialization' "$PROJ/build.gradle" 2>/dev/null; } \
   && has_serial=true
 
-  # ── Slot 1: Runtime ───────────────────────────────────────────────────────────
-  bl_version_seg "$IC_KOTLIN" Kotlin "$kotlin_version"
+# ── Slot 1: Runtime ───────────────────────────────────────────────────────────
+bl_version_seg "$IC_KOTLIN" Kotlin "$kotlin_version"
 
-  # ── Slot 2: Build tool ────────────────────────────────────────────────────────
-  bl_version_seg "$IC_GRADLE" Gradle "$gradle_version"
+# ── Slot 2: Build tool ────────────────────────────────────────────────────────
+bl_version_seg "$IC_GRADLE" Gradle "$gradle_version"
 
-  # ── Slot 3: Framework ─────────────────────────────────────────────────────────
-  $has_ktor  && bl_version_seg "$IC_WEB" Ktor "$ktor_version"
-  $has_spring && bl_version_seg "$IC_WEB" "Spring Boot" "$spring_version"
+# ── Slot 3: Framework ─────────────────────────────────────────────────────────
+$has_ktor  && bl_version_seg "$IC_WEB" Ktor "$ktor_version"
+$has_spring && bl_version_seg "$IC_WEB" "Spring Boot" "$spring_version"
 
-  # ── Slot 4: Add-ons ───────────────────────────────────────────────────────────
-  $has_koin  && bl_version_seg "$IC_DI" Koin
-  $has_arrow && bl_version_seg "$IC_FP" Arrow
+# ── Slot 4: Add-ons ───────────────────────────────────────────────────────────
+$has_koin  && bl_version_seg "$IC_DI" Koin
+$has_arrow && bl_version_seg "$IC_FP" Arrow
 
-  # ── Slot 5: Testing ───────────────────────────────────────────────────────────
-  $has_kotest && bl_version_seg "$IC_TEST" Kotest "$kotest_version"
-  $has_junit5 && bl_version_seg "$IC_TEST" "JUnit 5" "$junit5_version"
-  $has_mockk  && bl_version_seg "$IC_TEST" MockK "$mockk_version"
+# ── Slot 5: Testing ───────────────────────────────────────────────────────────
+$has_kotest && bl_version_seg "$IC_TEST" Kotest "$kotest_version"
+$has_junit5 && bl_version_seg "$IC_TEST" "JUnit 5" "$junit5_version"
+$has_mockk  && bl_version_seg "$IC_TEST" MockK "$mockk_version"
 
-  # ── Slot 6: Tooling (static analysis → ORM → serialization) ───────────────────
-  $has_detekt && bl_version_seg "$IC_LINT" Detekt "$detekt_version"
-  $has_ktlint && bl_version_seg "$IC_LINT" ktlint "$ktlint_version"
-  $has_exposed && bl_version_seg "$IC_DB" Exposed
-  $has_serial && bl_version_seg "$IC_SERIAL" kotlinx-serialization
+# ── Slot 6: Tooling (static analysis → ORM → serialization) ───────────────────
+$has_detekt && bl_version_seg "$IC_LINT" Detekt "$detekt_version"
+$has_ktlint && bl_version_seg "$IC_LINT" ktlint "$ktlint_version"
+$has_exposed && bl_version_seg "$IC_DB" Exposed
+$has_serial && bl_version_seg "$IC_SERIAL" kotlinx-serialization
 
 bl_bar_finish "$_bar_gradient"

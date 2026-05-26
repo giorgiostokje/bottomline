@@ -104,28 +104,28 @@ elif [[ -f "$PROJ/.golangci.yml" || -f "$PROJ/.golangci.yaml" || -f "$PROJ/.gola
   has_golangci=true
 fi
 
-  # ── Segments (canonical slot order) ───────────────────────────────────────────
-  # Slot 1: Runtime
-  go_seg="${FG_ACCENT}${IC_GO} ${FG_TEXT}Go"
-  [[ -n "$go_version" ]] && go_seg+=" ${N}${FG_ACCENT}v${go_version}"
-  $is_workspace && go_seg+=" ${FG_ACCENT}${IC_WORKSPACE}${FG_TEXT} workspace"
-  add_seg "$go_seg"
+# ── Segments (canonical slot order) ───────────────────────────────────────────
+# Slot 1: Runtime
+go_seg="${FG_ACCENT}${IC_GO} ${FG_TEXT}Go"
+[[ -n "$go_version" ]] && go_seg+=" ${N}${FG_ACCENT}v${go_version}"
+$is_workspace && go_seg+=" ${FG_ACCENT}${IC_WORKSPACE}${FG_TEXT} workspace"
+add_seg "$go_seg"
 
-  # Slot 3: Framework
-  [[ -n "$framework" ]] && bl_seg "$IC_WEB" "$framework_display" "$framework_version"
-  $has_cobra && bl_seg "$IC_CLI" Cobra "$cobra_version"
+# Slot 3: Framework
+[[ -n "$framework" ]] && bl_seg "$IC_WEB" "$framework_display" "$framework_version"
+$has_cobra && bl_seg "$IC_CLI" Cobra "$cobra_version"
 
-  # Slot 5: Testing
-  $has_ginkgo  && bl_version_seg "$IC_TEST" Ginkgo  "$ginkgo_version"
-  $has_testify && bl_version_seg "$IC_TEST" testify "$testify_version"
+# Slot 5: Testing
+$has_ginkgo  && bl_version_seg "$IC_TEST" Ginkgo  "$ginkgo_version"
+$has_testify && bl_version_seg "$IC_TEST" testify "$testify_version"
 
-  # Slot 6: Tooling
-  # static analysis first
-  $has_golangci && bl_seg "$IC_LINT" golangci-lint "$golangci_version"
-  # ORM second
-  $has_gorm && bl_version_seg "$IC_DB" GORM "$gorm_version"
-  $has_ent && bl_version_seg "$IC_DB" ent "$ent_version"
-  $has_sqlc && bl_version_seg "$IC_DB" sqlc "$sqlc_version"
-  $has_buf && bl_seg "$IC_PROTO" buf
+# Slot 6: Tooling
+# static analysis first
+$has_golangci && bl_seg "$IC_LINT" golangci-lint "$golangci_version"
+# ORM second
+$has_gorm && bl_version_seg "$IC_DB" GORM "$gorm_version"
+$has_ent && bl_version_seg "$IC_DB" ent "$ent_version"
+$has_sqlc && bl_version_seg "$IC_DB" sqlc "$sqlc_version"
+$has_buf && bl_seg "$IC_PROTO" buf
 
 bl_bar_finish "$_bar_gradient"

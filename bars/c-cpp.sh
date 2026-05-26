@@ -38,7 +38,8 @@ if $has_cmake; then
   if printf '%s' "$cmake_content" | grep -qiE 'project\([^)]*CXX'; then
     has_cxx=true
   fi
-  if printf '%s' "$cmake_content" | grep -qiE 'project\([^)]*[^X]C[ )"]'; then
+  if printf '%s' "$cmake_content" | grep -qiE 'project\([^)]*C[ )"]' && \
+     ! printf '%s' "$cmake_content" | grep -qiE 'project\([^)]*CXX'; then
     has_c=true
   fi
   # Fallback: scan src/ for source file extensions

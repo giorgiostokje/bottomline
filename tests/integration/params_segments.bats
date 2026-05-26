@@ -16,7 +16,7 @@ teardown() {
 }
 
 @test "params: literal string passes through unchanged" {
-  printf '#!/usr/bin/env bash\nprintf "%%s" "${BOTTOMLINE_BAR_PARAMS:-{}}"\n' > "$_FAKE_BAR"
+  printf '#!/usr/bin/env bash\nval="${BOTTOMLINE_BAR_PARAMS:-}"; [[ -z "$val" ]] && val='"'"'{}'"'"'; printf "%%s" "$val"\n' > "$_FAKE_BAR"
   local cfg
   cfg=$(jq -n --arg s "$_FAKE_BAR" '{"bars":[{"script":$s,"params":{"key":"plain_literal"}}]}')
   bl_run '{}' "$cfg"
@@ -26,7 +26,7 @@ teardown() {
 @test "params: file:/abs/path reads file contents" {
   local token_file; token_file=$(mktemp)
   printf 'file_secret' > "$token_file"
-  printf '#!/usr/bin/env bash\nprintf "%%s" "${BOTTOMLINE_BAR_PARAMS:-{}}"\n' > "$_FAKE_BAR"
+  printf '#!/usr/bin/env bash\nval="${BOTTOMLINE_BAR_PARAMS:-}"; [[ -z "$val" ]] && val='"'"'{}'"'"'; printf "%%s" "$val"\n' > "$_FAKE_BAR"
   local cfg
   cfg=$(jq -n --arg s "$_FAKE_BAR" --arg p "$token_file" \
     '{"bars":[{"script":$s,"params":{"key":("file:" + $p)}}]}')
@@ -38,7 +38,7 @@ teardown() {
 @test "params: file:~/path expands tilde and reads file" {
   mkdir -p "$FAKE_HOME/.config"
   printf 'tilde_secret' > "$FAKE_HOME/.config/token"
-  printf '#!/usr/bin/env bash\nprintf "%%s" "${BOTTOMLINE_BAR_PARAMS:-{}}"\n' > "$_FAKE_BAR"
+  printf '#!/usr/bin/env bash\nval="${BOTTOMLINE_BAR_PARAMS:-}"; [[ -z "$val" ]] && val='"'"'{}'"'"'; printf "%%s" "$val"\n' > "$_FAKE_BAR"
   local cfg
   cfg=$(jq -n --arg s "$_FAKE_BAR" \
     '{"bars":[{"script":$s,"params":{"key":"file:~/.config/token"}}]}')
@@ -47,7 +47,7 @@ teardown() {
 }
 
 @test "params: non-string values pass through unmodified" {
-  printf '#!/usr/bin/env bash\nprintf "%%s" "${BOTTOMLINE_BAR_PARAMS:-{}}"\n' > "$_FAKE_BAR"
+  printf '#!/usr/bin/env bash\nval="${BOTTOMLINE_BAR_PARAMS:-}"; [[ -z "$val" ]] && val='"'"'{}'"'"'; printf "%%s" "$val"\n' > "$_FAKE_BAR"
   local cfg
   cfg=$(jq -n --arg s "$_FAKE_BAR" \
     '{"bars":[{"script":$s,"params":{"count":3,"flag":true,"list":["a","b"]}}]}')

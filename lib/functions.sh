@@ -3,7 +3,8 @@
 # Sourced by bottomline.sh and the test suite.
 
 fmt_n() {
-  local n=$1
+  local n="$1"
+  [[ "$n" =~ ^[0-9]+$ ]] || return
   if   [ "$n" -ge 1000000 ]; then printf '%.1fM' "$(echo "scale=1; $n/1000000" | bc)"
   elif [ "$n" -ge 1000 ];    then printf '%.1fk' "$(echo "scale=1; $n/1000"    | bc)"
   else printf '%d' "$n"; fi

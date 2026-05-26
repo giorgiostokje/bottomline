@@ -17,7 +17,7 @@ _lua_signal=false
 [[ -f "$PROJ/.luarc.json" ]]  && _lua_signal=true
 [[ -f "$PROJ/.luarc.jsonc" ]] && _lua_signal=true
 [[ -f "$PROJ/.lua-version" ]] && _lua_signal=true
-ls "$PROJ"/*.rockspec > /dev/null 2>&1 && _lua_signal=true
+for _f in "$PROJ"/*.rockspec; do [[ -f "$_f" ]] && _lua_signal=true && break; done
 $_lua_signal || exit 0
 
 bl_icon_set IC_LUA  $'\xee\x9c\xae' '🌙'  # U+E72E  nf-seti-lua
@@ -49,7 +49,7 @@ fi
 has_luarocks=false
 luarocks_version=''
 _has_rockspec=false
-ls "$PROJ"/*.rockspec > /dev/null 2>&1 && _has_rockspec=true
+for _f in "$PROJ"/*.rockspec; do [[ -f "$_f" ]] && _has_rockspec=true && break; done
 if command -v luarocks > /dev/null 2>&1; then
   has_luarocks=true
   _luarocks_raw=$(luarocks --version 2>/dev/null)
@@ -84,12 +84,12 @@ has_luaunit=false
 if command -v busted > /dev/null 2>&1; then
   has_busted=true
 fi
-if ! $has_busted && ls "$PROJ"/*.rockspec > /dev/null 2>&1; then
-  grep -qE 'busted' "$PROJ"/*.rockspec 2>/dev/null && has_busted=true
+if ! $has_busted; then
+  for _f in "$PROJ"/*.rockspec; do [[ -f "$_f" ]] && grep -qE 'busted' "$_f" 2>/dev/null && has_busted=true && break; done
 fi
 # LuaUnit — only check if Busted not found (Busted suppresses LuaUnit)
-if ! $has_busted && ls "$PROJ"/*.rockspec > /dev/null 2>&1; then
-  grep -q 'luaunit' "$PROJ"/*.rockspec 2>/dev/null && has_luaunit=true
+if ! $has_busted; then
+  for _f in "$PROJ"/*.rockspec; do [[ -f "$_f" ]] && grep -q 'luaunit' "$_f" 2>/dev/null && has_luaunit=true && break; done
 fi
 
 # ── Slot 6: Tooling ───────────────────────────────────────────────────────────
@@ -100,8 +100,7 @@ if command -v luacheck > /dev/null 2>&1; then
   has_luacheck=true
 elif [[ -f "$PROJ/.luacheckrc" ]]; then
   has_luacheck=true
-elif ls "$PROJ"/*.rockspec > /dev/null 2>&1 && grep -q 'luacheck' "$PROJ"/*.rockspec 2>/dev/null; then
-  has_luacheck=true
+for _f in "$PROJ"/*.rockspec; do [[ -f "$_f" ]] && grep -q 'luacheck' "$_f" 2>/dev/null && has_luacheck=true && break; done
 fi
 # StyLua: binary or config file
 if command -v stylua > /dev/null 2>&1; then
@@ -110,23 +109,23 @@ elif [[ -f "$PROJ/.stylua.toml" ]]; then
   has_stylua=true
 fi
 
-  # ── Slot 1: Runtime ───────────────────────────────────────────────────────────
-  lua_seg="${FG_ACCENT}${IC_LUA} ${FG_TEXT}Lua"
-  [[ -n "$lua_version" ]] && lua_seg+=" ${N}${FG_ACCENT}${lua_version}"
-  add_seg "$lua_seg"
+# ── Slot 1: Runtime ───────────────────────────────────────────────────────────
+lua_seg="${FG_ACCENT}${IC_LUA} ${FG_TEXT}Lua"
+[[ -n "$lua_version" ]] && lua_seg+=" ${N}${FG_ACCENT}${lua_version}"
+add_seg "$lua_seg"
 
-  # ── Slot 2: Package manager ───────────────────────────────────────────────────
-  $has_luarocks && bl_seg "$IC_PKG" LuaRocks "$luarocks_version"
+# ── Slot 2: Package manager ───────────────────────────────────────────────────
+$has_luarocks && bl_seg "$IC_PKG" LuaRocks "$luarocks_version"
 
-  # ── Slot 3: Framework ─────────────────────────────────────────────────────────
-  [[ -n "$framework" ]] && bl_seg "$IC_GAME" "$framework"
+# ── Slot 3: Framework ─────────────────────────────────────────────────────────
+[[ -n "$framework" ]] && bl_seg "$IC_GAME" "$framework"
 
-  # ── Slot 5: Testing ───────────────────────────────────────────────────────────
-  $has_busted   && bl_seg "$IC_TEST" Busted
-  $has_luaunit  && bl_seg "$IC_TEST" LuaUnit
+# ── Slot 5: Testing ───────────────────────────────────────────────────────────
+$has_busted   && bl_seg "$IC_TEST" Busted
+$has_luaunit  && bl_seg "$IC_TEST" LuaUnit
 
-  # ── Slot 6: Tooling ───────────────────────────────────────────────────────────
-  $has_luacheck && bl_seg "$IC_LINT" Luacheck
-  $has_stylua   && bl_seg "$IC_LINT" StyLua
+# ── Slot 6: Tooling ───────────────────────────────────────────────────────────
+$has_luacheck && bl_seg "$IC_LINT" Luacheck
+$has_stylua   && bl_seg "$IC_LINT" StyLua
 
 bl_bar_finish "$_bar_gradient"
