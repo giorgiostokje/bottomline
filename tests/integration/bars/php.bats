@@ -185,3 +185,52 @@ teardown() { teardown_fake_proj; }
   [[ "$BAR_OUTPUT" == *"v1.0.0"* ]]
   [[ "$BAR_OUTPUT" == *"⚠"* ]]
 }
+
+# ── Doctrine ORM (slot 6 — ORM sub-slot) ──────────────────────────────────────
+
+@test "php: renders Doctrine from composer.lock" {
+  printf '{"name":"test/app"}\n' > "$FAKE_PROJ/composer.json"
+  printf '%s\n' '{"packages":[{"name":"doctrine/orm","version":"v3.3.0"}],"packages-dev":[]}' \
+    > "$FAKE_PROJ/composer.lock"
+  bar_run php "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Doctrine"* ]]
+  [[ "$BAR_OUTPUT" == *"3.3.0"* ]]
+}
+
+@test "php: renders Doctrine from composer.lock require-dev" {
+  printf '{"name":"test/app"}\n' > "$FAKE_PROJ/composer.json"
+  printf '%s\n' '{"packages":[],"packages-dev":[{"name":"doctrine/orm","version":"v2.19.0"}]}' \
+    > "$FAKE_PROJ/composer.lock"
+  bar_run php "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Doctrine"* ]]
+  [[ "$BAR_OUTPUT" == *"2.19.0"* ]]
+}
+
+@test "php: Doctrine suppressed when Laravel is present" {
+  printf '{"name":"test/app"}\n' > "$FAKE_PROJ/composer.json"
+  printf '%s\n' '{"packages":[{"name":"laravel/framework","version":"v11.0.0"},{"name":"doctrine/orm","version":"v3.3.0"}],"packages-dev":[]}' \
+    > "$FAKE_PROJ/composer.lock"
+  bar_run php "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Laravel"* ]]
+  [[ "$BAR_OUTPUT" != *"Doctrine"* ]]
+}
+
+# ── Rector (slot 6 — end) ─────────────────────────────────────────────────────
+
+@test "php: renders Rector from composer.lock" {
+  printf '{"name":"test/app"}\n' > "$FAKE_PROJ/composer.json"
+  printf '%s\n' '{"packages":[],"packages-dev":[{"name":"rector/rector","version":"v1.2.0"}]}' \
+    > "$FAKE_PROJ/composer.lock"
+  bar_run php "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Rector"* ]]
+  [[ "$BAR_OUTPUT" == *"1.2.0"* ]]
+}
+
+@test "php: renders Rector from composer.lock require section" {
+  printf '{"name":"test/app"}\n' > "$FAKE_PROJ/composer.json"
+  printf '%s\n' '{"packages":[{"name":"rector/rector","version":"v1.2.0"}],"packages-dev":[]}' \
+    > "$FAKE_PROJ/composer.lock"
+  bar_run php "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Rector"* ]]
+  [[ "$BAR_OUTPUT" == *"1.2.0"* ]]
+}

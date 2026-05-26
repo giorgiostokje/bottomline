@@ -31,6 +31,8 @@ bl_icon_set IC_TEST     $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
 bl_icon_set IC_PHPSTAN  $'\xef\x80\x8c' '🔍'  # U+F00C  nf-fa-check
 bl_icon_set IC_CSFIXER  $'\xef\x80\xb1' '🔧'  # U+F031  nf-fa-font
 bl_icon_set IC_PRO      $'\xef\x82\x91' '🏅'  # U+F091  nf-fa-trophy
+bl_icon_set IC_DB       $'\xef\x87\x80' '🗄'   # U+F1C0  nf-fa-database
+bl_icon_set IC_LINT     $'\xef\x80\x8c' '✓'    # U+F00C  nf-fa-check
 bl_icon_set IC_WARN     $'\xef\x81\xb1' '⚠'   # U+F071  nf-fa-warning
 
 # PHP version from the active binary (fast — no framework bootstrap).
@@ -59,6 +61,8 @@ larastan_version=''
 phpstan_version=''
 pint_version=''
 csfixer_version=''
+doctrine_version=''
+rector_version=''
 
 if [[ -f "$lock" ]]; then
   while IFS=$'\t' read -r name version; do
@@ -83,6 +87,8 @@ if [[ -f "$lock" ]]; then
       phpstan/phpstan)           phpstan_version="${version#v}"  ;;
       laravel/pint)              pint_version="${version#v}"     ;;
       friendsofphp/php-cs-fixer) csfixer_version="${version#v}"  ;;
+      doctrine/orm)              doctrine_version="${version#v}" ;;
+      rector/rector)             rector_version="${version#v}"  ;;
     esac
   done < <(jq -r '(.packages + (.["packages-dev"] // [])) | .[] | [.name, .version] | @tsv' "$lock" 2>/dev/null)
 fi
@@ -189,6 +195,15 @@ elif [[ -n "$csfixer_version" ]]; then
     bl_version_seg "$IC_CSFIXER" "PHP CS Fixer" "$csfixer_version"
   fi
 fi
+
+# ── ORM (slot 6 — after static analysis) ───────────────────────────────────
+if [[ -n "$doctrine_version" && -z "$laravel_version" ]]; then
+  bl_version_seg "$IC_DB" Doctrine "$doctrine_version"
+fi
+
+# ── Rector (slot 6 — end) ──────────────────────────────────────────────────
+[[ -n "$rector_version" ]] \
+  && bl_version_seg "$IC_LINT" Rector "$rector_version"
 
 # ── Herd local URL ────────────────────────────────────────────────────────────
 if [[ -n "$herd_url" ]]; then
