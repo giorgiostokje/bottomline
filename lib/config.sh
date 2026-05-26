@@ -9,6 +9,8 @@
 #          CFG_BARS, CFG_SEP_RAW
 # Exports: cfg_str, cfg_json (functions)
 
+# shellcheck disable=SC2034  # all CFG_* vars are consumed by sourced consumers
+
 cfg_str()  { printf '%s' "$MERGED_CFG" | jq -r "$1 // empty" 2>/dev/null; }
 cfg_json() { printf '%s' "$MERGED_CFG" | jq -c "$1 // empty" 2>/dev/null; }
 

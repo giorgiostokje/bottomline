@@ -15,6 +15,9 @@
 # Exports: gauge, threshold_resolve (internal),
 #          build_* (internal), bl_render_main_line (public entry)
 
+# shellcheck disable=SC2154  # vars set by lib/state.sh and lib/config.sh
+# shellcheck disable=SC2034  # THR_COLOR_ANSI, THR_ICON set by threshold_resolve
+
 gauge() {
   local used=$1 total=$2 width=${3:-10}
   [[ -z "$used" || -z "$total" || "$total" -le 0 ]] && return

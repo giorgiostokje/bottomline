@@ -8,6 +8,8 @@
 #          IC_COST, IC_DANGER, SEP
 # Exports: get_icon (function)
 
+# shellcheck disable=SC2034  # output vars consumed by lib/segments.sh
+
 SEP=$'\xee\x82\xb4'
 
 NF_MODEL=$'\xef\x8b\x9b'   NF_BOLT=$'\xef\x83\xa7'   NF_CTX=$'\xef\x82\xae'

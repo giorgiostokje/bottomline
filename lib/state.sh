@@ -9,6 +9,9 @@
 #          five_pct, week_pct, five_rem, week_rem
 # Exports: j, secs_until_reset (internal helpers)
 
+# shellcheck disable=SC2034  # all output vars consumed by lib/segments.sh
+# shellcheck disable=SC2154  # vars set by caller, used by downstream
+
 j()    { printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null; }
 
 secs_until_reset() {

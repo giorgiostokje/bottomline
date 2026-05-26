@@ -10,6 +10,8 @@
 #          CFG_BG_EXP, C_R[0..7], C_G[0..7], C_B[0..7]
 # Exports: resolve_color_hex, resolve_color (functions)
 
+# shellcheck disable=SC2034  # output vars consumed by lib/segments.sh and lib/bars.sh
+
 resolve_color_hex() {
   case "$1" in
     text)         printf '%s' "$CFG_TEXT_HEX"   ;;

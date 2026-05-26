@@ -4,6 +4,7 @@
 # Source at the top of your bar (after the shebang and guard):
 #   source "$BOTTOMLINE_LIB/helpers.sh"
 
+# shellcheck source=lib/ansi.sh
 source "$(dirname "${BASH_SOURCE[0]}")/ansi.sh"
 
 # ── Cache helpers ─────────────────────────────────────────────────────────────
@@ -67,6 +68,7 @@ FG_CRIT=$(make_fg   "$(hex_to_rgb "${BOTTOMLINE_DANGER_HEX:-#e05a4e}")")
 # Collapses the cache-check + color-init prelude. Sets FG_TEXT, FG_ACCENT,
 # _bar_gradient, _bl_ttl, _bl_cache. On cache hit: prints cached output and
 # exit 0s the calling script. Reads $PROJ (must be set before calling).
+# shellcheck disable=SC2153  # PROJ is set by the calling bar script
 bl_bar_init() {
   local name="$1" fb_text="$2" fb_accent="$3" fb_gradient="$4"
   shift 4
