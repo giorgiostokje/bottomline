@@ -772,10 +772,11 @@ flush "$_bar_gradient"</code></pre>
   <tbody>
     <tr><td>1 Runtime</td><td>Rust YYYY [workspace]</td><td><code>Cargo.toml</code> <code>edition</code> key; <code>[workspace]</code> section for workspace flag.</td></tr>
     <tr><td>3 Framework</td><td>Actix Web / axum / Rocket / warp</td><td>Grep <code>Cargo.toml</code> for dep key.</td></tr>
+    <tr><td>3 Framework</td><td>Clap</td><td>Grep <code>Cargo.toml</code> for <code>clap</code> dep key.</td></tr>
+    <tr><td>4 Add-ons</td><td>Tokio, Tonic</td><td>Grep <code>Cargo.toml</code>. Tonic shown after Tokio.</td></tr>
     <tr><td>5 Testing</td><td>nextest</td><td><code>Cargo.lock</code> dep, <code>.config/nextest.toml</code>, or <code>cargo-nextest</code> binary.</td></tr>
     <tr><td>6 Tooling</td><td>Clippy</td><td><code>rust-toolchain.toml</code> component list or <code>cargo-clippy</code> binary.</td></tr>
-    <tr><td>6 Tooling</td><td>Tokio</td><td>Grep <code>Cargo.toml</code>.</td></tr>
-    <tr><td>6 Tooling</td><td>sqlx / diesel</td><td>Grep <code>Cargo.toml</code> (first match wins).</td></tr>
+    <tr><td>6 Tooling</td><td>sqlx / diesel / SeaORM</td><td>Grep <code>Cargo.toml</code>. SeaORM shown after Diesel.</td></tr>
   </tbody>
 </table>
 
@@ -803,6 +804,27 @@ flush "$_bar_gradient"</code></pre>
       </div>
       <div class="seg">
         <span class="seg-inner">
+          <span style="color:#d05a38">&#xF121;</span>
+          <span style="color:#f0ddd8">&nbsp;Clap</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#d05a38">&#xF0E4;</span>
+          <span style="color:#f0ddd8">&nbsp;Tokio</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#d05a38">&#xF022;</span>
+          <span style="color:#f0ddd8">&nbsp;Tonic</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
           <span style="color:#d05a38">&#xF040;</span>
           <span style="color:#f0ddd8">&nbsp;nextest</span>
         </span>
@@ -817,15 +839,8 @@ flush "$_bar_gradient"</code></pre>
       </div>
       <div class="seg">
         <span class="seg-inner">
-          <span style="color:#d05a38">&#xF0E4;</span>
-          <span style="color:#f0ddd8">&nbsp;Tokio</span>
-        </span>
-        <span class="seg-sep">&#xE0B4;</span>
-      </div>
-      <div class="seg">
-        <span class="seg-inner">
           <span style="color:#d05a38">&#xF1C0;</span>
-          <span style="color:#f0ddd8">&nbsp;sqlx</span>
+          <span style="color:#f0ddd8">&nbsp;SeaORM</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
@@ -849,13 +864,17 @@ flush "$_bar_gradient"</code></pre>
 <table>
   <thead><tr><th>Slot</th><th>Segment</th><th>Detection</th></tr></thead>
   <tbody>
-    <tr><td>1 Runtime</td><td>Python vX.Y [Poetry/PDM/Hatch/Pipenv]</td><td>Version: <code>.python-version</code> → <code>pyproject.toml requires-python</code> → <code>.tool-versions</code>. Tool: <code>[tool.poetry]</code> / <code>[tool.pdm]</code> / <code>[tool.hatch]</code> in pyproject.toml, or Pipfile.</td></tr>
-    <tr><td>3 Framework</td><td>Django vX / FastAPI vX / Flask vX</td><td>Grep all dep sources (pyproject.toml + requirements.txt + Pipfile). Only one framework shown. Version from poetry.lock, Pipfile.lock, or requirements.txt.</td></tr>
+    <tr><td>1 Runtime</td><td>Python vX.Y [uv/Poetry/PDM/Hatch/Pipenv]</td><td>Version: <code>.python-version</code> → <code>pyproject.toml requires-python</code> → <code>.tool-versions</code>. Tool: <code>uv.lock</code> or <code>[tool.uv]</code> (highest priority), then <code>[tool.poetry]</code> / <code>[tool.pdm]</code> / <code>[tool.hatch]</code> in pyproject.toml, or Pipfile.</td></tr>
+    <tr><td>3 Framework</td><td>Django vX / FastAPI vX / Flask vX</td><td>Grep all dep sources (pyproject.toml + requirements.txt + Pipfile). Only one framework shown. Version from poetry.lock, Pipfile.lock, uv.lock, or requirements.txt.</td></tr>
+    <tr><td>4 Add-ons</td><td>Pydantic, HTTPX</td><td>Dep in pyproject.toml, requirements.txt, or Pipfile.</td></tr>
     <tr><td>5 Testing</td><td>pytest</td><td>Dep in lockfile/pyproject, <code>pytest.ini</code>, or <code>pytest</code> binary.</td></tr>
     <tr><td>6 Tooling</td><td>ruff</td><td>Dep in lockfile/pyproject, <code>ruff.toml</code>, or <code>.ruff.toml</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>black</td><td>Dep in lockfile/pyproject or <code>[tool.black]</code> in pyproject.toml.</td></tr>
+    <tr><td>6 Tooling</td><td>isort</td><td>Dep in lockfile/pyproject or <code>[tool.isort]</code> in pyproject.toml. Suppressed when ruff is present.</td></tr>
     <tr><td>6 Tooling</td><td>mypy</td><td>Dep in lockfile/pyproject, <code>mypy.ini</code>, or <code>.mypy.ini</code>.</td></tr>
     <tr><td>6 Tooling</td><td>Celery</td><td>Dep in lockfile/pyproject.</td></tr>
     <tr><td>6 Tooling</td><td>SQLAlchemy</td><td>Dep in lockfile/pyproject. Suppressed when Django is present.</td></tr>
+    <tr><td>6 Tooling</td><td>Alembic</td><td>Dep in lockfile/pyproject. Shown after SQLAlchemy.</td></tr>
   </tbody>
 </table>
 
@@ -885,6 +904,13 @@ flush "$_bar_gradient"</code></pre>
       </div>
       <div class="seg">
         <span class="seg-inner">
+          <span style="color:#ffd740">&#xF02E;</span>
+          <span style="color:#c8dff0">&nbsp;Pydantic</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
           <span style="color:#ffd740">&#xF040;</span>
           <span style="color:#c8dff0">&nbsp;pytest</span>
         </span>
@@ -901,6 +927,27 @@ flush "$_bar_gradient"</code></pre>
         <span class="seg-inner">
           <span style="color:#ffd740">&#xF02E;</span>
           <span style="color:#c8dff0">&nbsp;mypy</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ffd740">&#xF0E2;</span>
+          <span style="color:#c8dff0">&nbsp;Celery</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ffd740">&#xF1C0;</span>
+          <span style="color:#c8dff0">&nbsp;SQLAlchemy</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#ffd740">&#xF1C0;</span>
+          <span style="color:#c8dff0">&nbsp;Alembic</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
@@ -926,10 +973,11 @@ flush "$_bar_gradient"</code></pre>
   <tbody>
     <tr><td>1 Runtime</td><td>Node vX.Y</td><td><code>.nvmrc</code> → <code>.node-version</code> → <code>engines.node</code> in package.json.</td></tr>
     <tr><td>2 Pkg mgr</td><td>pnpm / yarn / bun / npm</td><td>Lockfile presence: <code>pnpm-lock.yaml</code> / <code>yarn.lock</code> / <code>bun.lock{b}</code> / <code>package-lock.json</code>.</td></tr>
-    <tr><td>3 Framework</td><td>Next.js / React / Remix / Expo / React Native / Nuxt / Vue / SvelteKit / Svelte / Angular / Astro / Electron / Vite</td><td>Package.json dep key. Vite suppressed when implied by Nuxt, SvelteKit, or Astro. Versions read from <code>node_modules/{pkg}/package.json</code>.</td></tr>
+    <tr><td>3 Framework</td><td>Next.js / React / Remix / Expo / React Native / Nuxt / Vue / SvelteKit / Svelte / Angular / Astro / Electron / SolidJS / Preact / Fastify / NestJS / Express / Hono / Vite</td><td>Package.json dep key. NestJS suppresses Express. Vite suppressed when implied by Nuxt, SvelteKit, or Astro. Versions read from <code>node_modules/{pkg}/package.json</code>.</td></tr>
+    <tr><td>4 Add-ons</td><td>shadcn/ui / TanStack Query / tRPC / Inertia.js</td><td><code>components.json</code> for shadcn/ui. Dep key for others.</td></tr>
     <tr><td>6 Language</td><td>TypeScript</td><td><code>typescript</code> dep key.</td></tr>
-    <tr><td>5 Testing</td><td>Jest / Vitest / Playwright / Cypress</td><td>Package.json dep keys.</td></tr>
-    <tr><td>6 Tooling</td><td>ESLint / Prettier / Biome / Tailwind CSS</td><td>Dep key or config file (<code>.eslintrc*</code>, <code>eslint.config.*</code>, <code>.prettierrc*</code>, <code>biome.json</code>).</td></tr>
+    <tr><td>5 Testing</td><td>Jest / Vitest / Testing Library / Storybook / Playwright / Cypress</td><td>Package.json dep keys. Testing Library: any <code>@testing-library/*</code> dep.</td></tr>
+    <tr><td>6 Tooling</td><td>Oxlint / ESLint / Prettier / Biome / Prisma / Drizzle / Tailwind CSS / MUI / DaisyUI / UnoCSS</td><td>Dep key or config file (<code>.eslintrc*</code>, <code>eslint.config.*</code>, <code>.prettierrc*</code>, <code>biome.json</code>). DaisyUI only shown with Tailwind. Sub-order: static analysis → ORM/DB → styling.</td></tr>
   </tbody>
 </table>
 
@@ -965,6 +1013,13 @@ flush "$_bar_gradient"</code></pre>
       </div>
       <div class="seg">
         <span class="seg-inner">
+          <span style="color:#f7df1e">&#xE749;</span>
+          <span style="color:#f5f0c8">&nbsp;shadcn/ui</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
           <span style="color:#f7df1e">&#xE628;</span>
           <span style="color:#f5f0c8">&nbsp;TypeScript&nbsp;</span>
           <span style="color:#f7df1e">v5.4</span>
@@ -980,6 +1035,13 @@ flush "$_bar_gradient"</code></pre>
       </div>
       <div class="seg">
         <span class="seg-inner">
+          <span style="color:#f7df1e">&#xF040;</span>
+          <span style="color:#f5f0c8">&nbsp;Testing Library</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
           <span style="color:#f7df1e">&#xF00C;</span>
           <span style="color:#f5f0c8">&nbsp;ESLint</span>
         </span>
@@ -987,7 +1049,14 @@ flush "$_bar_gradient"</code></pre>
       </div>
       <div class="seg">
         <span class="seg-inner">
-          <span style="color:#f7df1e">&#xE6A9;</span>
+          <span style="color:#f7df1e">&#xF1C0;</span>
+          <span style="color:#f5f0c8">&nbsp;Prisma</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#f7df1e">&#xE749;</span>
           <span style="color:#f5f0c8">&nbsp;Tailwind CSS</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
@@ -1086,10 +1155,13 @@ flush "$_bar_gradient"</code></pre>
   <tbody>
     <tr><td>1 Runtime</td><td>Ruby vX.Y</td><td><code>.ruby-version</code> or <code>ruby -e 'print RUBY_VERSION'</code>.</td></tr>
     <tr><td>3 Framework</td><td>Rails vX / Sinatra vX / Hanami vX</td><td>Grep Gemfile for <code>gem 'rails'</code> etc. Versions from Gemfile.lock.</td></tr>
-    <tr><td>5 Testing</td><td>RSpec / Minitest</td><td>Grep Gemfile.lock for <code>rspec</code> / <code>minitest</code>.</td></tr>
+    <tr><td>5 Testing</td><td>RSpec / Minitest / factory_bot</td><td>Grep Gemfile.lock for <code>rspec</code> / <code>minitest</code> / <code>factory_bot</code>.</td></tr>
+    <tr><td>6 Tooling</td><td>Sorbet</td><td>Grep Gemfile.lock for <code>sorbet</code> or <code>sorbet-runtime</code>.</td></tr>
     <tr><td>6 Tooling</td><td>RuboCop vX</td><td>Grep Gemfile.lock for locked version, or <code>.rubocop.yml</code> presence.</td></tr>
+    <tr><td>6 Tooling</td><td>Brakeman</td><td>Grep Gemfile.lock or Gemfile for <code>brakeman</code>.</td></tr>
     <tr><td>6 Tooling</td><td>Sidekiq</td><td>Grep Gemfile.lock.</td></tr>
     <tr><td>6 Tooling</td><td>Devise</td><td>Grep Gemfile.lock.</td></tr>
+    <tr><td>6 Tooling</td><td>Rake</td><td><code>Rakefile</code> presence.</td></tr>
   </tbody>
 </table>
 
@@ -1125,9 +1197,30 @@ flush "$_bar_gradient"</code></pre>
       </div>
       <div class="seg">
         <span class="seg-inner">
+          <span style="color:#e05060">&#xF040;</span>
+          <span style="color:#f5d0d0">&nbsp;factory_bot</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#e05060">&#xF02E;</span>
+          <span style="color:#f5d0d0">&nbsp;Sorbet</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
           <span style="color:#e05060">&#xF00C;</span>
           <span style="color:#f5d0d0">&nbsp;RuboCop&nbsp;</span>
           <span style="color:#e05060">v1.65</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#e05060">&#xF00C;</span>
+          <span style="color:#f5d0d0">&nbsp;Brakeman</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
@@ -1142,6 +1235,13 @@ flush "$_bar_gradient"</code></pre>
         <span class="seg-inner">
           <span style="color:#e05060">&#xF0A3;</span>
           <span style="color:#f5d0d0">&nbsp;Devise</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#e05060">&#xF121;</span>
+          <span style="color:#f5d0d0">&nbsp;Rake</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
@@ -1171,6 +1271,8 @@ flush "$_bar_gradient"</code></pre>
     <tr><td>5 Testing</td><td>Pest vX / PHPUnit vX</td><td>composer.lock. Pest suppresses PHPUnit.</td></tr>
     <tr><td>6 Tooling</td><td>Larastan vX / PHPStan vX</td><td>composer.lock or <code>phpstan.{neon,dist.neon}</code>. Larastan (<code>nunomaduro/larastan</code>) suppresses PHPStan when both are present.</td></tr>
     <tr><td>6 Tooling</td><td>Pint vX / PHP CS Fixer vX</td><td>composer.lock or <code>.php-cs-fixer.{php,dist.php}</code>. Pint (<code>laravel/pint</code>) suppresses PHP CS Fixer when both are present.</td></tr>
+    <tr><td>6 Tooling</td><td>Doctrine vX</td><td>composer.lock <code>doctrine/orm</code>. Suppressed when Laravel is detected.</td></tr>
+    <tr><td>6 Tooling</td><td>Rector vX</td><td>composer.lock <code>rector/rector</code>. End of slot 6.</td></tr>
     <tr><td>6 Tooling</td><td>Herd URL (site.test)</td><td><code>herd</code> binary on PATH → derives URL from project dirname.</td></tr>
   </tbody>
 </table>
@@ -1227,6 +1329,14 @@ flush "$_bar_gradient"</code></pre>
           <span style="color:#9898e0">&#xF031;</span>
           <span style="color:#ddd6f3">&nbsp;Pint&nbsp;</span>
           <span style="color:#9898e0">v1.18</span>
+        </span>
+        <span class="seg-sep">&#xE0B4;</span>
+      </div>
+      <div class="seg">
+        <span class="seg-inner">
+          <span style="color:#9898e0">&#xF00C;</span>
+          <span style="color:#ddd6f3">&nbsp;Rector&nbsp;</span>
+          <span style="color:#9898e0">v1.2</span>
         </span>
         <span class="seg-sep">&#xE0B4;</span>
       </div>
