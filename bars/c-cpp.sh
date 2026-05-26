@@ -24,6 +24,8 @@ bl_icon_set IC_BUILD     $'\xef\x80\x93' '🔨'
 bl_icon_set IC_TEST      $'\xef\x81\x80' '🧪'
 bl_icon_set IC_LINT      $'\xef\x80\x8c' '✓'
 bl_icon_set IC_PKG       $'\xef\x80\xbc' '📦'
+bl_icon_set IC_DATA      $'\xef\x87\x80' '{ }'
+bl_icon_set IC_LOG       $'\xef\x81\xab' '📋'
 
 
 # ── Slot 1: Detect language (C, C++, or C/C++) ────────────────────────────────
@@ -118,6 +120,15 @@ elif $has_meson && [[ -f "$meson_for_test" ]]; then
   grep -qi  'doctest'             "$meson_for_test" 2>/dev/null && has_doctest=true
 fi
 
+has_benchmark=false
+if $has_cmake && [[ -f "$PROJ/CMakeLists.txt" ]]; then
+  grep -qiE 'benchmark' "$PROJ/CMakeLists.txt" 2>/dev/null && has_benchmark=true
+fi
+if ! $has_benchmark; then
+  grep -qi 'benchmark' "$PROJ/conanfile.txt" 2>/dev/null && has_benchmark=true
+  grep -qi 'benchmark' "$PROJ/conanfile.py" 2>/dev/null && has_benchmark=true
+fi
+
 # ── Slot 6: Tooling ───────────────────────────────────────────────────────────
 has_clangtidy=false has_cppcheck=false has_clangformat=false
 [[ -f "$PROJ/.clang-tidy" ]] && has_clangtidy=true
@@ -129,6 +140,23 @@ if $has_cmake && [[ -f "$PROJ/CMakeLists.txt" ]]; then
 fi
 [[ -f "$PROJ/.cppcheck" ]] && has_cppcheck=true
 [[ -f "$PROJ/.clang-format" ]] && has_clangformat=true
+
+has_nlohmann_json=false
+has_spdlog=false
+if $has_cmake && [[ -f "$PROJ/CMakeLists.txt" ]]; then
+  grep -qi 'nlohmann' "$PROJ/CMakeLists.txt" 2>/dev/null && has_nlohmann_json=true
+  grep -qi 'spdlog'   "$PROJ/CMakeLists.txt" 2>/dev/null && has_spdlog=true
+fi
+if ! $has_nlohmann_json; then
+  grep -qi 'nlohmann_json' "$PROJ/conanfile.txt" 2>/dev/null && has_nlohmann_json=true
+  grep -qi 'nlohmann_json' "$PROJ/conanfile.py" 2>/dev/null && has_nlohmann_json=true
+  grep -qi 'nlohmann-json' "$PROJ/vcpkg.json" 2>/dev/null && has_nlohmann_json=true
+fi
+if ! $has_spdlog; then
+  grep -qi 'spdlog' "$PROJ/conanfile.txt" 2>/dev/null && has_spdlog=true
+  grep -qi 'spdlog' "$PROJ/conanfile.py" 2>/dev/null && has_spdlog=true
+  grep -qi 'spdlog' "$PROJ/vcpkg.json" 2>/dev/null && has_spdlog=true
+fi
 
 # ── Slot 1: Runtime ───────────────────────────────────────────────────────────
 lang_seg="${FG_ACCENT}${IC_CPLUSPLUS} ${FG_TEXT}${lang}"
@@ -152,11 +180,14 @@ $has_catch2    && bl_seg "$IC_TEST" Catch2
 $has_doctest   && bl_seg "$IC_TEST" doctest
 $has_boosttest && bl_seg "$IC_TEST" Boost.Test
 $has_ctest     && bl_seg "$IC_TEST" CTest
+$has_benchmark && bl_seg "$IC_TEST" Benchmark
 
 # ── Slot 6: Tooling ───────────────────────────────────────────────────────────
 # Static analysis first, then formatter
 $has_clangtidy    && bl_seg "$IC_LINT" clang-tidy
 $has_cppcheck     && bl_seg "$IC_LINT" cppcheck
 $has_clangformat  && bl_seg "$IC_LINT" clang-format
+$has_nlohmann_json && bl_seg "$IC_DATA" 'nlohmann/json'
+$has_spdlog       && bl_seg "$IC_LOG" spdlog
 
 bl_bar_finish "$_bar_gradient"

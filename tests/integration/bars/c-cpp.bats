@@ -162,3 +162,101 @@ CMAKE
   bar_run c-cpp "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"C"* ]]
 }
+
+# ── Google Benchmark (slot 5) ────────────────────────────────────────────────
+
+@test "c-cpp: shows Benchmark when detected in CMakeLists.txt" {
+  cat > "$FAKE_PROJ/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.20)
+project(MyApp CXX)
+find_package(benchmark REQUIRED)
+CMAKE
+  bar_run c-cpp "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Benchmark"* ]]
+}
+
+@test "c-cpp: shows Benchmark when detected in conanfile.txt" {
+  cat > "$FAKE_PROJ/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.20)
+project(MyApp CXX)
+CMAKE
+  printf '[requires]\nbenchmark/1.6.0\n' > "$FAKE_PROJ/conanfile.txt"
+  bar_run c-cpp "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Benchmark"* ]]
+}
+
+@test "c-cpp: Benchmark coexists with GoogleTest" {
+  cat > "$FAKE_PROJ/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.20)
+project(MyApp CXX)
+find_package(GTest REQUIRED)
+find_package(benchmark REQUIRED)
+CMAKE
+  bar_run c-cpp "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"GoogleTest"* ]]
+  [[ "$BAR_OUTPUT" == *"Benchmark"* ]]
+}
+
+# ── nlohmann/json (slot 6) ───────────────────────────────────────────────────
+
+@test "c-cpp: shows nlohmann/json when detected in CMakeLists.txt" {
+  cat > "$FAKE_PROJ/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.20)
+project(MyApp CXX)
+find_package(nlohmann_json REQUIRED)
+CMAKE
+  bar_run c-cpp "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"nlohmann/json"* ]]
+}
+
+@test "c-cpp: shows nlohmann/json when detected in conanfile.txt" {
+  cat > "$FAKE_PROJ/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.20)
+project(MyApp CXX)
+CMAKE
+  printf '[requires]\nnlohmann_json/3.10.0\n' > "$FAKE_PROJ/conanfile.txt"
+  bar_run c-cpp "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"nlohmann/json"* ]]
+}
+
+@test "c-cpp: shows nlohmann/json when detected in vcpkg.json" {
+  cat > "$FAKE_PROJ/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.20)
+project(MyApp CXX)
+CMAKE
+  printf '{"dependencies": ["nlohmann-json"]}\n' > "$FAKE_PROJ/vcpkg.json"
+  bar_run c-cpp "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"nlohmann/json"* ]]
+}
+
+# ── spdlog (slot 6) ──────────────────────────────────────────────────────────
+
+@test "c-cpp: shows spdlog when detected in CMakeLists.txt" {
+  cat > "$FAKE_PROJ/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.20)
+project(MyApp CXX)
+find_package(spdlog REQUIRED)
+CMAKE
+  bar_run c-cpp "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"spdlog"* ]]
+}
+
+@test "c-cpp: shows spdlog when detected in conanfile.txt" {
+  cat > "$FAKE_PROJ/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.20)
+project(MyApp CXX)
+CMAKE
+  printf '[requires]\nspdlog/1.10.0\n' > "$FAKE_PROJ/conanfile.txt"
+  bar_run c-cpp "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"spdlog"* ]]
+}
+
+@test "c-cpp: shows spdlog when detected in vcpkg.json" {
+  cat > "$FAKE_PROJ/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.20)
+project(MyApp CXX)
+CMAKE
+  printf '{"dependencies": ["spdlog"]}\n' > "$FAKE_PROJ/vcpkg.json"
+  bar_run c-cpp "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"spdlog"* ]]
+}
