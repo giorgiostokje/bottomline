@@ -5,17 +5,6 @@
 bats_require_minimum_version 1.5.0
 load '../helpers'
 
-_bl_extract() {
-  local name="$1"; shift
-  local f body
-  for f in "$@"; do
-    [[ -f "$f" ]] || continue
-    body=$(sed -n "/^${name}() {\$/,/^\}$/p" "$f")
-    [[ -n "$body" ]] && eval "$body" && return 0
-  done
-  return 1
-}
-
 setup() {
   BOTTOMLINE_RESET=$'\e[0m' BOTTOMLINE_BOLD=$'\e[1m' BOTTOMLINE_SEP='|'
   BOTTOMLINE_TEXT_HEX='#cccccc' BOTTOMLINE_ACCENT_HEX='#ff0000'

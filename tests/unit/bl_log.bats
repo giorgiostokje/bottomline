@@ -108,7 +108,7 @@ teardown() {
 @test "bl_log: log file created with mode 0600" {
   BOTTOMLINE_LOG_LEVEL=debug
   bl_log debug mybar "test"
-  local perms
-  perms=$(ls -la "$LOG_FILE" 2>/dev/null | awk '{print substr($1,1,10)}')
-  [ "$perms" = "-rw-------" ]
+  local mode
+  mode=$(stat -f '%Lp' "$LOG_FILE" 2>/dev/null || stat -c '%a' "$LOG_FILE" 2>/dev/null)
+  [ "$mode" = "600" ]
 }

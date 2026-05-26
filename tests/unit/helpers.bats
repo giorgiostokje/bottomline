@@ -9,8 +9,8 @@ setup() {
 }
 
 @test "bl_cache_path: returns path matching 4-segment format" {
-  result=$(bl_cache_path "go" 5 "/some/project")
-  [[ "$result" =~ ^/tmp/bl_go_[0-9a-f]{8}_[0-9a-f]{8}_[0-9]+\.txt$ ]]
+  result=$(BOTTOMLINE_CACHE_DIR="${TMPDIR:-/tmp}" bl_cache_path "go" 5 "/some/project")
+  [[ "$result" =~ /bl_go_[0-9a-f]{8}_[0-9a-f]{8}_[0-9]+\.txt$ ]]
 }
 
 @test "bl_cache_path: same inputs within same bucket return identical path" {
@@ -76,7 +76,7 @@ setup() {
 
 @test "bl_cache_write: removes stale files for same bar and project" {
   local hash; hash=$(printf '%s' "/some/project" | (md5sum 2>/dev/null || md5) | cut -c1-8)
-  local stale="/tmp/bl_go_${hash}_deadbeef_1.txt"
+  local stale="${TMPDIR:-/tmp}/bl_go_${hash}_deadbeef_1.txt"
   printf 'stale' > "$stale"
   local cache_file; cache_file=$(bl_cache_path "go" 5 "/some/project")
   bl_cache_write "$cache_file" "fresh"
@@ -87,7 +87,7 @@ setup() {
 @test "bl_cache_write: removes stale file with different fingerprint same project" {
   local projhash; projhash=$(printf '%s' "/some/project" | (md5sum 2>/dev/null || md5) | cut -c1-8)
   local bucket; bucket=$(( $(date +%s) / (5 * 60) ))
-  local stale="/tmp/bl_go_${projhash}_00000000_${bucket}.txt"
+  local stale="${TMPDIR:-/tmp}/bl_go_${projhash}_00000000_${bucket}.txt"
   printf 'stale' > "$stale"
   local f; f=$(mktemp)
   local cache_file; cache_file=$(bl_cache_path "go" 5 "/some/project" "$f")

@@ -5,17 +5,6 @@
 bats_require_minimum_version 1.5.0
 load '../helpers'
 
-_bl_extract() {
-  local name="$1"; shift
-  local f body
-  for f in "$@"; do
-    [[ -f "$f" ]] || continue
-    body=$(sed -n "/^${name}() {\$/,/^\}$/p" "$f")
-    [[ -n "$body" ]] && eval "$body" && return 0
-  done
-  return 1
-}
-
 setup() {
   source "$BOTTOMLINE_ROOT/lib/functions.sh"
 

@@ -16,6 +16,23 @@ strip_ansi() {
 }
 
 # ---------------------------------------------------------------------------
+# Function extraction helper (for unit tests)
+# ---------------------------------------------------------------------------
+
+# Extract a function body from source files and eval it into the current shell.
+# Usage: _bl_extract function_name file [file ...]
+_bl_extract() {
+  local name="$1"; shift
+  local f body
+  for f in "$@"; do
+    [[ -f "$f" ]] || continue
+    body=$(sed -n "/^${name}() {\$/,/^\}$/p" "$f")
+    [[ -n "$body" ]] && eval "$body" && return 0
+  done
+  return 1
+}
+
+# ---------------------------------------------------------------------------
 # Config-isolated script runner
 # ---------------------------------------------------------------------------
 

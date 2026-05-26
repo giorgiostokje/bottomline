@@ -13,7 +13,7 @@ setup() {
   BOTTOMLINE_GRADIENT=
   BOTTOMLINE_BAR_REFRESH_MINUTES=0
   BOTTOMLINE_CACHE_DIR=$(mktemp -d)
-  PROJ="/tmp/_bl_test_proj_${RANDOM}"
+  PROJ="$BOTTOMLINE_CACHE_DIR/_bl_test_proj"
   mkdir -p "$PROJ"
   source "$BOTTOMLINE_ROOT/lib/helpers.sh"
 }
