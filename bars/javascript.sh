@@ -23,11 +23,14 @@ bl_icon_set IC_VUE      $'\xee\x9e\xa8' '💚'  # U+E7A8  nf-dev-vuejs
 bl_icon_set IC_NUXT     $'\xee\x9e\xa8' '💚'  # U+E7A8  nf-dev-vuejs  (no dedicated Nuxt glyph)
 bl_icon_set IC_SVELTE   $'\xee\x9f\xab' '🧡'  # U+E7EB  nf-dev-svelte
 bl_icon_set IC_SVELTEKIT $'\xee\x9f\xab' '🧡' # U+E7EB  nf-dev-svelte
+bl_icon_set IC_SOLID    $'\xef\x84\xb5' '⬡'   # U+F135  nf-fa-rocket  (SolidJS)
 bl_icon_set IC_VITE     $'\xef\x83\xa7' '⚡'  # U+F0E7  nf-fa-bolt
 bl_icon_set IC_ANGULAR  $'\xee\x9d\x93' '🔴'  # U+E753  nf-dev-angularjs
 bl_icon_set IC_ASTRO    $'\xef\x84\xb5' '🚀'  # U+F135  nf-fa-rocket
 bl_icon_set IC_REMIX    $'\xef\x84\xa1' '♻'   # U+F121  nf-fa-code
 bl_icon_set IC_ELECTRON $'\xee\x9d\x8a' '⚡'  # U+E74A  nf-dev-electron
+bl_icon_set IC_WEB      $'\xef\x83\xac' '🌐'  # U+F0AC  nf-fa-globe
+bl_icon_set IC_NEST     $'\xef\x83\xac' '🐈'  # U+F0AC  nf-fa-globe  (NestJS)
 bl_icon_set IC_TS       $'\xee\x98\xa8' '🔷'  # U+E628  nf-seti-typescript
 bl_icon_set IC_NODE     $'\xee\x9c\x98' '🟢'  # U+E718  nf-seti-nodejs
 bl_icon_set IC_PKG      $'\xef\x92\xae' '📦'  # U+F4AE  nf-mdi-package
@@ -35,6 +38,7 @@ bl_icon_set IC_TEST     $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
 bl_icon_set IC_CSS      $'\xee\x9d\x89' '🎨'  # U+E749  nf-dev-css3
 bl_icon_set IC_LINT     $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check
 bl_icon_set IC_FMT      $'\xef\x80\xb1' '🖋'  # U+F031  nf-fa-font
+bl_icon_set IC_DB       $'\xef\x87\x80' '🗄'  # U+F1C0  nf-fa-database
 
 
 # ── Node version (priority: .nvmrc → .node-version → engines.node) ────────────
@@ -70,11 +74,17 @@ pkg="$PROJ/package.json"
 has_react=false   has_next=false    has_rn=false      has_expo=false
 has_vue=false     has_nuxt=false
 has_svelte=false  has_sveltekit=false
+has_solid=false   has_preact=false
 has_vite=false    has_angular=false
 has_ts=false      has_astro=false
 has_remix=false   has_electron=false
+has_express=false has_fastify=false has_nest=false    has_hono=false
+has_shadcn=false  has_tanstack_query=false has_trpc=false has_inertia=false
 has_jest=false has_vitest=false has_playwright=false has_cypress=false
+has_testing_library=false has_storybook=false
 has_tailwind=false has_eslint=false has_prettier=false has_biome=false
+has_oxlint=false  has_prisma=false  has_drizzle=false
+has_mui=false     has_daisyui=false has_unocss=false
 
 while IFS= read -r dep; do
   case "$dep" in
@@ -86,6 +96,8 @@ while IFS= read -r dep; do
     nuxt)             has_nuxt=true      ;;
     svelte)           has_svelte=true    ;;
     @sveltejs/kit)    has_sveltekit=true ;;
+    solid-js)         has_solid=true     ;;
+    preact)           has_preact=true    ;;
     vite)             has_vite=true      ;;
     @angular/core)    has_angular=true   ;;
     typescript)       has_ts=true        ;;
@@ -93,14 +105,34 @@ while IFS= read -r dep; do
     @remix-run/react) has_remix=true     ;;
     @remix-run/node)  has_remix=true     ;;
     electron)         has_electron=true  ;;
+    express)          has_express=true   ;;
+    fastify)          has_fastify=true   ;;
+    @nestjs/core)     has_nest=true      ;;
+    hono)             has_hono=true      ;;
+    @tanstack/react-query) has_tanstack_query=true ;;
+    @trpc/server)     has_trpc=true      ;;
+    @trpc/client)     has_trpc=true      ;;
+    @inertiajs/react) has_inertia=true   ;;
+    @inertiajs/vue3)  has_inertia=true   ;;
     jest)             has_jest=true      ;;
     vitest)           has_vitest=true    ;;
     '@playwright/test') has_playwright=true ;;
     cypress)          has_cypress=true   ;;
+    storybook)        has_storybook=true ;;
+    @storybook/react) has_storybook=true ;;
+    @storybook/vue3)  has_storybook=true ;;
+    @storybook/svelte) has_storybook=true ;;
+    oxlint)           has_oxlint=true    ;;
+    prisma)           has_prisma=true    ;;
+    @prisma/client)   has_prisma=true    ;;
+    drizzle-orm)      has_drizzle=true   ;;
     tailwindcss)      has_tailwind=true  ;;
     eslint)           has_eslint=true    ;;
     prettier)         has_prettier=true  ;;
     '@biomejs/biome') has_biome=true     ;;
+    @mui/material)    has_mui=true       ;;
+    daisyui)          has_daisyui=true   ;;
+    unocss)           has_unocss=true    ;;
   esac
 done < <(jq -r '((.dependencies // {}) + (.devDependencies // {})) | keys[]' "$pkg" 2>/dev/null)
 
@@ -108,6 +140,9 @@ done < <(jq -r '((.dependencies // {}) + (.devDependencies // {})) | keys[]' "$p
 if ! $has_eslint; then [[ -f "$PROJ/.eslintrc" || -f "$PROJ/.eslintrc.js" || -f "$PROJ/.eslintrc.cjs" || -f "$PROJ/.eslintrc.json" || -f "$PROJ/eslint.config.js" || -f "$PROJ/eslint.config.mjs" ]] && has_eslint=true; fi
 if ! $has_prettier; then [[ -f "$PROJ/.prettierrc" || -f "$PROJ/.prettierrc.json" || -f "$PROJ/.prettierrc.js" || -f "$PROJ/prettier.config.js" ]] && has_prettier=true; fi
 if ! $has_biome; then [[ -f "$PROJ/biome.json" ]] && has_biome=true; fi
+[[ -f "$PROJ/components.json" ]] && has_shadcn=true
+_testing_lib_dep=$(jq -r '((.dependencies // {}) + (.devDependencies // {})) | keys[] | select(startswith("@testing-library/"))' "$pkg" 2>/dev/null | head -1)
+[[ -n "$_testing_lib_dep" ]] && has_testing_library=true
 
 # Build a segment with icon, label, and optional version from node_modules.
 js_seg() {
@@ -144,6 +179,14 @@ $has_sveltekit && js_seg "$IC_SVELTEKIT" "SvelteKit" "@sveltejs/kit"
 $has_angular  && js_seg "$IC_ANGULAR"  "Angular"  "@angular/core"
 $has_astro    && js_seg "$IC_ASTRO"    "Astro"    "astro"
 $has_electron && js_seg "$IC_ELECTRON" "Electron" "electron"
+$has_solid    && js_seg "$IC_SOLID"    "SolidJS"  "solid-js"
+$has_preact   && js_seg "$IC_REACT"    "Preact"   "preact"
+
+# ── Server frameworks ─────────────────────────────────────────────────────────
+$has_fastify  && js_seg "$IC_WEB"      "Fastify"  "fastify"
+$has_nest     && js_seg "$IC_NEST"     "NestJS"   "@nestjs/core"
+( $has_express && ! $has_nest ) && js_seg "$IC_WEB" "Express" "express"
+$has_hono     && js_seg "$IC_WEB"      "Hono"     "hono"
 
 # Vite — suppress when implied by Vite-native meta-frameworks.
 ( $has_vite && ! $has_nuxt && ! $has_sveltekit && ! $has_astro ) \
@@ -152,16 +195,31 @@ $has_electron && js_seg "$IC_ELECTRON" "Electron" "electron"
 # ── Language ──────────────────────────────────────────────────────────────────
 $has_ts && js_seg "$IC_TS" "TypeScript" "typescript"
 
+# ── Add-ons ──────────────────────────────────────────────────────────────────
+$has_shadcn        && bl_seg "$IC_CSS" "shadcn/ui"
+$has_tanstack_query && js_seg "$IC_WEB" "TanStack Query" "@tanstack/react-query"
+$has_trpc          && js_seg "$IC_WEB" "tRPC" "@trpc/server"
+$has_inertia       && js_seg "$IC_WEB" "Inertia" "@inertiajs/react"
+
 # Slot 5: Testing
-$has_jest       && js_seg "$IC_TEST" "Jest" "jest"
-$has_vitest     && js_seg "$IC_TEST" "Vitest" "vitest"
-$has_playwright && js_seg "$IC_TEST" "Playwright" "@playwright/test"
-$has_cypress    && js_seg "$IC_TEST" "Cypress" "cypress"
+$has_jest            && js_seg "$IC_TEST" "Jest" "jest"
+$has_vitest          && js_seg "$IC_TEST" "Vitest" "vitest"
+$has_testing_library && bl_seg "$IC_TEST" "Testing Library"
+$has_storybook       && bl_seg "$IC_TEST" "Storybook"
+$has_playwright      && js_seg "$IC_TEST" "Playwright" "@playwright/test"
+$has_cypress         && js_seg "$IC_TEST" "Cypress" "cypress"
 
 # Slot 6: Tooling
-$has_eslint   && js_seg "$IC_LINT" "ESLint"       "eslint"
-$has_prettier && js_seg "$IC_FMT"  "Prettier"     "prettier"
-$has_biome    && js_seg "$IC_LINT" "Biome"        "@biomejs/biome"
-$has_tailwind && js_seg "$IC_CSS"  "Tailwind CSS" "tailwindcss"
+# Sub-order: static analysis → ORM/DB → styling
+$has_oxlint   && js_seg "$IC_LINT" "Oxlint"        "oxlint"
+$has_eslint   && js_seg "$IC_LINT" "ESLint"        "eslint"
+$has_prettier && js_seg "$IC_FMT"  "Prettier"      "prettier"
+$has_biome    && js_seg "$IC_LINT" "Biome"         "@biomejs/biome"
+$has_prisma   && js_seg "$IC_DB"   "Prisma"        "prisma"
+$has_drizzle  && js_seg "$IC_DB"   "Drizzle"       "drizzle-orm"
+$has_tailwind && js_seg "$IC_CSS"  "Tailwind CSS"  "tailwindcss"
+$has_mui      && js_seg "$IC_CSS"  "MUI"           "@mui/material"
+( $has_daisyui && $has_tailwind ) && bl_seg "$IC_CSS" "DaisyUI"
+$has_unocss   && js_seg "$IC_CSS"  "UnoCSS"        "unocss"
 
 bl_bar_finish "$_bar_gradient"

@@ -156,3 +156,156 @@ teardown() { teardown_fake_proj; }
   bar_run javascript "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"Biome"* ]]
 }
+
+@test "javascript: SolidJS detected from solid-js dep" {
+  printf '%s\n' '{"dependencies":{"solid-js":"^1.8.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"SolidJS"* ]]
+}
+
+@test "javascript: Preact detected from preact dep" {
+  printf '%s\n' '{"dependencies":{"preact":"^10.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Preact"* ]]
+}
+
+@test "javascript: Express detected from express dep" {
+  printf '%s\n' '{"dependencies":{"express":"^4.18.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Express"* ]]
+}
+
+@test "javascript: Fastify detected from fastify dep" {
+  printf '%s\n' '{"dependencies":{"fastify":"^4.25.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Fastify"* ]]
+}
+
+@test "javascript: NestJS detected from @nestjs/core dep" {
+  printf '%s\n' '{"dependencies":{"@nestjs/core":"^10.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"NestJS"* ]]
+}
+
+@test "javascript: Hono detected from hono dep" {
+  printf '%s\n' '{"dependencies":{"hono":"^3.11.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Hono"* ]]
+}
+
+@test "javascript: NestJS suppresses Express" {
+  printf '%s\n' '{"dependencies":{"@nestjs/core":"^10.0.0","express":"^4.18.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"NestJS"* ]]
+  [[ "$BAR_OUTPUT" != *"Express"* ]]
+}
+
+@test "javascript: shadcn/ui detected from components.json" {
+  printf '{"name":"x"}\n' > "$FAKE_PROJ/package.json"
+  printf '{"style":"default"}\n' > "$FAKE_PROJ/components.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"shadcn/ui"* ]]
+}
+
+@test "javascript: TanStack Query detected from @tanstack/react-query dep" {
+  printf '%s\n' '{"dependencies":{"@tanstack/react-query":"^5.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"TanStack Query"* ]]
+}
+
+@test "javascript: tRPC detected from @trpc/server dep" {
+  printf '%s\n' '{"dependencies":{"@trpc/server":"^10.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"tRPC"* ]]
+}
+
+@test "javascript: tRPC detected from @trpc/client dep" {
+  printf '%s\n' '{"dependencies":{"@trpc/client":"^10.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"tRPC"* ]]
+}
+
+@test "javascript: Inertia detected from @inertiajs/react dep" {
+  printf '%s\n' '{"dependencies":{"@inertiajs/react":"^1.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Inertia"* ]]
+}
+
+@test "javascript: Inertia detected from @inertiajs/vue3 dep" {
+  printf '%s\n' '{"dependencies":{"@inertiajs/vue3":"^1.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Inertia"* ]]
+}
+
+@test "javascript: Testing Library detected from @testing-library/react dep" {
+  printf '%s\n' '{"devDependencies":{"@testing-library/react":"^14.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Testing Library"* ]]
+}
+
+@test "javascript: Testing Library shown alongside Jest" {
+  printf '%s\n' '{"devDependencies":{"jest":"^29.0.0","@testing-library/react":"^14.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Testing Library"* ]]
+  [[ "$BAR_OUTPUT" == *"Jest"* ]]
+}
+
+@test "javascript: Storybook detected from storybook dep" {
+  printf '%s\n' '{"devDependencies":{"storybook":"^7.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Storybook"* ]]
+}
+
+@test "javascript: Storybook detected from @storybook/react dep" {
+  printf '%s\n' '{"devDependencies":{"@storybook/react":"^7.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Storybook"* ]]
+}
+
+@test "javascript: Oxlint detected from oxlint dep" {
+  printf '%s\n' '{"devDependencies":{"oxlint":"^0.1.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Oxlint"* ]]
+}
+
+@test "javascript: Prisma detected from prisma dep" {
+  printf '%s\n' '{"devDependencies":{"prisma":"^5.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Prisma"* ]]
+}
+
+@test "javascript: Prisma detected from @prisma/client dep" {
+  printf '%s\n' '{"dependencies":{"@prisma/client":"^5.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Prisma"* ]]
+}
+
+@test "javascript: Drizzle detected from drizzle-orm dep" {
+  printf '%s\n' '{"dependencies":{"drizzle-orm":"^0.29.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Drizzle"* ]]
+}
+
+@test "javascript: MUI detected from @mui/material dep" {
+  printf '%s\n' '{"dependencies":{"@mui/material":"^5.15.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"MUI"* ]]
+}
+
+@test "javascript: DaisyUI shown when Tailwind also present" {
+  printf '%s\n' '{"devDependencies":{"daisyui":"^4.0.0","tailwindcss":"^3.4.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"DaisyUI"* ]]
+}
+
+@test "javascript: DaisyUI suppressed when no Tailwind" {
+  printf '%s\n' '{"devDependencies":{"daisyui":"^4.0.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" != *"DaisyUI"* ]]
+}
+
+@test "javascript: UnoCSS detected from unocss dep" {
+  printf '%s\n' '{"devDependencies":{"unocss":"^0.58.0"}}' > "$FAKE_PROJ/package.json"
+  bar_run javascript "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"UnoCSS"* ]]
+}
