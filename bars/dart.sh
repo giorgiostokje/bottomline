@@ -28,12 +28,16 @@ pubspec_dep_version() {
   ' "$PROJ/pubspec.yaml" 2>/dev/null
 }
 
-bl_icon_set IC_DART   $'\xef\x88\x99' '🎯'  # U+F219  nf-fa-diamond
-bl_icon_set IC_FLUTTER $'\xef\x84\x8b' '🐦' # U+F10B  nf-fa-mobile
-bl_icon_set IC_TEST   $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
-bl_icon_set IC_STATE  $'\xef\x84\xa9' '🧭'  # U+F129  nf-fa-info (state mgmt)
-bl_icon_set IC_NET    $'\xef\x82\xac' '🌐'  # U+F0AC  nf-fa-globe (HTTP)
-bl_icon_set IC_LINT   $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check
+bl_icon_set IC_DART     $'\xef\x88\x99' '🎯'  # U+F219  nf-fa-diamond
+bl_icon_set IC_FLUTTER   $'\xef\x84\x8b' '🐦' # U+F10B  nf-fa-mobile
+bl_icon_set IC_TEST     $'\xef\x81\x80' '🧪'  # U+F040  nf-fa-pencil
+bl_icon_set IC_STATE    $'\xef\x84\xa9' '🧭'  # U+F129  nf-fa-info (state mgmt)
+bl_icon_set IC_NET      $'\xef\x82\xac' '🌐'  # U+F0AC  nf-fa-globe (HTTP)
+bl_icon_set IC_LINT     $'\xef\x80\x8c' '✓'   # U+F00C  nf-fa-check
+bl_icon_set IC_ROUTER   $'\xef\x83\xac' '🗺'  # U+F0EC  nf-fa-exchange (routing)
+bl_icon_set IC_DI       $'\xef\x87\xa6' '💉'  # U+F1E6  nf-fa-plug (DI)
+bl_icon_set IC_CODEGEN  $'\xef\x84\xa1' '❄'   # U+F121  nf-fa-code (code-gen)
+bl_icon_set IC_DB       $'\xef\x87\x80' '🗄'   # U+F1C0  nf-fa-database
 
 # ── Parse pubspec.yaml ────────────────────────────────────────────────────────
 pkg_name=$(grep -m1 '^name:' "$PROJ/pubspec.yaml" 2>/dev/null | awk '{print $2}')
@@ -83,6 +87,32 @@ dio_version=''
 grep -Eq '^[[:space:]]+dio:' "$pubspec" 2>/dev/null && has_dio=true
 $has_dio && dio_version=$(pubspec_dep_version "dio")
 
+has_go_router=false
+go_router_version=''
+grep -Eq '^[[:space:]]+go_router:' "$pubspec" 2>/dev/null && has_go_router=true
+$has_go_router && go_router_version=$(pubspec_dep_version "go_router")
+
+has_get_it=false
+get_it_version=''
+grep -Eq '^[[:space:]]+get_it:' "$pubspec" 2>/dev/null && has_get_it=true
+$has_get_it && get_it_version=$(pubspec_dep_version "get_it")
+
+has_mocktail=false
+grep -Eq '^[[:space:]]+mocktail:' "$pubspec" 2>/dev/null && has_mocktail=true
+
+has_freezed=false
+freezed_version=''
+grep -Eq '^[[:space:]]+(freezed_annotation|freezed):' "$pubspec" 2>/dev/null && has_freezed=true
+if $has_freezed; then
+  freezed_version=$(pubspec_dep_version "freezed_annotation")
+  [[ -z "$freezed_version" ]] && freezed_version=$(pubspec_dep_version "freezed")
+fi
+
+has_drift=false
+drift_version=''
+grep -Eq '^[[:space:]]+drift:' "$pubspec" 2>/dev/null && has_drift=true
+$has_drift && drift_version=$(pubspec_dep_version "drift")
+
 lint_pkg=''
 lint_pkg_version=''
 if grep -Eq '^[[:space:]]+very_good_analysis:' "$pubspec" 2>/dev/null; then
@@ -100,18 +130,26 @@ dart_seg="${FG_ACCENT}${IC_DART} ${FG_TEXT}Dart"
 [[ -n "$pkg_name" ]]    && dart_seg+=" ${FG_TEXT}${pkg_name}"
 add_seg "$dart_seg"
 
+# Slot 1: Framework
 $is_flutter && bl_seg "$IC_FLUTTER" Flutter
+
+# Slot 4: Add-ons
+[[ -n "$state_mgmt" ]] && bl_version_seg "$IC_STATE" "$state_mgmt_display" "$state_mgmt_version"
+$has_dio && bl_version_seg "$IC_NET" Dio "$dio_version"
+$has_go_router && bl_version_seg "$IC_ROUTER" go_router "$go_router_version"
+$has_get_it && bl_version_seg "$IC_DI" get_it "$get_it_version"
 
 # Slot 5: Testing
 $has_flutter_test && bl_seg "$IC_TEST" flutter_test
 $has_test         && bl_seg "$IC_TEST" test
+$has_mocktail     && bl_seg "$IC_TEST" Mocktail
 
 # Slot 6: Tooling
-# static analysis first
+# static analysis
 [[ -n "$lint_pkg" ]] && bl_version_seg "$IC_LINT" "$lint_pkg" "$lint_pkg_version"
-# business logic / state management
-[[ -n "$state_mgmt" ]] && bl_version_seg "$IC_STATE" "$state_mgmt_display" "$state_mgmt_version"
-# HTTP client
-$has_dio && bl_version_seg "$IC_NET" Dio "$dio_version"
+# code-gen (compile-time code generation before ORM, per Flutter community convention)
+$has_freezed && bl_version_seg "$IC_CODEGEN" Freezed "$freezed_version"
+# ORM
+$has_drift && bl_version_seg "$IC_DB" Drift "$drift_version"
 
 bl_bar_finish "$_bar_gradient"

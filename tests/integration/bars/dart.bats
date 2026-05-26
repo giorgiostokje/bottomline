@@ -111,3 +111,62 @@ EOF
   bar_run dart "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"very_good_analysis"* ]]
 }
+
+@test "dart: renders go_router when present" {
+  printf 'name: x\ndependencies:\n  go_router: ^13.0.0\n' > "$FAKE_PROJ/pubspec.yaml"
+  bar_run dart "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"go_router"* ]]
+}
+
+@test "dart: renders get_it when present" {
+  printf 'name: x\ndependencies:\n  get_it: ^7.6.0\n' > "$FAKE_PROJ/pubspec.yaml"
+  bar_run dart "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"get_it"* ]]
+}
+
+@test "dart: renders Mocktail when present" {
+  printf 'name: x\ndev_dependencies:\n  mocktail: ^1.0.0\n' > "$FAKE_PROJ/pubspec.yaml"
+  bar_run dart "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Mocktail"* ]]
+}
+
+@test "dart: Mocktail shown alongside flutter_test" {
+  printf 'name: x\ndev_dependencies:\n  flutter_test:\n    sdk: flutter\n  mocktail: ^1.0.0\n' > "$FAKE_PROJ/pubspec.yaml"
+  bar_run dart "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"flutter_test"* ]]
+  [[ "$BAR_OUTPUT" == *"Mocktail"* ]]
+}
+
+@test "dart: renders Freezed when freezed_annotation present" {
+  printf 'name: x\ndependencies:\n  freezed_annotation: ^2.4.0\n' > "$FAKE_PROJ/pubspec.yaml"
+  bar_run dart "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Freezed"* ]]
+}
+
+@test "dart: renders Freezed when freezed dev dep present" {
+  printf 'name: x\ndev_dependencies:\n  freezed: ^2.5.0\n' > "$FAKE_PROJ/pubspec.yaml"
+  bar_run dart "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Freezed"* ]]
+}
+
+@test "dart: renders Drift when present" {
+  printf 'name: x\ndependencies:\n  drift: ^2.14.0\n' > "$FAKE_PROJ/pubspec.yaml"
+  bar_run dart "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"Drift"* ]]
+}
+
+@test "dart: Drift appears after Freezed in output" {
+  printf 'name: x\ndependencies:\n  freezed_annotation: ^2.4.0\n  drift: ^2.14.0\n' > "$FAKE_PROJ/pubspec.yaml"
+  bar_run dart "$FAKE_PROJ"
+  freezed_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'Freezed' | head -1 | cut -d: -f1)
+  drift_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'Drift' | head -1 | cut -d: -f1)
+  [ "$freezed_pos" -lt "$drift_pos" ]
+}
+
+@test "dart: slot 4 add-ons appear before slot 5 testing" {
+  printf 'name: x\ndependencies:\n  dio: ^5.4.0\ndev_dependencies:\n  flutter_test:\n    sdk: flutter\n' > "$FAKE_PROJ/pubspec.yaml"
+  bar_run dart "$FAKE_PROJ"
+  dio_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'Dio' | head -1 | cut -d: -f1)
+  test_pos=$(printf '%s' "$BAR_OUTPUT" | grep -bo 'flutter_test' | head -1 | cut -d: -f1)
+  [ "$dio_pos" -lt "$test_pos" ]
+}
