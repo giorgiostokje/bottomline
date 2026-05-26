@@ -217,38 +217,38 @@ while IFS= read -r _seg_name; do
       ;;
     team)
       [[ -n "$_team_name" ]] && \
-        add_seg "${FG_TEXT}${_team_name}"
+        bl_seg "" "$_team_name"
       ;;
     cycle)
       [[ -n "$_cycle_name" ]] && \
-        add_seg "${FG_ACCENT}${IC_CYCLE}${IC_CYCLE:+ }${FG_TEXT}${_cycle_name} ${FG_ACCENT}·${FG_TEXT} ${_cycle_done}/${_cycle_total}"
+        bl_data_seg "$IC_CYCLE" "$_cycle_name" "${_cycle_done}/${_cycle_total}" "" "1"
       ;;
     in_progress)
-      (( _count_in_progress > 0 )) && bl_seg "$IC_PROGRESS" "${_count_in_progress} wip"
+      (( _count_in_progress > 0 )) && bl_data_seg "$IC_PROGRESS" "$_count_in_progress" "wip"
       ;;
     review)
-      (( _count_review > 0 )) && bl_seg "$IC_REVIEW" "${_count_review} review"
+      (( _count_review > 0 )) && bl_data_seg "$IC_REVIEW" "$_count_review" "review"
       ;;
     assigned)
-      (( _count_assigned > 0 )) && bl_seg "$IC_ASSIGNED" "${_count_assigned} open"
+      (( _count_assigned > 0 )) && bl_data_seg "$IC_ASSIGNED" "$_count_assigned" "open"
       ;;
     priority)
-      (( _count_priority > 0 )) && bl_seg "$IC_PRIORITY" "${_count_priority} urgent" "" warn
+      (( _count_priority > 0 )) && bl_data_seg "$IC_PRIORITY" "$_count_priority" "urgent" "warn"
       ;;
     overdue)
-      (( _count_overdue > 0 )) && bl_seg "$IC_OVERDUE" "${_count_overdue} overdue" "" crit
+      (( _count_overdue > 0 )) && bl_data_seg "$IC_OVERDUE" "$_count_overdue" "overdue" "crit"
       ;;
     due_soon)
-      (( _count_due_soon > 0 )) && bl_seg "$IC_DUE" "${_count_due_soon} due soon" "" warn
+      (( _count_due_soon > 0 )) && bl_data_seg "$IC_DUE" "$_count_due_soon" "due soon" "warn"
       ;;
     cycle_days)
-      [[ -n "$_cycle_id" && "$_cycle_days_left" -gt 0 ]] && bl_seg "$IC_DAYS" "${_cycle_days_left}d left"
+      [[ -n "$_cycle_id" && "$_cycle_days_left" -gt 0 ]] && bl_data_seg "$IC_DAYS" "${_cycle_days_left}d" "left"
       ;;
     blocked)
-      (( _count_blocked > 0 )) && bl_seg "$IC_BLOCKED" "${_count_blocked} blocked" "" warn
+      (( _count_blocked > 0 )) && bl_data_seg "$IC_BLOCKED" "$_count_blocked" "blocked" "warn"
       ;;
     mentions)
-      (( _notif_count > 0 )) && bl_seg "$IC_MENTIONS" "${_notif_count} unread"
+      (( _notif_count > 0 )) && bl_data_seg "$IC_MENTIONS" "$_notif_count" "unread"
       ;;
     *)
       ;; # unknown segment: silently skip

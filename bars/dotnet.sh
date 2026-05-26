@@ -88,7 +88,7 @@ fi
 # ── Segments ──────────────────────────────────────────────────────────────────
 bl_version_seg "$IC_DOTNET" .NET "$sdk_version"
 
-[[ -n "$target_framework" ]] && add_seg "${FG_TEXT}${target_framework}"
+[[ -n "$target_framework" ]] && bl_seg "" "$target_framework"
 
 # Slot 3: Framework
 [[ -n "$framework" ]] && bl_seg "$IC_WEB" "$framework"
