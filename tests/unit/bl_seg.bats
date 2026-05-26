@@ -156,6 +156,26 @@ setup() {
   [[ "$plain" == *"Qualifier"* ]]
 }
 
+@test "bl_data_seg: suffix with no state — suffix appended, no trail" {
+  bl_data_seg '>' Primary status '' 1 ICON
+  [ ${#_sc[@]} -eq 1 ]
+  plain=$(printf '%s' "${_sc[0]}" | strip_ansi)
+  [[ "$plain" == *"Primary"* ]]
+  [[ "$plain" == *"status"* ]]
+  [[ "$plain" == *"ICON"* ]]
+  [[ "$plain" != *"⚠"* ]]
+  [[ "$plain" != *"🛑"* ]]
+}
+
+@test "bl_data_seg: suffix with warn state — suffix in warn color, no ⚠ trail" {
+  bl_data_seg '>' Primary failed warn 1 ICON
+  [ ${#_sc[@]} -eq 1 ]
+  plain=$(printf '%s' "${_sc[0]}" | strip_ansi)
+  [[ "$plain" == *"failed"* ]]
+  [[ "$plain" == *"ICON"* ]]
+  [[ "$plain" != *"⚠"* ]]
+}
+
 # ── bl_version_seg alias ──────────────────────────────────────────────────────
 
 @test "bl_version_seg alias: delegates to bl_seg, output matches" {

@@ -141,19 +141,22 @@ bl_seg() {
   add_seg "$seg"
 }
 
-# bl_data_seg <icon> <primary> [qualifier] [state] [bullet]
+# bl_data_seg <icon> <primary> [qualifier] [state] [bullet] [suffix]
 # Two-element data segment. Primary is FG_TEXT; qualifier is normal-weight FG_ACCENT.
 # bullet="1": insert "·" separator (use when primary and qualifier are logically independent).
+# suffix: icon appended after qualifier, colored by state (replaces ⚠/🛑 trail when non-empty).
 # state/trail rules same as bl_seg.
 bl_data_seg() {
-  local icon="$1" primary="$2" qualifier="${3:-}" state="${4:-}" bullet="${5:-}"
-  local pc="$FG_TEXT" qc="$FG_ACCENT" trail=""
+  local icon="$1" primary="$2" qualifier="${3:-}" state="${4:-}" bullet="${5:-}" suffix="${6:-}"
+  local pc="$FG_TEXT" qc="$FG_ACCENT" sc="$FG_ACCENT" trail=""
   if [[ "$state" == "warn" ]]; then
     if [[ -z "$qualifier" ]]; then pc="$FG_WARN"; else qc="$FG_WARN"; fi
-    trail=" ${FG_WARN}⚠"
+    sc="$FG_WARN"
+    [[ -z "$suffix" ]] && trail=" ${FG_WARN}⚠"
   elif [[ "$state" == "crit" ]]; then
     if [[ -z "$qualifier" ]]; then pc="$FG_CRIT"; else qc="$FG_CRIT"; fi
-    trail=" ${FG_CRIT}🛑"
+    sc="$FG_CRIT"
+    [[ -z "$suffix" ]] && trail=" ${FG_CRIT}🛑"
   fi
   local seg
   if [[ -n "$icon" ]]; then
@@ -166,6 +169,7 @@ bl_data_seg() {
     seg+=" ${N}${qc}${qualifier}"
   fi
   seg+="$trail"
+  [[ -n "$suffix" ]] && seg+=" ${sc}${suffix}"
   add_seg "$seg"
 }
 
