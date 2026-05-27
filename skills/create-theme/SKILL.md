@@ -9,7 +9,7 @@ Use this skill when creating a new colour theme for Bottomline.
 
 ## Detect plugin path
 
-Before saving a theme, detect where Bottomline is installed:
+Detect where Bottomline is installed (needed for the full-stack test and for `BOTTOMLINE_LIB`):
 
 ```bash
 [[ -n "${CLAUDE_PLUGIN_ROOT:-}" && -f "$CLAUDE_PLUGIN_ROOT/bottomline.sh" ]] \
@@ -20,12 +20,26 @@ Store the output as `BL_DIR`. If the result is `NOT_FOUND`, use the base directo
 
 ## Theme File Location
 
-Save themes to:
-```
-$BL_DIR/themes/<name>.json
+Save themes outside the plugin directory so they survive plugin updates.
+
+| Scope | Path |
+|---|---|
+| Personal default | `~/.claude/bottomline/themes/<name>.json` |
+| Project-scoped | `<project>/.claude/bottomline/themes/<name>.json` |
+
+Bottomline checks these locations before the plugin's built-in `themes/`
+directory, so the name resolves automatically — just set it in config:
+
+```json
+{ "appearance": { "theme": "<name>" } }
 ```
 
-The `<name>` is what users set in their config: `"appearance": { "theme": "<name>" }`.
+To point at any theme file directly, use an absolute or `~/`-prefixed path
+as the theme value:
+
+```json
+{ "appearance": { "theme": "~/my-themes/ocean.json" } }
+```
 
 ## Schema
 
@@ -79,9 +93,12 @@ Write the extracted colours to the theme file:
 
 ```bash
 # Replace <name> with the chosen theme name
+mkdir -p "$HOME/.claude/bottomline/themes"
 jq '{colors: .appearance.colors}' "<source-config>" \
-  > "$BL_DIR/themes/<name>.json"
+  > "$HOME/.claude/bottomline/themes/<name>.json"
 ```
+
+(For a project-scoped theme, use `$(pwd)/.claude/bottomline/themes/` instead.)
 
 Then replace the inline `colors` block in the source config with `appearance.theme` and remove `appearance.colors`:
 

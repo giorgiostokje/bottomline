@@ -5,8 +5,29 @@ description: Use when the user wants to add a second (or third) status line, sur
 
 # Bottomline: Create a Bar
 
-Use this skill when writing a new bar script — whether project-specific or a
-new built-in bar for the plugin.
+Use this skill when writing a new bar script for your personal workflow or a
+specific project.
+
+## Where to Save Your Bar
+
+Custom bars must be saved outside the plugin directory — the plugin root is
+replaced on every update.
+
+| Scope | Path | When to use |
+|---|---|---|
+| Personal (all projects) | `~/.claude/bottomline/bars/<name>.sh` | Reusable across all projects |
+| Project-specific | `<project>/.claude/bottomline/bars/<name>.sh` | Tailored to one project; commit to the repo |
+
+Bottomline checks these locations automatically before falling back to the
+plugin's built-in bars, so no extra config is needed — just use the short
+name in your `bars` config:
+
+```json
+{ "bars": [{ "script": "mybar" }] }
+```
+
+To bypass the lookup and point at any path directly, use an absolute or
+`~/`-prefixed path as the `script` value instead.
 
 ## What is a Bar?
 
@@ -39,7 +60,7 @@ bl_icon_set IC_EXAMPLE $'\xef\x80\x80' '🔥'   # replace with your Nerd Font co
 
 # ── Your segments ─────────────────────────────────────────────────────────────
 # bl_seg icon label [version] [state] — standard icon/label/version segments
-# bl_data_seg icon primary [qualifier] [state] [bullet] — two-element segments
+# bl_data_seg icon primary [qualifier] [state] [bullet] [suffix] — two-element segments
 # add_seg directly — only when the format can't fit the helpers above
 my_value="hello"
 [[ -n "$my_value" ]] && bl_seg "$IC_EXAMPLE" "$my_value"
@@ -178,18 +199,12 @@ Users control the interval via `refresh_minutes` in their `bottomline.json`:
 The `find` cleanup removes stale buckets from `/tmp` on each successful fetch;
 `/tmp` is also cleared on reboot, so no manual maintenance is needed.
 
-## Placement
+## Contributing a Built-in Bar
 
-**Project-specific bar** (only runs for this project):
-- Save to: `<project>/.claude/bottomline/bars/<name>.sh`
-- Reference by name (no path) in `<project>/.claude/bottomline.json`:
-  ```json
-  { "bars": [{ "script": "mybar" }] }
-  ```
+For save locations, see the table in "Where to Save Your Bar" above.
 
-**Plugin built-in bar** (available across all projects):
-- Save to: `<plugin-dir>/bars/<name>.sh` (e.g. `$HOME/.claude/plugins/marketplaces/bottomline/bars/<name>.sh` for marketplace installs, or `$HOME/.claude/bottomline/bars/<name>.sh` for manual clones).
-- To contribute it to the plugin itself, submit a PR to the GitHub repo.
+**Contributing to the plugin:**
+- To contribute a bar to the plugin itself, submit a PR to the GitHub repo.
 - Optionally register for auto-detection by adding an entry to `auto_bars.scripts` in `settings.json` (plugin file — not a user config).
   ```json
   "auto_bars": {
@@ -247,7 +262,7 @@ Use `bl_bar_finish "$_bar_gradient"` at the end instead of manual `flush`.
 
 ## Testing Your Bar
 
-First detect where Bottomline is installed:
+Detect `BOTTOMLINE_LIB` — the path to the shared helpers sourced by all bar scripts:
 
 ```bash
 [[ -n "${CLAUDE_PLUGIN_ROOT:-}" && -f "$CLAUDE_PLUGIN_ROOT/bottomline.sh" ]] \
@@ -259,7 +274,7 @@ Store the output as `BL_DIR`. If the result is `NOT_FOUND`, use the base directo
 Then set the required env vars and run the script directly:
 
 ```bash
-BOTTOMLINE_LIB="$BL_DIR/lib" \
+BOTTOMLINE_LIB="$BL_DIR/lib" \  # path to shared helpers
 BOTTOMLINE_TEXT_HEX="#e2d5c3" \
 BOTTOMLINE_ACCENT_HEX="#da7756" \
 BOTTOMLINE_WARN_HEX="#f4a261" \
@@ -272,7 +287,9 @@ BOTTOMLINE_ICON_TYPE=nerd \
 BOTTOMLINE_IC_DANGER=$'\xef\x81\x9e' \
 BOTTOMLINE_PROJECT_DIR="$(pwd)" \
 BOTTOMLINE_GRADIENT='["#2e1f14","#160f0a"]' \
-bash "$BL_DIR/bars/mybar.sh"
+bash "$HOME/.claude/bottomline/bars/mybar.sh"
+# or for a project bar:
+# bash "$(pwd)/.claude/bottomline/bars/mybar.sh"
 ```
 
 Or test the full stack (replace the path with a directory matching your bar's
