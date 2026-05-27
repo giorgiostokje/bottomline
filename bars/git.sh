@@ -21,6 +21,8 @@ bl_icon_set IC_CLEAN     $'\xef\x80\x8c' '✓' '✓'  # U+F00C  nf-fa-check  (fa
 bl_icon_set IC_CI_PASS   $'\xef\x80\x8c' '✓' '✓'  # U+F00C  nf-fa-check
 bl_icon_set IC_CI_FAIL   $'\xef\x80\x8d' '✗' '✗'  # U+F00D  nf-fa-times
 bl_icon_set IC_CI_RUN    $'\xef\x80\xa1' '⟳' '~'  # U+F021  nf-fa-refresh
+bl_icon_set IC_CI        $'\xef\x80\x93' '⚙' ''   # U+F013  nf-fa-cog
+bl_icon_set IC_PR        $'\xef\x84\xa6' '⑂' '#'  # U+F126  nf-fa-code_fork
 
 # ── Utility functions ─────────────────────────────────────────────────────────
 shorten_rel_time() {
@@ -212,11 +214,11 @@ if ! $is_detached && command -v gh > /dev/null 2>&1; then
     _ci_conclusion=$(printf '%s' "$_ci_json" | jq -r '.[0].conclusion // empty' 2>/dev/null)
 
     _ci_key="${_ci_status}/${_ci_conclusion}"
-    if   [[ "$_ci_key" == "completed/success"   ]]; then add_seg "${FG_ACCENT}CI ${FG_TEXT}passed ${IC_CI_PASS}"
-    elif [[ "$_ci_key" == "completed/failure"   ]]; then add_seg "${FG_ACCENT}CI ${FG_TEXT}failed ${FG_WARN}${IC_CI_FAIL}"
-    elif [[ "$_ci_key" == "completed/timed_out" ]]; then add_seg "${FG_ACCENT}CI ${FG_TEXT}timed out ${FG_WARN}${IC_CI_FAIL}"
-    elif [[ "$_ci_status" == "in_progress"      ]]; then add_seg "${FG_ACCENT}CI ${FG_TEXT}running ${IC_CI_RUN}"
-    elif [[ "$_ci_status" == "queued" || "$_ci_status" == "waiting" ]]; then add_seg "${FG_ACCENT}CI ${FG_TEXT}queued ${IC_CI_RUN}"
+    if   [[ "$_ci_key" == "completed/success"   ]]; then bl_data_seg "$IC_CI" "CI" "passed"    ""     "1" "$IC_CI_PASS"
+    elif [[ "$_ci_key" == "completed/failure"   ]]; then bl_data_seg "$IC_CI" "CI" "failed"    "warn" "1" "$IC_CI_FAIL"
+    elif [[ "$_ci_key" == "completed/timed_out" ]]; then bl_data_seg "$IC_CI" "CI" "timed out" "warn" "1" "$IC_CI_FAIL"
+    elif [[ "$_ci_status" == "in_progress"      ]]; then bl_data_seg "$IC_CI" "CI" "running"   ""     "1" "$IC_CI_RUN"
+    elif [[ "$_ci_status" == "queued" || "$_ci_status" == "waiting" ]]; then bl_data_seg "$IC_CI" "CI" "queued" "" "1" "$IC_CI_RUN"
     fi
 
     # PR state — open PR for this branch
@@ -247,13 +249,13 @@ if ! $is_detached && command -v gh > /dev/null 2>&1; then
 
     if [[ "$_pr_state" == "OPEN" && -n "$_pr_number" ]]; then
       if [[ "$_pr_is_draft" == "true" ]]; then
-        add_seg "${FG_ACCENT}PR ${FG_TEXT}#${_pr_number} · draft"
+        bl_data_seg "$IC_PR" "PR #${_pr_number}" "draft"    ""     "1"
       elif [[ "$_pr_review" == "APPROVED" ]]; then
-        add_seg "${FG_ACCENT}PR ${FG_TEXT}#${_pr_number} · ${IC_CI_PASS}"
+        bl_data_seg "$IC_PR" "PR #${_pr_number}" "approved" ""     "1" "$IC_CI_PASS"
       elif [[ "$_pr_review" == "CHANGES_REQUESTED" ]]; then
-        add_seg "${FG_WARN}PR ${FG_TEXT}#${_pr_number} · ${FG_WARN}changes"
+        bl_data_seg "$IC_PR" "PR #${_pr_number}" "changes"  "warn" "1" "$IC_CI_FAIL"
       else
-        add_seg "${FG_ACCENT}PR ${FG_TEXT}#${_pr_number}"
+        bl_data_seg "$IC_PR" "PR #${_pr_number}"
       fi
     fi
 

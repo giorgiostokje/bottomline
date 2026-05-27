@@ -125,6 +125,8 @@ MOCK
   _make_gh '[]' '{"state":"OPEN","number":42,"isDraft":false,"reviewDecision":null}'
   bar_run git "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"PR #42"* ]]
+  # IC_PR plain fallback is '#'; verify icon precedes "PR" in output
+  [[ "$BAR_OUTPUT" == *"# PR #42"* ]]
 }
 
 @test "git: draft PR shows 'draft'" {
@@ -134,10 +136,11 @@ MOCK
   [[ "$BAR_OUTPUT" == *"draft"* ]]
 }
 
-@test "git: approved PR shows PR number and check mark" {
+@test "git: approved PR shows PR number and approval status" {
   _make_gh '[]' '{"state":"OPEN","number":12,"isDraft":false,"reviewDecision":"APPROVED"}'
   bar_run git "$FAKE_PROJ"
-  [[ "$BAR_OUTPUT" == *"PR #12 · ✓"* ]]
+  [[ "$BAR_OUTPUT" == *"PR #12"* ]]
+  [[ "$BAR_OUTPUT" == *"approved"* ]]
 }
 
 @test "git: changes-requested PR shows 'changes'" {
@@ -173,4 +176,28 @@ MOCK
   bar_run git "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"passed"* ]]
   [[ "$BAR_OUTPUT" == *"PR #42"* ]]
+}
+
+@test "git: CI gear icon and PR fork icon present in emoji mode" {
+  # IC_CI plain fallback is '' (untestable in none mode); use emoji mode to verify both icons.
+  _make_gh '[{"status":"completed","conclusion":"success"}]' \
+           '{"state":"OPEN","number":1,"isDraft":false,"reviewDecision":null}'
+  local _raw _stripped
+  _raw=$(
+    BOTTOMLINE_BAR_PARAMS="" BOTTOMLINE_BAR_SEGMENTS="" \
+    BOTTOMLINE_BAR_REFRESH_MINUTES="0" \
+    BOTTOMLINE_PROJECT_DIR="$FAKE_PROJ" \
+    BOTTOMLINE_CACHE_DIR="$FAKE_PROJ/.bl_cache" \
+    BOTTOMLINE_LIB="$BOTTOMLINE_ROOT/lib" \
+    BOTTOMLINE_ICON_TYPE=emoji \
+    BOTTOMLINE_GRADIENT='"#1a1a1a"' BOTTOMLINE_BAR_COLORS= \
+    BOTTOMLINE_BG_R=26 BOTTOMLINE_BG_G=26 BOTTOMLINE_BG_B=26 \
+    BOTTOMLINE_SEP='|' BOTTOMLINE_BOLD='' BOTTOMLINE_RESET='' \
+    BOTTOMLINE_TEXT_HEX='#e2d5c3' BOTTOMLINE_ACCENT_HEX='#da7756' \
+    BOTTOMLINE_WARN_HEX='#f4a261' BOTTOMLINE_DANGER_HEX='#e05a4e' \
+    bash "$BOTTOMLINE_ROOT/bars/git.sh"
+  )
+  _stripped=$(printf '%s' "$_raw" | strip_ansi)
+  [[ "$_stripped" == *"⚙"* ]]   # IC_CI gear (nf-fa-cog emoji fallback)
+  [[ "$_stripped" == *"⑂"* ]]   # IC_PR fork (nf-fa-code_fork emoji fallback)
 }
