@@ -1,6 +1,6 @@
 ---
 name: bottomline:configure
-description: Configures the Bottomline status line — segments, colours, icons, themes, separators, and thresholds — at user or project level. Use whenever the user wants to change how their status line looks or behaves, apply a colour palette (including from a brand name, mood, or visual description), choose which segments to show, set a theme, or tweak any Bottomline setting. Always use this skill rather than editing config files directly.
+description: Use whenever the user wants to change how their status line looks or behaves, apply a colour palette (including from a brand name, mood, or visual description), choose which segments to show, set a theme, or tweak any Bottomline setting. Always use this skill rather than editing config files directly.
 ---
 
 # Bottomline: Configure
@@ -73,7 +73,8 @@ Ask: "Would you like to see Claude API cost approximations in the status line?"
   ```bash
   tmp=$(mktemp) \
     && jq '.segments.disabled += ["cost"]' "$HOME/.claude/bottomline.json" > "$tmp" \
-    && mv "$tmp" "$HOME/.claude/bottomline.json"
+    && mv "$tmp" "$HOME/.claude/bottomline.json" \
+    && echo "✓ cost segment disabled"
   ```
 
 - **Yes** — leave `cost` enabled (it is on by default); no action needed.
@@ -85,7 +86,8 @@ The `usage_5h` and `usage_7d` segments track subscription rate-limit consumption
 ```bash
 tmp=$(mktemp) \
   && jq '.segments.disabled += ["usage_5h", "usage_7d"]' "$HOME/.claude/bottomline.json" > "$tmp" \
-  && mv "$tmp" "$HOME/.claude/bottomline.json"
+  && mv "$tmp" "$HOME/.claude/bottomline.json" \
+  && echo "✓ usage_5h and usage_7d segments disabled"
 ```
 
 ## Starting Point
@@ -166,7 +168,8 @@ tmp=$(mktemp) \
     "300000": { "color": "danger",  "icon": { "nerd": "f05e", "emoji": "1f6d1" } },
     "200000": { "color": "warning", "icon": { "nerd": "f071", "emoji": "26a0" } }
   }' "$HOME/.claude/bottomline.json" > "$tmp" \
-  && mv "$tmp" "$HOME/.claude/bottomline.json"
+  && mv "$tmp" "$HOME/.claude/bottomline.json" \
+  && echo "✓ context window thresholds set (200k warning, 300k danger)"
 ```
 
 If the user wants custom thresholds, apply them with the same structure.
@@ -195,7 +198,8 @@ tmp=$(mktemp) \
     "90": { "color": "danger"  },
     "75": { "color": "warning" }
   }' "$HOME/.claude/bottomline.json" > "$tmp" \
-  && mv "$tmp" "$HOME/.claude/bottomline.json"
+  && mv "$tmp" "$HOME/.claude/bottomline.json" \
+  && echo "✓ rate-limit usage thresholds set (75% warning, 90% danger)"
 ```
 
 If the user wants different percentages, apply them with the same structure.
@@ -223,7 +227,8 @@ Ask the user whether they would like to enable auto-bars:
   tmp=$(mktemp) \
     && jq '.auto_bars.enabled = true | .auto_bars.disabled = ["git"]' \
          "$HOME/.claude/bottomline.json" > "$tmp" \
-    && mv "$tmp" "$HOME/.claude/bottomline.json"
+    && mv "$tmp" "$HOME/.claude/bottomline.json" \
+    && echo "✓ auto-bars enabled (git excluded)"
   ```
 
   Without any exclusions:
@@ -231,7 +236,8 @@ Ask the user whether they would like to enable auto-bars:
   ```bash
   tmp=$(mktemp) \
     && jq '.auto_bars.enabled = true' "$HOME/.claude/bottomline.json" > "$tmp" \
-    && mv "$tmp" "$HOME/.claude/bottomline.json"
+    && mv "$tmp" "$HOME/.claude/bottomline.json" \
+    && echo "✓ auto-bars enabled"
   ```
 
 - **No** → skip; auto-bars remain off. Continue to **Explicit bars** below if
@@ -277,7 +283,8 @@ For each bar the user selects, run:
 tmp=$(mktemp) \
   && jq --arg name "BARNAME" '.bars += [{"script": $name}]' \
        "$HOME/.claude/bottomline.json" > "$tmp" \
-  && mv "$tmp" "$HOME/.claude/bottomline.json"
+  && mv "$tmp" "$HOME/.claude/bottomline.json" \
+  && echo "✓ BARNAME bar added"
 ```
 
 Replace `BARNAME` with the bar name. Run once per bar.
@@ -297,7 +304,8 @@ Then add (or update) the bar with the chosen interval:
 tmp=$(mktemp) \
   && jq --argjson rm MINUTES '.bars += [{"script": "random-facts", "refresh_minutes": $rm}]' \
        "$HOME/.claude/bottomline.json" > "$tmp" \
-  && mv "$tmp" "$HOME/.claude/bottomline.json"
+  && mv "$tmp" "$HOME/.claude/bottomline.json" \
+  && echo "✓ random-facts bar added (refresh: MINUTES min)"
 ```
 
 *Updating an existing entry:*
@@ -306,7 +314,8 @@ tmp=$(mktemp) \
   && jq --argjson rm MINUTES \
        '.bars |= map(if .script == "random-facts" then .refresh_minutes = $rm else . end)' \
        "$HOME/.claude/bottomline.json" > "$tmp" \
-  && mv "$tmp" "$HOME/.claude/bottomline.json"
+  && mv "$tmp" "$HOME/.claude/bottomline.json" \
+  && echo "✓ random-facts refresh interval updated to MINUTES min"
 ```
 
 Replace `MINUTES` with the integer the user chose (e.g. `60`). Use the "adding"
@@ -331,6 +340,7 @@ Before adding it, ask the user for:
      ```bash
      printf '%s' "lin_api_YOUR_KEY_HERE" > "$HOME/.linear_api_key"
      chmod 600 "$HOME/.linear_api_key"
+     echo "✓ API key written to ~/.linear_api_key (mode 600)"
      ```
      Write `"api_key": "file:~/.linear_api_key"` to the user config.
 
@@ -342,7 +352,8 @@ Before adding it, ask the user for:
      && jq --arg key "API_KEY_VALUE" \
           '.bars += [{"script":"linear","params":{"api_key":$key}}]' \
           "$HOME/.claude/bottomline.json" > "$tmp" \
-     && mv "$tmp" "$HOME/.claude/bottomline.json"
+     && mv "$tmp" "$HOME/.claude/bottomline.json" \
+     && echo "✓ linear bar added to user config (api_key set)"
    ```
    Replace `API_KEY_VALUE` with the resolved value (`"file:~/.linear_api_key"`, a literal key, or `"$LINEAR_API_KEY"`).
 
@@ -358,7 +369,8 @@ tmp=$(mktemp) \
   && jq --arg team "TEAM_KEY" --argjson rm MINUTES \
        '.bars += [{"script":"linear","params":{"team":$team},"refresh_minutes":$rm}]' \
        ".claude/bottomline.json" > "$tmp" \
-  && mv "$tmp" ".claude/bottomline.json"
+  && mv "$tmp" ".claude/bottomline.json" \
+  && echo "✓ linear bar added to project config (team: TEAM_KEY, refresh: MINUTES min)"
 ```
 
 Replace `TEAM_KEY` and `MINUTES` with the user's choices.
@@ -370,7 +382,8 @@ tmp=$(mktemp) \
   && jq --argjson rm MINUTES \
        '.bars |= map(if .script == "linear" then .refresh_minutes = $rm else . end)' \
        ".claude/bottomline.json" > "$tmp" \
-  && mv "$tmp" ".claude/bottomline.json"
+  && mv "$tmp" ".claude/bottomline.json" \
+  && echo "✓ linear refresh interval updated to MINUTES min"
 ```
 
 *Updating `api_key` on an existing entry (user config):*
@@ -379,7 +392,8 @@ tmp=$(mktemp) \
   && jq --arg key "NEW_KEY" \
        '.bars |= map(if .script == "linear" then .params.api_key = $key else . end)' \
        "$HOME/.claude/bottomline.json" > "$tmp" \
-  && mv "$tmp" "$HOME/.claude/bottomline.json"
+  && mv "$tmp" "$HOME/.claude/bottomline.json" \
+  && echo "✓ linear API key updated"
 ```
 
 ## Going Further

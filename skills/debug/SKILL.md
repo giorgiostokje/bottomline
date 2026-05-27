@@ -1,6 +1,6 @@
 ---
 name: bottomline:debug
-description: Diagnoses and fixes Bottomline status line problems — blank output, missing bars, wrong colours, icon boxes, config merge failures, and invalid config values. Use whenever the Bottomline status line isn't working as expected, a setting doesn't seem to take effect, or the output looks wrong. Always use this skill before manually editing scripts or config files to troubleshoot.
+description: Use when Bottomline shows blank output, missing bars, wrong colours, icon boxes, config merge failures, or invalid config values — or when any setting isn't taking effect. Always use before manually editing scripts or config files to troubleshoot.
 ---
 
 # Bottomline: Debug

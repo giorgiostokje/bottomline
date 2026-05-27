@@ -1,6 +1,6 @@
 ---
 name: write-tests
-description: Guidance for writing bats unit and integration tests in this repo. Use when adding tests for a new feature, segment, bar, or bug fix.
+description: Use when adding bats unit or integration tests for a new feature, segment, bar, or bug fix in the Bottomline repo.
 ---
 
 # Writing Tests

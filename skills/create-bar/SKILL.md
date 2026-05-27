@@ -1,6 +1,6 @@
 ---
 name: bottomline:create-bar
-description: Creates a new Bottomline bar script — an additional line rendered below the main status line that displays custom project-specific information. Use when the user wants to add a second (or third) status line, surface project data like language version or build status, or build a reusable built-in bar for the Bottomline plugin.
+description: Use when the user wants to add a second (or third) status line, surface project data like language version or build status, or build a reusable built-in bar for the Bottomline plugin.
 ---
 
 # Bottomline: Create a Bar

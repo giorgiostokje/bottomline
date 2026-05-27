@@ -1,6 +1,6 @@
 ---
 name: add-bar
-description: Step-by-step checklist for adding a new built-in bar script to the Bottomline plugin. Use when contributing a new language or tool bar to bars/ — covers the script, auto-detection registration, and tests.
+description: Use when contributing a new language or tool bar to bars/ — covers the script, auto-detection entry in settings.json, and integration tests.
 ---
 
 # Add a Built-in Bar

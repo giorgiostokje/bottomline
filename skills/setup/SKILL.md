@@ -1,6 +1,6 @@
 ---
 name: bottomline:setup
-description: Installs, verifies, and uninstalls the Bottomline status line plugin for Claude Code. Use when a user wants to install Bottomline for the first time, something isn't showing up after installation, or they want to uninstall it. Also use when the user mentions setting up the status line, running the initial install, or removing Bottomline.
+description: Use when a user wants to install Bottomline for the first time, something isn't showing up after installation, or they want to uninstall it. Also use when the user mentions setting up the status line, running the initial install, or removing Bottomline.
 ---
 
 # Bottomline: Setup

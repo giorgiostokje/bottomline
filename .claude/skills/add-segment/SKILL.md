@@ -1,6 +1,6 @@
 ---
 name: add-segment
-description: Step-by-step checklist for adding a new built-in segment to the main Bottomline status line. Use whenever implementing a new segment — the change spans five files and agents reliably miss steps without this checklist.
+description: Use when implementing a new built-in segment for the Bottomline status line — the change spans five files and agents reliably miss steps without this checklist.
 ---
 
 # Add a Built-in Segment
