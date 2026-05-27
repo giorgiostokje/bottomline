@@ -184,3 +184,58 @@ _make_bar() {
   rm -rf "$proj_dir"
   [[ "$BL_OUTPUT" == *"ACCENT:#abcdef"* ]]
 }
+
+# ---------------------------------------------------------------------------
+# Custom theme paths
+# ---------------------------------------------------------------------------
+
+@test "theme: user-level theme from ~/.claude/bottomline/themes/ resolves" {
+  mkdir -p "$FAKE_HOME/.claude/bottomline/themes"
+  printf '{"colors":{"accent":"#aabb01"}}' > "$FAKE_HOME/.claude/bottomline/themes/ocean.json"
+  local user_cfg='{"appearance":{"theme":"ocean"},"segments":{"enabled":["model"]}}'
+  bl_run '{"model":{"display_name":"x"}}' "$user_cfg"
+  # accent #aabb01 = RGB(170,187,1)
+  [[ "$BL_OUTPUT_RAW" == *$'\e[38;2;170;187;1m'* ]]
+}
+
+@test "theme: project-level theme file shadows user-level theme file" {
+  local proj_dir
+  proj_dir=$(mktemp -d)
+  mkdir -p "$proj_dir/.claude/bottomline/themes"
+  printf '{"colors":{"accent":"#001122"}}' > "$proj_dir/.claude/bottomline/themes/ocean.json"
+  mkdir -p "$FAKE_HOME/.claude/bottomline/themes"
+  printf '{"colors":{"accent":"#aabb01"}}' > "$FAKE_HOME/.claude/bottomline/themes/ocean.json"
+  printf '{"appearance":{"theme":"ocean"},"segments":{"enabled":["model"]}}' \
+    > "$FAKE_HOME/.claude/bottomline.json"
+  local json tmpjson
+  json=$(jq -n --arg d "$proj_dir" '{"workspace":{"current_dir":$d},"model":{"display_name":"x"}}')
+  tmpjson=$(mktemp)
+  printf '%s' "$json" > "$tmpjson"
+  BL_OUTPUT_RAW=$(HOME="$FAKE_HOME" bash "$BOTTOMLINE_ROOT/bottomline.sh" < "$tmpjson")
+  BL_OUTPUT=$(printf '%s' "$BL_OUTPUT_RAW" | strip_ansi)
+  rm -f "$tmpjson"
+  rm -rf "$proj_dir"
+  # Project-level accent #001122 = RGB(0,17,34) must be present
+  # User-level accent #aabb01 = RGB(170,187,1) must NOT be present
+  # Combined into one assertion to avoid bats ERR-trap quirk with [[ ]]
+  [[ "$BL_OUTPUT_RAW" == *$'\e[38;2;0;17;34m'* && "$BL_OUTPUT_RAW" != *$'\e[38;2;170;187;1m'* ]]
+}
+
+@test "theme: absolute path resolves directly" {
+  local theme_file
+  theme_file=$(mktemp)
+  printf '{"colors":{"accent":"#aabb01"}}' > "$theme_file"
+  local user_cfg
+  user_cfg=$(jq -n --arg t "$theme_file" '{"appearance":{"theme":$t},"segments":{"enabled":["model"]}}')
+  bl_run '{"model":{"display_name":"x"}}' "$user_cfg"
+  rm -f "$theme_file"
+  [[ "$BL_OUTPUT_RAW" == *$'\e[38;2;170;187;1m'* ]]
+}
+
+@test "theme: tilde path expands to HOME" {
+  mkdir -p "$FAKE_HOME/my-themes"
+  printf '{"colors":{"accent":"#aabb01"}}' > "$FAKE_HOME/my-themes/ocean.json"
+  local user_cfg='{"appearance":{"theme":"~/my-themes/ocean.json"},"segments":{"enabled":["model"]}}'
+  bl_run '{"model":{"display_name":"x"}}' "$user_cfg"
+  [[ "$BL_OUTPUT_RAW" == *$'\e[38;2;170;187;1m'* ]]
+}
