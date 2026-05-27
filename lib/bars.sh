@@ -25,6 +25,8 @@ resolve_bar_script() {
     candidate="$cdir/.claude/bottomline/bars/${name}.sh"
     [[ -f "$candidate" ]] && printf '%s' "$candidate" && return
   fi
+  candidate="$HOME/.claude/bottomline/bars/${name}.sh"
+  [[ -f "$candidate" ]] && printf '%s' "$candidate" && return
   candidate="$_BL_DIR/bars/${name}.sh"
   [[ -f "$candidate" ]] && printf '%s' "$candidate"
 }

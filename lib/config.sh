@@ -67,10 +67,22 @@ bl_load_config() {
 
   # When a theme is set in any config file (project > user > settings), its
   # colors take priority over all per-file color settings.
+  # Theme lookup order: absolute/~/path → project → user → plugin.
   local _theme_name _theme_file _v
   _theme_name=$(cfg_str '.appearance.theme')
   if [[ -n "$_theme_name" ]]; then
-    _theme_file="$_BL_DIR/themes/${_theme_name}.json"
+    if [[ "$_theme_name" == */* ]]; then
+      _theme_file="${_theme_name/#\~/$HOME}"
+    else
+      _theme_file=""
+      if [[ -n "$cdir" && -f "$cdir/.claude/bottomline/themes/${_theme_name}.json" ]]; then
+        _theme_file="$cdir/.claude/bottomline/themes/${_theme_name}.json"
+      elif [[ -f "$HOME/.claude/bottomline/themes/${_theme_name}.json" ]]; then
+        _theme_file="$HOME/.claude/bottomline/themes/${_theme_name}.json"
+      else
+        _theme_file="$_BL_DIR/themes/${_theme_name}.json"
+      fi
+    fi
     if [[ -f "$_theme_file" ]]; then
       _v=$(jq -r '.colors.text       // empty' "$_theme_file" 2>/dev/null); [[ -n "$_v" ]] && CFG_TEXT_HEX="$_v"
       _v=$(jq -r '.colors.accent     // empty' "$_theme_file" 2>/dev/null); [[ -n "$_v" ]] && CFG_ACCENT_HEX="$_v"
