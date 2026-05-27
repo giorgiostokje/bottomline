@@ -114,7 +114,7 @@ Use these instead of constructing `add_seg` strings manually:
 | Helper | Signature | Use for |
 |--------|-----------|---------|
 | `bl_seg` | `bl_seg icon label [version] [state]` | Language/tool segments with optional version |
-| `bl_data_seg` | `bl_data_seg icon primary [qualifier] [state] [bullet]` | Two-element segments (e.g., status + count, app + team) |
+| `bl_data_seg` | `bl_data_seg icon primary [qualifier] [state] [bullet] [suffix]` | Two-element segments (e.g., status + count, app + team) |
 
 `state` can be `"warn"` or `"crit"`: recolors the accent part and appends ⚠ or 🛑.
 `bullet="1"` inserts `·` between primary and qualifier (use when the two parts are logically independent).
