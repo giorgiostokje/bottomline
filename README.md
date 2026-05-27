@@ -1,23 +1,44 @@
 # Bottomline
 
+[![Website](https://img.shields.io/badge/website-bottomline.sh-da7756)](https://bottomline.sh) [![Tests](https://github.com/giorgiostokje/bottomline/actions/workflows/tests.yml/badge.svg)](https://github.com/giorgiostokje/bottomline/actions/workflows/tests.yml)
+
 ![Bottomline](bottomline.png)
 
-[![Tests](https://github.com/giorgiostokje/bottomline/actions/workflows/tests.yml/badge.svg)](https://github.com/giorgiostokje/bottomline/actions/workflows/tests.yml)
-
-Gradient status line for Claude Code. Renders a bar of ANSI segments below every response, plus optional extra bars with language ecosystem info, git details, or anything you write yourself.
+Modular, project-aware status line for Claude Code. Bottomline renders one or more colour-coded **bars** below every response — together they form your **status line**. The built-in bar surfaces model, context, tokens, cost and more; stack on language, git, and custom bars to build the status line that fits your workflow.
 
 ---
 
 ## Features
 
-- **Main status line** — model, effort, context usage, directory, git branch, token counts, rate limits, cost
+### Modular
+Add, remove, and reorder bars freely. Each bar is a standalone shell script or inline JSON definition — mix built-in bars with your own.
+
+- **19 built-in bars** — 17 language and ecosystem bars (PHP, JavaScript, Go, Shell, Python, Rust, Ruby, Java, Swift, Elixir, Salesforce, C/C++, Dart, .NET, Kotlin, Lua, Git) plus opt-in Linear (project management) and `random-facts`
+- **Built-in status bar** — model, effort, context usage, directory, git branch, token counts, rate limits, cost
+- **Custom bars** — write any bar as a shell script; place it in `.claude/bottomline/bars/` and reference it by name
+
+### Themeable
+Control every colour from a single config file, or drop in a named theme in one line.
+
 - **Gradient backgrounds** — linear RGB interpolation across any number of keyframes
-- **Themes** — activate a named colour palette with one setting
-- **Bars** — one or more extra lines below the main status line, rendered by shell scripts or defined inline in JSON
-- **Auto-bars** — bars that appear automatically when a project's signal file (e.g. `composer.json`) is detected
-- **19 built-in bars** — 17 language and ecosystem bars (PHP, JavaScript, Go, Shell, Python, Rust, Ruby, Java, Swift, Elixir, Salesforce, C/C++, Dart, .NET, Kotlin, Lua, Git) plus Linear (project management) and opt-in `random-facts`
-- **Nerd Font, emoji, or text-only icons**
-- **Skills** — `/bottomline:setup`, `/bottomline:configure`, `/bottomline:debug`, `/bottomline:create-bar`, `/bottomline:create-theme`
+- **22 included themes** — Catppuccin, Dracula, Tokyo Night, Nord, Gruvbox, Rosé Pine, Solarized, One Dark, GitHub, Everforest, Monokai and more
+- **Nerd Font, emoji, or text-only icons** — per-segment icon overrides supported
+
+### Project-aware
+Bottomline detects your project's ecosystem and activates the right bars automatically — no manual configuration per project.
+
+- **Auto-bars** — bars activate when a signal file (e.g. `composer.json`, `go.mod`, `Cargo.toml`) is found in the project root
+- **Per-project config** — place `.claude/bottomline.json` in any project to override colours, segments, or bars for that project only
+- **Three-layer config merge** — shipped defaults → user overrides → project overrides, deep-merged at runtime
+
+### Agent skills
+Five Claude Code skills for installing, configuring, debugging, and extending Bottomline — no manual file editing required.
+
+- `/bottomline:setup` — install and wire the status line
+- `/bottomline:configure` — change colours, icons, segments, themes, and bars
+- `/bottomline:debug` — diagnose blank output or missing bars
+- `/bottomline:create-bar` — scaffold a new bar script
+- `/bottomline:create-theme` — design or extract a named colour theme
 
 ---
 
@@ -534,39 +555,36 @@ All keys, their types, and which config files they belong in.
 
 ## Writing a custom bar
 
-Bar scripts are standalone Bash files that write ANSI segments to stdout using the shared `add_seg` / `flush` helpers.
+Bar scripts are standalone Bash files that write ANSI segments to stdout using the `bl_bar_init`, `bl_seg`, and `bl_bar_finish` helpers.
 
 **Template:**
 
 ```bash
 #!/usr/bin/env bash
+# Bottomline bar: <description>
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
 # Add signal file guards:
 # [[ ! -f "$PROJ/my-signal-file" ]] && exit 0
 
+# shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-# Apply a built-in palette — respects BOTTOMLINE_BAR_COLORS override
-if [[ -z "${BOTTOMLINE_BAR_COLORS:-}" ]]; then
-  FG_TEXT=$(make_fg "$(hex_to_rgb "#your_text_hex")")
-  FG_ACCENT=$(make_fg "$(hex_to_rgb "#your_accent_hex")")
-  _bar_gradient='["#bg_start","#bg_end"]'
-else
-  _bar_gradient="$BOTTOMLINE_GRADIENT"
-fi
+# Handles cache check, palette fallback, and gradient resolution.
+# Pass fallback text/accent/background colours for a built-in brand palette.
+bl_bar_init mybar "#e2d5c3" "#da7756" '["#2e1f14","#160f0a"]'
 
-case "$BOTTOMLINE_ICON_TYPE" in
-  nerd)  IC_EXAMPLE=$'\xef\x80\x80' ;;
-  emoji) IC_EXAMPLE='🔥' ;;
-  *)     IC_EXAMPLE='' ;;
-esac
+# ── Icons ─────────────────────────────────────────────────────────────────────
+bl_icon_set IC_EXAMPLE $'\xef\x80\x80' '🔥'   # replace with your Nerd Font codepoint
 
-add_seg "${FG_ACCENT}${IC_EXAMPLE} ${FG_TEXT}hello"
+# ── Segments ──────────────────────────────────────────────────────────────────
+# bl_seg icon label [version] [state]                        — icon/label/version
+# bl_data_seg icon primary [qualifier] [state] [bullet] [suffix]  — two-element data segments
+my_value="hello"
+[[ -n "$my_value" ]] && bl_seg "$IC_EXAMPLE" "$my_value"
 
-(( ${#_sc[@]} == 0 )) && exit 0
-flush "$_bar_gradient"
+bl_bar_finish "$_bar_gradient"
 ```
 
 **Placement:** save to `<project>/.claude/bottomline/bars/<name>.sh`, then reference by name in `<project>/.claude/bottomline.json`:
@@ -591,6 +609,16 @@ bats --recursive tests/integration/bars/  # all bar tests
 ```
 
 `tests/unit/` covers pure utility functions. `tests/integration/` covers the main status line and all 19 bars, with shared fixture files under `tests/integration/bars/fixtures/`.
+
+### Linting
+
+[ShellCheck](https://www.shellcheck.net/) (`brew install shellcheck` / `apt install shellcheck`) lints the main script, all library files, and every bar script:
+
+```bash
+shellcheck bottomline.sh lib/*.sh bars/*.sh
+```
+
+Configuration lives in `.shellcheckrc` at the project root. It sets `shell=bash`, allows `source` directives to be resolved from the project root (`source-path=.`), and disables SC1003 (a false positive on OSC terminal escape sequences used in ANSI output).
 
 ---
 
