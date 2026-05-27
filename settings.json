@@ -59,7 +59,7 @@
         "signals": ["sfdx-project.json"],
         "refresh_minutes": 0
       },
-      { "script": "git", "signals": [".git"], "refresh_minutes": 0 }
+      { "script": "git", "signals": [".git"], "refresh_minutes": 1 }
     ]
   },
   "debug": {
