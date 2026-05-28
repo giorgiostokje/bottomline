@@ -140,3 +140,97 @@ _only() {
   [[ "$BL_OUTPUT" == *"🔥"* ]]
   [[ "$BL_OUTPUT" != *"⚠"* ]]
 }
+
+# ---------------------------------------------------------------------------
+# cost — prices verified against https://platform.claude.com/docs/en/about-claude/pricing
+# ---------------------------------------------------------------------------
+
+# Run the cost segment with a given model display_name and transcript.
+_cost_run() {
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\",\"model\":{\"display_name\":\"$1\"}}" "$(_only cost)"
+}
+
+@test "cost: Opus 4.8 input priced at \$5/MTok" {
+  make_transcript 1000000 0
+  _cost_run "Opus 4.8"
+  [[ "$BL_OUTPUT" == *'$5.00'* ]]
+}
+
+@test "cost: Opus 4.8 output priced at \$25/MTok" {
+  make_transcript 0 1000000
+  _cost_run "Opus 4.8"
+  [[ "$BL_OUTPUT" == *'$25.00'* ]]
+}
+
+@test "cost: Opus 4.8 cache read priced at \$0.50/MTok" {
+  make_transcript 0 0 1000000 0
+  _cost_run "Opus 4.8"
+  [[ "$BL_OUTPUT" == *'$0.50'* ]]
+}
+
+@test "cost: Opus 4.8 cache write priced at \$6.25/MTok (5m)" {
+  make_transcript 0 0 0 1000000
+  _cost_run "Opus 4.8"
+  [[ "$BL_OUTPUT" == *'$6.25'* ]]
+}
+
+@test "cost: Opus 4.1 uses legacy \$15/MTok input pricing" {
+  make_transcript 1000000 0
+  _cost_run "Opus 4.1"
+  [[ "$BL_OUTPUT" == *'$15.00'* ]]
+}
+
+@test "cost: model id form 'claude-opus-4-8' parses version (current pricing)" {
+  make_transcript 1000000 0
+  _cost_run "claude-opus-4-8"
+  [[ "$BL_OUTPUT" == *'$5.00'* ]]
+}
+
+@test "cost: Haiku 4.5 input priced at \$1/MTok" {
+  make_transcript 1000000 0
+  _cost_run "Haiku 4.5"
+  [[ "$BL_OUTPUT" == *'$1.00'* ]]
+}
+
+@test "cost: Haiku 3.5 uses retired \$0.80/MTok input pricing" {
+  make_transcript 1000000 0
+  _cost_run "claude-3-5-haiku-20241022"
+  [[ "$BL_OUTPUT" == *'$0.80'* ]]
+}
+
+@test "cost: Sonnet 4.6 input priced at \$3/MTok" {
+  make_transcript 1000000 0
+  _cost_run "Sonnet 4.6"
+  [[ "$BL_OUTPUT" == *'$3.00'* ]]
+}
+
+@test "cost: unknown model falls back to Sonnet pricing" {
+  make_transcript 1000000 0
+  _cost_run "some-future-model"
+  [[ "$BL_OUTPUT" == *'$3.00'* ]]
+}
+
+@test "cost: web search billed at \$10 per 1000 requests" {
+  make_transcript 0 0 0 0 1000
+  _cost_run "Sonnet 4.6"
+  [[ "$BL_OUTPUT" == *'$10.00'* ]]
+}
+
+@test "cost: web search adds to token cost" {
+  make_transcript 1000000 0 0 0 100   # $3.00 tokens + $1.00 (100 searches)
+  _cost_run "Sonnet 4.6"
+  [[ "$BL_OUTPUT" == *'$4.00'* ]]
+}
+
+@test "cost: sub-cent total renders as < \$0.01" {
+  make_transcript 100 0
+  _cost_run "Opus 4.8"
+  [[ "$BL_OUTPUT" == *'< $0.01'* ]]
+}
+
+@test "cost: hidden when no tokens and no web searches" {
+  make_transcript 0 0 0 0 0
+  _cost_run "Opus 4.8"
+  stripped=$(printf '%s' "$BL_OUTPUT" | tr -d ' \n')
+  [ -z "$stripped" ]
+}

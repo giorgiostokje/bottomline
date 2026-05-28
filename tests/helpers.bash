@@ -91,12 +91,12 @@ bl_run() {
 # Write a minimal JSON-lines transcript file containing one assistant turn
 # with the given token counts.  Sets $TRANSCRIPT_PATH.
 #
-#   make_transcript in out [cache_read] [cache_create]
+#   make_transcript in out [cache_read] [cache_create] [web_search]
 make_transcript() {
-  local in="${1:-0}" out="${2:-0}" cache_read="${3:-0}" cache_create="${4:-0}"
+  local in="${1:-0}" out="${2:-0}" cache_read="${3:-0}" cache_create="${4:-0}" web_search="${5:-0}"
   TRANSCRIPT_PATH=$(mktemp)
-  printf '{"type":"assistant","message":{"usage":{"input_tokens":%d,"output_tokens":%d,"cache_read_input_tokens":%d,"cache_creation_input_tokens":%d}}}\n' \
-    "$in" "$out" "$cache_read" "$cache_create" > "$TRANSCRIPT_PATH"
+  printf '{"type":"assistant","message":{"usage":{"input_tokens":%d,"output_tokens":%d,"cache_read_input_tokens":%d,"cache_creation_input_tokens":%d,"server_tool_use":{"web_search_requests":%d}}}}\n' \
+    "$in" "$out" "$cache_read" "$cache_create" "$web_search" > "$TRANSCRIPT_PATH"
 }
 
 cleanup_transcript() {
