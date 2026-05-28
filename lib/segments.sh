@@ -8,7 +8,7 @@
 #          IC_TOKENS_IN, IC_TOKENS_OUT, IC_USAGE_5H, IC_USAGE_7D,
 #          IC_COST (set by lib/icons.sh),
 #          model, effort, cw_size, ctx_used, sum_in, sum_out,
-#          sum_cache_read, sum_cache_create, branch, branch_url,
+#          sum_cache_read, sum_cache_create, web_searches, branch, branch_url,
 #          cdir, dir_label, five_pct, week_pct, five_rem, week_rem
 #          (all set by lib/state.sh)
 # Outputs: writes ANSI to stdout via flush; mutates _sc array (from lib/ansi.sh)
@@ -127,25 +127,50 @@ build_usage_7d() {
   add_seg "$lbl"
 }
 
+# Estimated session spend. Per-MTok rates and the $10/1,000 web-search rate are
+# from https://platform.claude.com/docs/en/about-claude/pricing.
+# Cache-write rate is the 5-minute write (1.25x input), which is what Claude Code
+# uses; the 1-hour write rate is not modelled. Pricing differs by model *version*
+# (Opus 4.5+ vs 4.1, Haiku 4.5 vs 3.5), so the version is parsed from the model
+# string ("Opus 4.8" or id form "claude-opus-4-8"). Unknown models fall back to
+# the current pricing for their family (Sonnet rates for an unrecognised family).
+# Not captured (no usage-field signal): fast-mode premium, code-execution hours.
 build_cost() {
-  (( sum_in + sum_out + sum_cache_read + sum_cache_create <= 0 )) && return
+  (( sum_in + sum_out + sum_cache_read + sum_cache_create + ${web_searches:-0} <= 0 )) && return
   local price_in price_out price_cache_read price_cache_write
+  local maj=0 min=0
+  [[ "$model" =~ ([0-9]+)[.-]([0-9]+) ]] && { maj=${BASH_REMATCH[1]}; min=${BASH_REMATCH[2]}; }
   case "$model" in
-    *Opus*)
-      price_in=15; price_out=75; price_cache_read=1.5; price_cache_write=18.75 ;;
-    *Haiku*)
-      price_in=0.80; price_out=4; price_cache_read=0.08; price_cache_write=1.0 ;;
+    *Opus*|*opus*)
+      if (( maj > 0 && (maj < 4 || (maj == 4 && min <= 1)) )); then
+        # Opus 4.1 and earlier — legacy pricing
+        price_in=15; price_out=75; price_cache_read=1.50; price_cache_write=18.75
+      else
+        # Opus 4.5+ — current pricing
+        price_in=5;  price_out=25; price_cache_read=0.50; price_cache_write=6.25
+      fi ;;
+    *Haiku*|*haiku*)
+      if (( maj > 0 && maj < 4 )); then
+        # Haiku 3.5 — retired pricing
+        price_in=0.80; price_out=4; price_cache_read=0.08; price_cache_write=1.00
+      else
+        # Haiku 4.5+ — current pricing
+        price_in=1;    price_out=5; price_cache_read=0.10; price_cache_write=1.25
+      fi ;;
     *)
+      # Sonnet (4 / 4.5 / 4.6) and default
       price_in=3; price_out=15; price_cache_read=0.30; price_cache_write=3.75 ;;
   esac
   local cost_fmt
   cost_fmt=$(awk \
     -v in_tok="$sum_in"  -v out_tok="$sum_out" \
     -v cr="$sum_cache_read" -v cw="$sum_cache_create" \
+    -v ws="${web_searches:-0}" \
     -v pi="$price_in"    -v po="$price_out" \
     -v pcr="$price_cache_read" -v pcw="$price_cache_write" \
     'BEGIN {
-      c = (in_tok*pi + out_tok*po + cr*pcr + cw*pcw) / 1000000
+      # ws*10000/1e6 == ws * ($10 / 1000 searches) == ws * $0.01
+      c = (in_tok*pi + out_tok*po + cr*pcr + cw*pcw + ws*10000) / 1000000
       if (c < 0.005) printf "< $0.01"
       else           printf "$%.2f", c
     }')
