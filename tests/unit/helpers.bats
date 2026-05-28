@@ -78,7 +78,7 @@ setup() {
   local hash; hash=$(printf '%s' "/some/project" | (md5sum 2>/dev/null || md5) | cut -c1-8)
   local stale="${TMPDIR:-/tmp}/bl_go_${hash}_deadbeef_1.txt"
   printf 'stale' > "$stale"
-  local cache_file; cache_file=$(bl_cache_path "go" 5 "/some/project")
+  local cache_file; cache_file=$(BOTTOMLINE_CACHE_DIR="${TMPDIR:-/tmp}" bl_cache_path "go" 5 "/some/project")
   bl_cache_write "$cache_file" "fresh"
   [ ! -f "$stale" ]
   rm -f "$cache_file"
@@ -90,7 +90,7 @@ setup() {
   local stale="${TMPDIR:-/tmp}/bl_go_${projhash}_00000000_${bucket}.txt"
   printf 'stale' > "$stale"
   local f; f=$(mktemp)
-  local cache_file; cache_file=$(bl_cache_path "go" 5 "/some/project" "$f")
+  local cache_file; cache_file=$(BOTTOMLINE_CACHE_DIR="${TMPDIR:-/tmp}" bl_cache_path "go" 5 "/some/project" "$f")
   bl_cache_write "$cache_file" "fresh"
   [ ! -f "$stale" ]
   rm -f "$cache_file" "$f"
