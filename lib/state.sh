@@ -5,6 +5,7 @@
 # Inputs : stdin (Claude Code JSON payload)
 # Outputs: input, cdir, model, transcript, effort, cw_size,
 #          ctx_used, sum_in, sum_out, sum_cache_read, sum_cache_create,
+#          web_searches,
 #          branch, branch_url, short_dir, dir_label,
 #          five_pct, week_pct, five_rem, week_rem
 # Exports: j, secs_until_reset (internal helpers)
@@ -43,9 +44,9 @@ bl_read_state() {
   hint=$(j '.context_window.context_window_size // empty')
   [[ -n "$hint" && "$hint" -gt 0 ]] 2>/dev/null && cw_size=$hint
 
-  ctx_used=0; sum_in=0; sum_out=0; sum_cache_read=0; sum_cache_create=0
+  ctx_used=0; sum_in=0; sum_out=0; sum_cache_read=0; sum_cache_create=0; web_searches=0
   if [[ -n "$transcript" && -f "$transcript" ]]; then
-    read -r ctx_used sum_in sum_out sum_cache_read sum_cache_create <<<"$(
+    read -r ctx_used sum_in sum_out sum_cache_read sum_cache_create web_searches <<<"$(
       jq -rs '
         [ .[] | select(.type=="assistant") | .message.usage // empty ] as $u
         | ($u | last) as $last
@@ -55,12 +56,14 @@ bl_read_state() {
             ([ $u[].input_tokens // 0 ]                    | add // 0),
             ([ $u[].output_tokens // 0 ]                   | add // 0),
             ([ $u[].cache_read_input_tokens // 0 ]          | add // 0),
-            ([ $u[].cache_creation_input_tokens // 0 ]      | add // 0)
+            ([ $u[].cache_creation_input_tokens // 0 ]      | add // 0),
+            ([ $u[].server_tool_use.web_search_requests // 0 ] | add // 0)
           ] | @tsv
       ' "$transcript" 2>/dev/null
     )"
     ctx_used=${ctx_used:-0}; sum_in=${sum_in:-0}; sum_out=${sum_out:-0}
     sum_cache_read=${sum_cache_read:-0}; sum_cache_create=${sum_cache_create:-0}
+    web_searches=${web_searches:-0}
   fi
 
   branch='' branch_url=''
