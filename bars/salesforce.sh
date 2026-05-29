@@ -74,10 +74,20 @@ if command -v sf &>/dev/null; then
   sf_version=$(printf '%s' "$_sf_raw" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 fi
 
+# Auth-file fallback: sfdcLoginUrl reflects the project default, not the active org type.
+# Read isSandbox from ~/.sfdx/<username>.json when available.
+if [[ -z "$org_type" && -n "$username" ]]; then
+  _auth="$HOME/.sfdx/${username}.json"
+  if [[ -f "$_auth" ]]; then
+    [[ $(jq -r '.isSandbox // false' "$_auth" 2>/dev/null) == 'true' ]] && org_type='sandbox'
+  fi
+fi
+
 # ── PMD (Apex static analysis) ────────────────────────────────────────────────
 has_pmd=false
 [[ -f "$PROJ/.pmdrc" ]] && has_pmd=true
 ! $has_pmd && command -v pmd > /dev/null 2>&1 && has_pmd=true
+! $has_pmd && [[ -f "$PROJ/code-analyzer.yml" ]] && has_pmd=true
 
 # ── ESLint for LWC ───────────────────────────────────────────────────────────
 has_lwc_eslint=false

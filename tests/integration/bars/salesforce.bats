@@ -85,6 +85,28 @@ EOF
   [[ "$BAR_OUTPUT" != *"sandbox"* ]]
 }
 
+@test "salesforce: shows sandbox indicator from auth file when sfdcLoginUrl is production" {
+  _minimal_sfdx_json  # sets sfdcLoginUrl = https://login.salesforce.com
+  local fake_home; fake_home=$(mktemp -d)
+  mkdir -p "$fake_home/.sf" "$fake_home/.sfdx"
+  printf '{"target-org":"logik"}\n'                                  > "$fake_home/.sf/config.json"
+  printf '{"orgs":{"logik":"user@example.com.logik"}}\n'            > "$fake_home/.sfdx/alias.json"
+  printf '{"username":"user@example.com.logik","isSandbox":true}\n' \
+    > "$fake_home/.sfdx/user@example.com.logik.json"
+  BAR_OUTPUT_RAW=$(
+    HOME="$fake_home" BOTTOMLINE_PROJECT_DIR="$FAKE_PROJ" BOTTOMLINE_LIB="$BOTTOMLINE_ROOT/lib" \
+    BOTTOMLINE_ICON_TYPE=none BOTTOMLINE_GRADIENT='"#1a1a1a"' BOTTOMLINE_BAR_COLORS= \
+    BOTTOMLINE_BG_R=26 BOTTOMLINE_BG_G=26 BOTTOMLINE_BG_B=26 BOTTOMLINE_SEP='|' \
+    BOTTOMLINE_BOLD='' BOTTOMLINE_RESET='' BOTTOMLINE_TEXT_HEX='#e2d5c3' \
+    BOTTOMLINE_ACCENT_HEX='#da7756' BOTTOMLINE_WARN_HEX='#f4a261' \
+    BOTTOMLINE_DANGER_HEX='#e05a4e' \
+    bash "$BOTTOMLINE_ROOT/bars/salesforce.sh"
+  )
+  BAR_OUTPUT=$(printf '%s' "$BAR_OUTPUT_RAW" | strip_ansi)
+  rm -rf "$fake_home"
+  [[ "$BAR_OUTPUT" == *"sandbox"* ]]
+}
+
 @test "salesforce: no org segment when no config files present" {
   _minimal_sfdx_json
   bar_run salesforce "$FAKE_PROJ"
@@ -150,6 +172,13 @@ EOF
 @test "salesforce: PMD detected from .pmdrc config file" {
   _minimal_sfdx_json
   touch "$FAKE_PROJ/.pmdrc"
+  bar_run salesforce "$FAKE_PROJ"
+  [[ "$BAR_OUTPUT" == *"PMD"* ]]
+}
+
+@test "salesforce: PMD detected from code-analyzer.yml (Salesforce Code Analyzer)" {
+  _minimal_sfdx_json
+  touch "$FAKE_PROJ/code-analyzer.yml"
   bar_run salesforce "$FAKE_PROJ"
   [[ "$BAR_OUTPUT" == *"PMD"* ]]
 }
