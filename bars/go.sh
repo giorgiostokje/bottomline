@@ -4,14 +4,15 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 bl_bar_init go "#c8e8f4" "#29bcd8" '["#031824","#054860"]' \
-  "$PROJ/go.mod" "$PROJ/go.work"
+  "$SIGNAL_DIR/go.mod" "$SIGNAL_DIR/go.work"
 
-[[ ! -f "$PROJ/go.mod" ]] && exit 0
+[[ ! -f "$SIGNAL_DIR/go.mod" ]] && exit 0
 
 bl_icon_set IC_GO        $'\xee\x9c\xa4' '🐹'  # U+E724  nf-seti-go_lang
 bl_icon_set IC_WORKSPACE $'\xef\x81\xae' '🗂'  # U+F06E  nf-fa-eye
@@ -24,9 +25,9 @@ bl_icon_set IC_PROTO     $'\xef\x80\xa2' '📡'   # U+F022  nf-fa-signal
 
 
 # ── Read go.mod ───────────────────────────────────────────────────────────────
-go_version=$(awk '/^go /{print $2; exit}' "$PROJ/go.mod" 2>/dev/null)
+go_version=$(awk '/^go /{print $2; exit}' "$SIGNAL_DIR/go.mod" 2>/dev/null)
 is_workspace=false
-[[ -f "$PROJ/go.work" ]] && is_workspace=true
+[[ -f "$SIGNAL_DIR/go.work" ]] && is_workspace=true
 
 # ── Detect frameworks/libraries ───────────────────────────────────────────────
 framework=''
@@ -39,10 +40,10 @@ for fw in gin echo fiber chi; do
     fiber) pat='github.com/gofiber/fiber'   ; disp='Fiber' ;;
     chi)   pat='github.com/go-chi/chi'      ; disp='chi'   ;;
   esac
-  if grep -q "$pat" "$PROJ/go.mod" 2>/dev/null; then
+  if grep -q "$pat" "$SIGNAL_DIR/go.mod" 2>/dev/null; then
     framework="$fw"
     framework_display="$disp"
-    framework_version=$(grep "$pat" "$PROJ/go.mod" 2>/dev/null \
+    framework_version=$(grep "$pat" "$SIGNAL_DIR/go.mod" 2>/dev/null \
       | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
     break
   fi
@@ -52,45 +53,45 @@ has_ginkgo=false
 has_testify=false
 ginkgo_version=''
 testify_version=''
-grep -q 'github.com/onsi/ginkgo' "$PROJ/go.mod" 2>/dev/null && has_ginkgo=true \
-  && ginkgo_version=$(grep 'github.com/onsi/ginkgo' "$PROJ/go.mod" 2>/dev/null \
+grep -q 'github.com/onsi/ginkgo' "$SIGNAL_DIR/go.mod" 2>/dev/null && has_ginkgo=true \
+  && ginkgo_version=$(grep 'github.com/onsi/ginkgo' "$SIGNAL_DIR/go.mod" 2>/dev/null \
      | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
-grep -q 'github.com/stretchr/testify' "$PROJ/go.mod" 2>/dev/null && has_testify=true \
-  && testify_version=$(grep 'github.com/stretchr/testify' "$PROJ/go.mod" 2>/dev/null \
+grep -q 'github.com/stretchr/testify' "$SIGNAL_DIR/go.mod" 2>/dev/null && has_testify=true \
+  && testify_version=$(grep 'github.com/stretchr/testify' "$SIGNAL_DIR/go.mod" 2>/dev/null \
      | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
 # Layering: Ginkgo suppresses testify
 $has_ginkgo && has_testify=false
 
 has_cobra=false
 cobra_version=''
-grep -q 'github.com/spf13/cobra' "$PROJ/go.mod" 2>/dev/null && has_cobra=true \
-  && cobra_version=$(grep 'github.com/spf13/cobra' "$PROJ/go.mod" 2>/dev/null \
+grep -q 'github.com/spf13/cobra' "$SIGNAL_DIR/go.mod" 2>/dev/null && has_cobra=true \
+  && cobra_version=$(grep 'github.com/spf13/cobra' "$SIGNAL_DIR/go.mod" 2>/dev/null \
      | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
 
 has_gorm=false
 gorm_version=''
-grep -q 'gorm.io/gorm' "$PROJ/go.mod" 2>/dev/null && has_gorm=true \
-  && gorm_version=$(grep 'gorm.io/gorm' "$PROJ/go.mod" 2>/dev/null \
+grep -q 'gorm.io/gorm' "$SIGNAL_DIR/go.mod" 2>/dev/null && has_gorm=true \
+  && gorm_version=$(grep 'gorm.io/gorm' "$SIGNAL_DIR/go.mod" 2>/dev/null \
      | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
 
 has_ent=false
 ent_version=''
-grep -q 'entgo.io/ent' "$PROJ/go.mod" 2>/dev/null && has_ent=true \
-  && ent_version=$(grep 'entgo.io/ent' "$PROJ/go.mod" 2>/dev/null \
+grep -q 'entgo.io/ent' "$SIGNAL_DIR/go.mod" 2>/dev/null && has_ent=true \
+  && ent_version=$(grep 'entgo.io/ent' "$SIGNAL_DIR/go.mod" 2>/dev/null \
      | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
 
 has_sqlc=false
 sqlc_version=''
-if [[ -f "$PROJ/sqlc.yaml" || -f "$PROJ/sqlc.yml" ]]; then
+if [[ -f "$SIGNAL_DIR/sqlc.yaml" || -f "$SIGNAL_DIR/sqlc.yml" ]]; then
   has_sqlc=true
-elif grep -q 'github.com/sqlc-dev/sqlc' "$PROJ/go.mod" 2>/dev/null; then
+elif grep -q 'github.com/sqlc-dev/sqlc' "$SIGNAL_DIR/go.mod" 2>/dev/null; then
   has_sqlc=true
-  sqlc_version=$(grep 'github.com/sqlc-dev/sqlc' "$PROJ/go.mod" 2>/dev/null \
+  sqlc_version=$(grep 'github.com/sqlc-dev/sqlc' "$SIGNAL_DIR/go.mod" 2>/dev/null \
     | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | sed 's/^v//')
 fi
 
 has_buf=false
-[[ -f "$PROJ/buf.yaml" || -f "$PROJ/buf.gen.yaml" ]] && has_buf=true
+[[ -f "$SIGNAL_DIR/buf.yaml" || -f "$SIGNAL_DIR/buf.gen.yaml" ]] && has_buf=true
 
 has_golangci=false
 golangci_version=''

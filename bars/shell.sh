@@ -4,6 +4,7 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"

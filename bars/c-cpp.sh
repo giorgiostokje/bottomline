@@ -4,19 +4,20 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 bl_bar_init c-cpp "#dce8f0" "#4a8db7" '["#0a1520","#0f2535"]' \
-  "$PROJ/CMakeLists.txt" "$PROJ/meson.build" "$PROJ/configure.ac" \
-  "$PROJ/conanfile.txt" "$PROJ/conanfile.py" "$PROJ/vcpkg.json"
+  "$SIGNAL_DIR/CMakeLists.txt" "$SIGNAL_DIR/meson.build" "$SIGNAL_DIR/configure.ac" \
+  "$SIGNAL_DIR/conanfile.txt" "$SIGNAL_DIR/conanfile.py" "$SIGNAL_DIR/vcpkg.json"
 
 # Hard guard: exit silently if not a C/C++ project
 has_cmake=false has_meson=false has_autotools=false
-[[ -f "$PROJ/CMakeLists.txt" ]] && has_cmake=true
-[[ -f "$PROJ/meson.build" ]]    && has_meson=true
-[[ -f "$PROJ/configure.ac" ]]   && has_autotools=true
+[[ -f "$SIGNAL_DIR/CMakeLists.txt" ]] && has_cmake=true
+[[ -f "$SIGNAL_DIR/meson.build" ]]    && has_meson=true
+[[ -f "$SIGNAL_DIR/configure.ac" ]]   && has_autotools=true
 $has_cmake || $has_meson || $has_autotools || exit 0
 
 bl_icon_set IC_CPLUSPLUS $'\xee\x98\xa3' '⚙'
@@ -31,7 +32,7 @@ bl_icon_set IC_LOG       $'\xef\x81\xab' '📋'
 # ── Slot 1: Detect language (C, C++, or C/C++) ────────────────────────────────
 lang='C/C++'
 if $has_cmake; then
-  cmake_content=$(cat "$PROJ/CMakeLists.txt" 2>/dev/null)
+  cmake_content=$(cat "$SIGNAL_DIR/CMakeLists.txt" 2>/dev/null)
   has_cxx=false
   has_c=false
   # Check project() call for language tags
@@ -44,10 +45,10 @@ if $has_cmake; then
   fi
   # Fallback: scan src/ for source file extensions
   if ! $has_cxx && ! $has_c; then
-    if find "$PROJ/src" -maxdepth 3 \( -name "*.cpp" -o -name "*.cxx" -o -name "*.cc" \) 2>/dev/null | grep -q .; then
+    if find "$SIGNAL_DIR/src" -maxdepth 3 \( -name "*.cpp" -o -name "*.cxx" -o -name "*.cc" \) 2>/dev/null | grep -q .; then
       has_cxx=true
     fi
-    if find "$PROJ/src" -maxdepth 3 -name "*.c" 2>/dev/null | grep -q .; then
+    if find "$SIGNAL_DIR/src" -maxdepth 3 -name "*.c" 2>/dev/null | grep -q .; then
       has_c=true
     fi
   fi
@@ -64,12 +65,12 @@ fi
 lang_standard=''
 if $has_cmake; then
   if [[ "$lang" == 'C++' || "$lang" == 'C/C++' ]]; then
-    cpp_standard=$(grep -m1 'CMAKE_CXX_STANDARD' "$PROJ/CMakeLists.txt" 2>/dev/null \
+    cpp_standard=$(grep -m1 'CMAKE_CXX_STANDARD' "$SIGNAL_DIR/CMakeLists.txt" 2>/dev/null \
       | grep -oE '[0-9]{2,3}' | head -1)
     [[ -n "$cpp_standard" ]] && lang_standard="C++${cpp_standard}"
   fi
   if [[ "$lang" == 'C' ]]; then
-    c_standard=$(grep -m1 'CMAKE_C_STANDARD' "$PROJ/CMakeLists.txt" 2>/dev/null \
+    c_standard=$(grep -m1 'CMAKE_C_STANDARD' "$SIGNAL_DIR/CMakeLists.txt" 2>/dev/null \
       | grep -oE '[0-9]{2,3}' | head -1)
     [[ -n "$c_standard" ]] && lang_standard="C${c_standard}"
   fi
@@ -80,11 +81,11 @@ build_system=''
 build_version=''
 if $has_cmake; then
   build_system='CMake'
-  cmake_version=$(grep -m1 -i 'cmake_minimum_required' "$PROJ/CMakeLists.txt" 2>/dev/null \
+  cmake_version=$(grep -m1 -i 'cmake_minimum_required' "$SIGNAL_DIR/CMakeLists.txt" 2>/dev/null \
     | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
 elif $has_meson; then
   build_system='Meson'
-  meson_version=$(grep -m1 'meson_version' "$PROJ/meson.build" 2>/dev/null \
+  meson_version=$(grep -m1 'meson_version' "$SIGNAL_DIR/meson.build" 2>/dev/null \
     | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
   build_version="$meson_version"
 elif $has_autotools; then
@@ -98,13 +99,13 @@ fi
 # ── Slot 4: Package managers (add-ons) ───────────────────────────────────────
 has_conan=false
 has_vcpkg=false
-[[ -f "$PROJ/conanfile.txt" || -f "$PROJ/conanfile.py" ]] && has_conan=true
-[[ -f "$PROJ/vcpkg.json" ]]                                && has_vcpkg=true
+[[ -f "$SIGNAL_DIR/conanfile.txt" || -f "$SIGNAL_DIR/conanfile.py" ]] && has_conan=true
+[[ -f "$SIGNAL_DIR/vcpkg.json" ]]                                && has_vcpkg=true
 
 # ── Slot 5: Testing ───────────────────────────────────────────────────────────
 has_gtest=false has_catch2=false has_doctest=false has_boosttest=false has_ctest=false
-cmake_for_test="$PROJ/CMakeLists.txt"
-meson_for_test="$PROJ/meson.build"
+cmake_for_test="$SIGNAL_DIR/CMakeLists.txt"
+meson_for_test="$SIGNAL_DIR/meson.build"
 
 if $has_cmake && [[ -f "$cmake_for_test" ]]; then
   grep -qiE 'gtest|googletest|google_test|GTest' "$cmake_for_test" 2>/dev/null && has_gtest=true
@@ -122,41 +123,41 @@ elif $has_meson && [[ -f "$meson_for_test" ]]; then
 fi
 
 has_benchmark=false
-if $has_cmake && [[ -f "$PROJ/CMakeLists.txt" ]]; then
-  grep -qiE 'benchmark' "$PROJ/CMakeLists.txt" 2>/dev/null && has_benchmark=true
+if $has_cmake && [[ -f "$SIGNAL_DIR/CMakeLists.txt" ]]; then
+  grep -qiE 'benchmark' "$SIGNAL_DIR/CMakeLists.txt" 2>/dev/null && has_benchmark=true
 fi
 if ! $has_benchmark; then
-  grep -qi 'benchmark' "$PROJ/conanfile.txt" 2>/dev/null && has_benchmark=true
-  grep -qi 'benchmark' "$PROJ/conanfile.py" 2>/dev/null && has_benchmark=true
+  grep -qi 'benchmark' "$SIGNAL_DIR/conanfile.txt" 2>/dev/null && has_benchmark=true
+  grep -qi 'benchmark' "$SIGNAL_DIR/conanfile.py" 2>/dev/null && has_benchmark=true
 fi
 
 # ── Slot 6: Tooling ───────────────────────────────────────────────────────────
 has_clangtidy=false has_cppcheck=false has_clangformat=false
-[[ -f "$PROJ/.clang-tidy" ]] && has_clangtidy=true
-if ! $has_clangtidy && $has_cmake && [[ -f "$PROJ/CMakeLists.txt" ]]; then
-  grep -qi 'find_program.*CLANG_TIDY\|clang.tidy' "$PROJ/CMakeLists.txt" 2>/dev/null && has_clangtidy=true
+[[ -f "$SIGNAL_DIR/.clang-tidy" ]] && has_clangtidy=true
+if ! $has_clangtidy && $has_cmake && [[ -f "$SIGNAL_DIR/CMakeLists.txt" ]]; then
+  grep -qi 'find_program.*CLANG_TIDY\|clang.tidy' "$SIGNAL_DIR/CMakeLists.txt" 2>/dev/null && has_clangtidy=true
 fi
-if $has_cmake && [[ -f "$PROJ/CMakeLists.txt" ]]; then
-  grep -qi 'cppcheck' "$PROJ/CMakeLists.txt" 2>/dev/null && has_cppcheck=true
+if $has_cmake && [[ -f "$SIGNAL_DIR/CMakeLists.txt" ]]; then
+  grep -qi 'cppcheck' "$SIGNAL_DIR/CMakeLists.txt" 2>/dev/null && has_cppcheck=true
 fi
-[[ -f "$PROJ/.cppcheck" ]] && has_cppcheck=true
-[[ -f "$PROJ/.clang-format" ]] && has_clangformat=true
+[[ -f "$SIGNAL_DIR/.cppcheck" ]] && has_cppcheck=true
+[[ -f "$SIGNAL_DIR/.clang-format" ]] && has_clangformat=true
 
 has_nlohmann_json=false
 has_spdlog=false
-if $has_cmake && [[ -f "$PROJ/CMakeLists.txt" ]]; then
-  grep -qi 'nlohmann' "$PROJ/CMakeLists.txt" 2>/dev/null && has_nlohmann_json=true
-  grep -qi 'spdlog'   "$PROJ/CMakeLists.txt" 2>/dev/null && has_spdlog=true
+if $has_cmake && [[ -f "$SIGNAL_DIR/CMakeLists.txt" ]]; then
+  grep -qi 'nlohmann' "$SIGNAL_DIR/CMakeLists.txt" 2>/dev/null && has_nlohmann_json=true
+  grep -qi 'spdlog'   "$SIGNAL_DIR/CMakeLists.txt" 2>/dev/null && has_spdlog=true
 fi
 if ! $has_nlohmann_json; then
-  grep -qi 'nlohmann_json' "$PROJ/conanfile.txt" 2>/dev/null && has_nlohmann_json=true
-  grep -qi 'nlohmann_json' "$PROJ/conanfile.py" 2>/dev/null && has_nlohmann_json=true
-  grep -qi 'nlohmann-json' "$PROJ/vcpkg.json" 2>/dev/null && has_nlohmann_json=true
+  grep -qi 'nlohmann_json' "$SIGNAL_DIR/conanfile.txt" 2>/dev/null && has_nlohmann_json=true
+  grep -qi 'nlohmann_json' "$SIGNAL_DIR/conanfile.py" 2>/dev/null && has_nlohmann_json=true
+  grep -qi 'nlohmann-json' "$SIGNAL_DIR/vcpkg.json" 2>/dev/null && has_nlohmann_json=true
 fi
 if ! $has_spdlog; then
-  grep -qi 'spdlog' "$PROJ/conanfile.txt" 2>/dev/null && has_spdlog=true
-  grep -qi 'spdlog' "$PROJ/conanfile.py" 2>/dev/null && has_spdlog=true
-  grep -qi 'spdlog' "$PROJ/vcpkg.json" 2>/dev/null && has_spdlog=true
+  grep -qi 'spdlog' "$SIGNAL_DIR/conanfile.txt" 2>/dev/null && has_spdlog=true
+  grep -qi 'spdlog' "$SIGNAL_DIR/conanfile.py" 2>/dev/null && has_spdlog=true
+  grep -qi 'spdlog' "$SIGNAL_DIR/vcpkg.json" 2>/dev/null && has_spdlog=true
 fi
 
 # ── Slot 1: Runtime ───────────────────────────────────────────────────────────

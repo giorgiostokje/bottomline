@@ -4,16 +4,17 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 bl_bar_init javascript "#f5f0c8" "#f7df1e" '["#1c1a00","#2d2b00"]' \
-  "$PROJ/package.json" "$PROJ/package-lock.json" \
-  "$PROJ/pnpm-lock.yaml" "$PROJ/yarn.lock" \
-  "$PROJ/bun.lockb" "$PROJ/bun.lock"
+  "$SIGNAL_DIR/package.json" "$SIGNAL_DIR/package-lock.json" \
+  "$SIGNAL_DIR/pnpm-lock.yaml" "$SIGNAL_DIR/yarn.lock" \
+  "$SIGNAL_DIR/bun.lockb" "$SIGNAL_DIR/bun.lock"
 
-[[ ! -f "$PROJ/package.json" ]] && exit 0
+[[ ! -f "$SIGNAL_DIR/package.json" ]] && exit 0
 
 bl_icon_set IC_REACT    $'\xee\x9e\xba' '⚛'   # U+E7BA  nf-dev-react
 bl_icon_set IC_NEXT     $'\xee\x9f\x8a' '▲'   # U+E7CA  nf-dev-nextjs
@@ -43,34 +44,34 @@ bl_icon_set IC_DB       $'\xef\x87\x80' '🗄'  # U+F1C0  nf-fa-database
 
 # ── Node version (priority: .nvmrc → .node-version → engines.node) ────────────
 node_version=''
-if [[ -f "$PROJ/.nvmrc" ]]; then
-  node_version=$(awk '/^[0-9]|^v[0-9]/{gsub(/^v/,""); print; exit}' "$PROJ/.nvmrc" 2>/dev/null)
-elif [[ -f "$PROJ/.node-version" ]]; then
-  node_version=$(awk '/^[0-9]|^v[0-9]/{gsub(/^v/,""); print; exit}' "$PROJ/.node-version" 2>/dev/null)
-elif [[ -f "$PROJ/package.json" ]]; then
-  node_version=$(jq -r '.engines.node // empty' "$PROJ/package.json" 2>/dev/null | sed 's/[^0-9.]//g')
+if [[ -f "$SIGNAL_DIR/.nvmrc" ]]; then
+  node_version=$(awk '/^[0-9]|^v[0-9]/{gsub(/^v/,""); print; exit}' "$SIGNAL_DIR/.nvmrc" 2>/dev/null)
+elif [[ -f "$SIGNAL_DIR/.node-version" ]]; then
+  node_version=$(awk '/^[0-9]|^v[0-9]/{gsub(/^v/,""); print; exit}' "$SIGNAL_DIR/.node-version" 2>/dev/null)
+elif [[ -f "$SIGNAL_DIR/package.json" ]]; then
+  node_version=$(jq -r '.engines.node // empty' "$SIGNAL_DIR/package.json" 2>/dev/null | sed 's/[^0-9.]//g')
 fi
 
 # ── Package manager (lockfile-driven) ─────────────────────────────────────────
 pkg_mgr=''
-if [[ -f "$PROJ/pnpm-lock.yaml" ]]; then
+if [[ -f "$SIGNAL_DIR/pnpm-lock.yaml" ]]; then
   pkg_mgr='pnpm'
-elif [[ -f "$PROJ/yarn.lock" ]]; then
+elif [[ -f "$SIGNAL_DIR/yarn.lock" ]]; then
   pkg_mgr='yarn'
-elif [[ -f "$PROJ/bun.lockb" || -f "$PROJ/bun.lock" ]]; then
+elif [[ -f "$SIGNAL_DIR/bun.lockb" || -f "$SIGNAL_DIR/bun.lock" ]]; then
   pkg_mgr='bun'
-elif [[ -f "$PROJ/package-lock.json" ]]; then
+elif [[ -f "$SIGNAL_DIR/package-lock.json" ]]; then
   pkg_mgr='npm'
 fi
 
 # Returns the installed version from node_modules, or empty if not found.
 npm_version() {
-  local vf="$PROJ/node_modules/${1}/package.json"
+  local vf="$SIGNAL_DIR/node_modules/${1}/package.json"
   [[ -f "$vf" ]] && jq -r '.version // empty' "$vf" 2>/dev/null || printf ''
 }
 
 # Parse package.json once — collect all dependency keys in a single jq pass.
-pkg="$PROJ/package.json"
+pkg="$SIGNAL_DIR/package.json"
 has_react=false   has_next=false    has_rn=false      has_expo=false
 has_vue=false     has_nuxt=false
 has_svelte=false  has_sveltekit=false
@@ -137,10 +138,10 @@ while IFS= read -r dep; do
 done < <(jq -r '((.dependencies // {}) + (.devDependencies // {})) | keys[]' "$pkg" 2>/dev/null)
 
 # Config-file fallbacks
-if ! $has_eslint; then [[ -f "$PROJ/.eslintrc" || -f "$PROJ/.eslintrc.js" || -f "$PROJ/.eslintrc.cjs" || -f "$PROJ/.eslintrc.json" || -f "$PROJ/eslint.config.js" || -f "$PROJ/eslint.config.mjs" ]] && has_eslint=true; fi
-if ! $has_prettier; then [[ -f "$PROJ/.prettierrc" || -f "$PROJ/.prettierrc.json" || -f "$PROJ/.prettierrc.js" || -f "$PROJ/prettier.config.js" ]] && has_prettier=true; fi
-if ! $has_biome; then [[ -f "$PROJ/biome.json" ]] && has_biome=true; fi
-[[ -f "$PROJ/components.json" ]] && has_shadcn=true
+if ! $has_eslint; then [[ -f "$SIGNAL_DIR/.eslintrc" || -f "$SIGNAL_DIR/.eslintrc.js" || -f "$SIGNAL_DIR/.eslintrc.cjs" || -f "$SIGNAL_DIR/.eslintrc.json" || -f "$SIGNAL_DIR/eslint.config.js" || -f "$SIGNAL_DIR/eslint.config.mjs" ]] && has_eslint=true; fi
+if ! $has_prettier; then [[ -f "$SIGNAL_DIR/.prettierrc" || -f "$SIGNAL_DIR/.prettierrc.json" || -f "$SIGNAL_DIR/.prettierrc.js" || -f "$SIGNAL_DIR/prettier.config.js" ]] && has_prettier=true; fi
+if ! $has_biome; then [[ -f "$SIGNAL_DIR/biome.json" ]] && has_biome=true; fi
+[[ -f "$SIGNAL_DIR/components.json" ]] && has_shadcn=true
 _testing_lib_dep=$(jq -r '((.dependencies // {}) + (.devDependencies // {})) | keys[] | select(startswith("@testing-library/"))' "$pkg" 2>/dev/null | head -1)
 [[ -n "$_testing_lib_dep" ]] && has_testing_library=true
 

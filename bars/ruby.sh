@@ -4,13 +4,14 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-bl_bar_init ruby "#f5d0d0" "#e05060" '["#1e0505","#350c0c"]' "$PROJ/Gemfile" "$PROJ/Gemfile.lock"
+bl_bar_init ruby "#f5d0d0" "#e05060" '["#1e0505","#350c0c"]' "$SIGNAL_DIR/Gemfile" "$SIGNAL_DIR/Gemfile.lock"
 
-[[ ! -f "$PROJ/Gemfile" ]] && exit 0
+[[ ! -f "$SIGNAL_DIR/Gemfile" ]] && exit 0
 
 bl_icon_set IC_RUBY    $'\xee\x9e\x91' '💎'  # U+E791  nf-dev-ruby
 bl_icon_set IC_RAILS   $'\xee\x9c\xbb' '🛤'  # U+E73B  nf-dev-rails
@@ -26,7 +27,7 @@ bl_icon_set IC_BUILD   $'\xef\x84\xa1' '🔨'  # U+F121  nf-fa-wrench
 
 # Returns the locked version of a gem from Gemfile.lock.
 gem_version() {
-  local gem="$1" lock="$PROJ/Gemfile.lock"
+  local gem="$1" lock="$SIGNAL_DIR/Gemfile.lock"
   [[ ! -f "$lock" ]] && return
   awk -v g="$gem" '$1==g { match($2,/[0-9][0-9.]*/); if(RSTART) print substr($2,RSTART,RLENGTH); exit }' \
     "$lock" 2>/dev/null
@@ -34,8 +35,8 @@ gem_version() {
 
 # ── Read Ruby version ─────────────────────────────────────────────────────────
 ruby_version=''
-if [[ -f "$PROJ/.ruby-version" ]]; then
-  ruby_version=$(tr -d '[:space:]' < "$PROJ/.ruby-version" | sed 's/^ruby-//')
+if [[ -f "$SIGNAL_DIR/.ruby-version" ]]; then
+  ruby_version=$(tr -d '[:space:]' < "$SIGNAL_DIR/.ruby-version" | sed 's/^ruby-//')
 elif command -v ruby > /dev/null 2>&1; then
   ruby_version=$(ruby -e 'print RUBY_VERSION' 2>/dev/null)
   _ruby_exit=$?
@@ -46,18 +47,18 @@ fi
 has_rails=false has_sinatra=false has_hanami=false
 rails_version='' sinatra_version='' hanami_version=''
 
-if grep -qiE "gem ['\"]rails['\"]" "$PROJ/Gemfile" 2>/dev/null; then
+if grep -qiE "gem ['\"]rails['\"]" "$SIGNAL_DIR/Gemfile" 2>/dev/null; then
   has_rails=true; rails_version=$(gem_version "rails")
 fi
-if grep -qiE "gem ['\"]sinatra['\"]" "$PROJ/Gemfile" 2>/dev/null; then
+if grep -qiE "gem ['\"]sinatra['\"]" "$SIGNAL_DIR/Gemfile" 2>/dev/null; then
   has_sinatra=true; sinatra_version=$(gem_version "sinatra")
 fi
-if grep -qiE "gem ['\"]hanami['\"]" "$PROJ/Gemfile" 2>/dev/null; then
+if grep -qiE "gem ['\"]hanami['\"]" "$SIGNAL_DIR/Gemfile" 2>/dev/null; then
   has_hanami=true; hanami_version=$(gem_version "hanami")
 fi
 
 # ── Detect testing + add-ons + linter from Gemfile.lock ───────────────────────
-lock="$PROJ/Gemfile.lock"
+lock="$SIGNAL_DIR/Gemfile.lock"
 has_rspec=false
 has_minitest=false
 has_factory_bot=false
@@ -79,10 +80,10 @@ if [[ -f "$lock" ]]; then
   rubocop_version=$(awk '/^[[:space:]]+rubocop[[:space:]]+\(/{gsub(/[()]/,"",$2); print $2; exit}' "$lock" 2>/dev/null)
 fi
 
-grep -qiE "gem ['\"]brakeman['\"]" "$PROJ/Gemfile" 2>/dev/null && has_brakeman=true
+grep -qiE "gem ['\"]brakeman['\"]" "$SIGNAL_DIR/Gemfile" 2>/dev/null && has_brakeman=true
 
 has_rake=false
-[[ -f "$PROJ/Rakefile" ]] && has_rake=true
+[[ -f "$SIGNAL_DIR/Rakefile" ]] && has_rake=true
 
 # RuboCop can also be detected via config file alone
 [[ -z "$rubocop_version" && -f "$PROJ/.rubocop.yml" ]] && rubocop_version='present'

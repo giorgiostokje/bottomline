@@ -4,17 +4,18 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 bl_bar_init kotlin "#e8dff5" "#7f52ff" '["#1a0a3d","#2d1b6e"]' \
-  "$PROJ/build.gradle.kts" "$PROJ/gradle/wrapper/gradle-wrapper.properties"
+  "$SIGNAL_DIR/build.gradle.kts" "$SIGNAL_DIR/gradle/wrapper/gradle-wrapper.properties"
 
 # Hard guard: AFTER cache block
-[[ ! -f "$PROJ/build.gradle.kts" ]] && exit 0
+[[ ! -f "$SIGNAL_DIR/build.gradle.kts" ]] && exit 0
 # Secondary guard: must actually use the Kotlin plugin (not just Kotlin DSL for a Java project)
-grep -qE 'kotlin\(|org\.jetbrains\.kotlin' "$PROJ/build.gradle.kts" 2>/dev/null || exit 0
+grep -qE 'kotlin\(|org\.jetbrains\.kotlin' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null || exit 0
 
 bl_icon_set IC_KOTLIN  $'\xee\x9c\xb2' '🎯'  # U+E732  nf-dev-kotlin
 bl_icon_set IC_GRADLE  $'\xef\x80\x93' '🐘'  # U+F013  nf-fa-cog
@@ -27,31 +28,31 @@ bl_icon_set IC_DB      $'\xef\x87\x80' '🗄'   # U+F1C0  nf-fa-database
 bl_icon_set IC_SERIAL  $'\xef\x83\xa2' '⟨⟩'  # U+F0E2  nf-fa-code (serialization)
 
 # ── Slot 1: Kotlin version ────────────────────────────────────────────────────
-kotlin_version=$(grep -m1 -oE 'kotlin\([^)]*\)\s+version\s+"[0-9][0-9.]*"' "$PROJ/build.gradle.kts" 2>/dev/null \
+kotlin_version=$(grep -m1 -oE 'kotlin\([^)]*\)\s+version\s+"[0-9][0-9.]*"' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
   | grep -oE '"[0-9][0-9.]*"' | tr -d '"')
 if [[ -z "$kotlin_version" ]]; then
-  kotlin_version=$(grep -m1 -oE 'id\("org\.jetbrains\.kotlin\.[^"]*"\)\s+version\s+"[0-9][0-9.]*"' "$PROJ/build.gradle.kts" 2>/dev/null \
+  kotlin_version=$(grep -m1 -oE 'id\("org\.jetbrains\.kotlin\.[^"]*"\)\s+version\s+"[0-9][0-9.]*"' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
     | grep -oE '"[0-9][0-9.]*"' | head -1 | tr -d '"')
 fi
 if [[ -z "$kotlin_version" ]]; then
-  kotlin_version=$(grep -m1 -E 'kotlin_version\s*=\s*"[0-9]|ext\["kotlinVersion"\]\s*=' "$PROJ/build.gradle.kts" 2>/dev/null \
+  kotlin_version=$(grep -m1 -E 'kotlin_version\s*=\s*"[0-9]|ext\["kotlinVersion"\]\s*=' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
     | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
 fi
 
 # ── Slot 2: Gradle wrapper version ───────────────────────────────────────────
-gradle_version=$(grep 'distributionUrl' "$PROJ/gradle/wrapper/gradle-wrapper.properties" 2>/dev/null \
+gradle_version=$(grep 'distributionUrl' "$SIGNAL_DIR/gradle/wrapper/gradle-wrapper.properties" 2>/dev/null \
   | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
 
 # ── Slot 3: Framework ─────────────────────────────────────────────────────────
 has_ktor=false has_spring=false
 ktor_version='' spring_version=''
 
-grep -q 'io\.ktor' "$PROJ/build.gradle.kts" 2>/dev/null && has_ktor=true \
-  && ktor_version=$(grep -m1 'io\.ktor' "$PROJ/build.gradle.kts" 2>/dev/null \
+grep -q 'io\.ktor' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null && has_ktor=true \
+  && ktor_version=$(grep -m1 'io\.ktor' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 
-grep -q 'org\.springframework\.boot' "$PROJ/build.gradle.kts" 2>/dev/null && has_spring=true \
-  && spring_version=$(grep -m1 'spring.boot.*version\|springBootVersion\|org\.springframework\.boot' "$PROJ/build.gradle.kts" 2>/dev/null \
+grep -q 'org\.springframework\.boot' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null && has_spring=true \
+  && spring_version=$(grep -m1 'spring.boot.*version\|springBootVersion\|org\.springframework\.boot' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 
 # Ktor takes priority if both present
@@ -60,28 +61,28 @@ $has_ktor && has_spring=false
 # ── Slot 4: Add-ons ───────────────────────────────────────────────────────────
 has_koin=false has_arrow=false
 
-{ grep -q 'io\.insert-koin:koin' "$PROJ/build.gradle.kts" 2>/dev/null \
-  || grep -q 'io\.insert-koin:koin' "$PROJ/build.gradle" 2>/dev/null; } \
+{ grep -q 'io\.insert-koin:koin' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
+  || grep -q 'io\.insert-koin:koin' "$SIGNAL_DIR/build.gradle" 2>/dev/null; } \
   && has_koin=true
 
-{ grep -q 'io\.arrow-kt:arrow-core' "$PROJ/build.gradle.kts" 2>/dev/null \
-  || grep -q 'io\.arrow-kt:arrow-core' "$PROJ/build.gradle" 2>/dev/null; } \
+{ grep -q 'io\.arrow-kt:arrow-core' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
+  || grep -q 'io\.arrow-kt:arrow-core' "$SIGNAL_DIR/build.gradle" 2>/dev/null; } \
   && has_arrow=true
 
 # ── Slot 5: Testing ───────────────────────────────────────────────────────────
 has_kotest=false has_junit5=false has_mockk=false
 kotest_version='' junit5_version='' mockk_version=''
 
-grep -q 'io\.kotest' "$PROJ/build.gradle.kts" 2>/dev/null && has_kotest=true \
-  && kotest_version=$(grep -m1 'io\.kotest' "$PROJ/build.gradle.kts" 2>/dev/null \
+grep -q 'io\.kotest' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null && has_kotest=true \
+  && kotest_version=$(grep -m1 'io\.kotest' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 
-grep -qE 'junit-jupiter|junit5|org\.junit\.jupiter' "$PROJ/build.gradle.kts" 2>/dev/null && has_junit5=true \
-  && junit5_version=$(grep -m1 -E 'junit-jupiter|org\.junit\.jupiter' "$PROJ/build.gradle.kts" 2>/dev/null \
+grep -qE 'junit-jupiter|junit5|org\.junit\.jupiter' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null && has_junit5=true \
+  && junit5_version=$(grep -m1 -E 'junit-jupiter|org\.junit\.jupiter' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 
-grep -q 'io\.mockk' "$PROJ/build.gradle.kts" 2>/dev/null && has_mockk=true \
-  && mockk_version=$(grep -m1 'io\.mockk' "$PROJ/build.gradle.kts" 2>/dev/null \
+grep -q 'io\.mockk' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null && has_mockk=true \
+  && mockk_version=$(grep -m1 'io\.mockk' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 
 # Layering: Kotest suppresses JUnit5
@@ -91,27 +92,27 @@ $has_kotest && has_junit5=false
 has_detekt=false has_ktlint=false
 detekt_version='' ktlint_version=''
 
-if grep -qE 'io\.gitlab\.arturbosch\.detekt|detekt' "$PROJ/build.gradle.kts" 2>/dev/null \
+if grep -qE 'io\.gitlab\.arturbosch\.detekt|detekt' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
      || [[ -f "$PROJ/.detekt.yml" || -f "$PROJ/detekt.yml" ]]; then
   has_detekt=true
-  detekt_version=$(grep -m1 -E 'io\.gitlab\.arturbosch\.detekt|detekt' "$PROJ/build.gradle.kts" 2>/dev/null \
+  detekt_version=$(grep -m1 -E 'io\.gitlab\.arturbosch\.detekt|detekt' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
     | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 fi
 
-grep -qE 'ktlint|jlleitschuh\.gradle\.ktlint' "$PROJ/build.gradle.kts" 2>/dev/null && has_ktlint=true \
-  && ktlint_version=$(grep -m1 -E 'ktlint|jlleitschuh\.gradle\.ktlint' "$PROJ/build.gradle.kts" 2>/dev/null \
+grep -qE 'ktlint|jlleitschuh\.gradle\.ktlint' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null && has_ktlint=true \
+  && ktlint_version=$(grep -m1 -E 'ktlint|jlleitschuh\.gradle\.ktlint' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 
 has_exposed=false has_serial=false
 
-{ grep -q 'org\.jetbrains\.exposed:exposed' "$PROJ/build.gradle.kts" 2>/dev/null \
-  || grep -q 'org\.jetbrains\.exposed:exposed' "$PROJ/build.gradle" 2>/dev/null; } \
+{ grep -q 'org\.jetbrains\.exposed:exposed' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
+  || grep -q 'org\.jetbrains\.exposed:exposed' "$SIGNAL_DIR/build.gradle" 2>/dev/null; } \
   && has_exposed=true
 
-{ grep -q 'kotlinx-serialization' "$PROJ/build.gradle.kts" 2>/dev/null \
-  || grep -q 'plugin\.serialization' "$PROJ/build.gradle.kts" 2>/dev/null \
-  || grep -q 'kotlinx-serialization' "$PROJ/build.gradle" 2>/dev/null \
-  || grep -q 'plugin\.serialization' "$PROJ/build.gradle" 2>/dev/null; } \
+{ grep -q 'kotlinx-serialization' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
+  || grep -q 'plugin\.serialization' "$SIGNAL_DIR/build.gradle.kts" 2>/dev/null \
+  || grep -q 'kotlinx-serialization' "$SIGNAL_DIR/build.gradle" 2>/dev/null \
+  || grep -q 'plugin\.serialization' "$SIGNAL_DIR/build.gradle" 2>/dev/null; } \
   && has_serial=true
 
 # ── Slot 1: Runtime ───────────────────────────────────────────────────────────

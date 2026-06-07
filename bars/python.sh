@@ -4,20 +4,21 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 bl_bar_init python "#c8dff0" "#ffd740" '["#0c1e30","#183352"]' \
-  "$PROJ/pyproject.toml" "$PROJ/requirements.txt" \
-  "$PROJ/Pipfile" "$PROJ/Pipfile.lock" "$PROJ/poetry.lock" \
-  "$PROJ/uv.lock"
+  "$SIGNAL_DIR/pyproject.toml" "$SIGNAL_DIR/requirements.txt" \
+  "$SIGNAL_DIR/Pipfile" "$SIGNAL_DIR/Pipfile.lock" "$SIGNAL_DIR/poetry.lock" \
+  "$SIGNAL_DIR/uv.lock"
 
 has_pyproject=false has_requirements=false has_pipfile=false has_setup=false
-[[ -f "$PROJ/pyproject.toml" ]]   && has_pyproject=true
-[[ -f "$PROJ/requirements.txt" ]] && has_requirements=true
-[[ -f "$PROJ/Pipfile" ]]          && has_pipfile=true
-[[ -f "$PROJ/setup.py" ]]         && has_setup=true
+[[ -f "$SIGNAL_DIR/pyproject.toml" ]]   && has_pyproject=true
+[[ -f "$SIGNAL_DIR/requirements.txt" ]] && has_requirements=true
+[[ -f "$SIGNAL_DIR/Pipfile" ]]          && has_pipfile=true
+[[ -f "$SIGNAL_DIR/setup.py" ]]         && has_setup=true
 $has_pyproject || $has_requirements || $has_pipfile || $has_setup || exit 0
 
 bl_icon_set IC_PYTHON  $'\xee\x98\x86' '🐍'  # U+E606  nf-seti-python
@@ -35,27 +36,27 @@ bl_icon_set IC_WEB     $'\xef\x83\xac' '🌐'  # U+F0EC  nf-fa-globe
 
 # ── Python version detection (priority: .python-version → pyproject.toml → .tool-versions) ──
 py_version=''
-if [[ -f "$PROJ/.python-version" ]]; then
-  py_version=$(awk '/^[0-9]/{print; exit}' "$PROJ/.python-version" 2>/dev/null)
-elif [[ -f "$PROJ/pyproject.toml" ]]; then
-  py_version=$(awk -F'"' '/requires-python/{print $2; exit}' "$PROJ/pyproject.toml" 2>/dev/null | sed 's/[^0-9.]//g')
+if [[ -f "$SIGNAL_DIR/.python-version" ]]; then
+  py_version=$(awk '/^[0-9]/{print; exit}' "$SIGNAL_DIR/.python-version" 2>/dev/null)
+elif [[ -f "$SIGNAL_DIR/pyproject.toml" ]]; then
+  py_version=$(awk -F'"' '/requires-python/{print $2; exit}' "$SIGNAL_DIR/pyproject.toml" 2>/dev/null | sed 's/[^0-9.]//g')
 fi
-if [[ -z "$py_version" && -f "$PROJ/.tool-versions" ]]; then
-  py_version=$(awk '/^python /{print $2; exit}' "$PROJ/.tool-versions" 2>/dev/null)
+if [[ -z "$py_version" && -f "$SIGNAL_DIR/.tool-versions" ]]; then
+  py_version=$(awk '/^python /{print $2; exit}' "$SIGNAL_DIR/.tool-versions" 2>/dev/null)
 fi
 
 # ── Detect package manager / tool ─────────────────────────────────────────────
 tool_label=''
 tool_icon=''
 
-if [[ -f "$PROJ/uv.lock" ]] || { $has_pyproject && grep -q '^\[tool\.uv\]' "$PROJ/pyproject.toml" 2>/dev/null; }; then
+if [[ -f "$SIGNAL_DIR/uv.lock" ]] || { $has_pyproject && grep -q '^\[tool\.uv\]' "$SIGNAL_DIR/pyproject.toml" 2>/dev/null; }; then
   tool_label='uv'; tool_icon="$IC_POETRY"
 elif $has_pyproject; then
-  if grep -q '^\[tool\.poetry\]' "$PROJ/pyproject.toml" 2>/dev/null; then
+  if grep -q '^\[tool\.poetry\]' "$SIGNAL_DIR/pyproject.toml" 2>/dev/null; then
     tool_label='Poetry'; tool_icon="$IC_POETRY"
-  elif grep -q '^\[tool\.pdm\]' "$PROJ/pyproject.toml" 2>/dev/null; then
+  elif grep -q '^\[tool\.pdm\]' "$SIGNAL_DIR/pyproject.toml" 2>/dev/null; then
     tool_label='PDM'; tool_icon="$IC_POETRY"
-  elif grep -q '^\[tool\.hatch\]' "$PROJ/pyproject.toml" 2>/dev/null; then
+  elif grep -q '^\[tool\.hatch\]' "$SIGNAL_DIR/pyproject.toml" 2>/dev/null; then
     tool_label='Hatch'; tool_icon="$IC_POETRY"
   fi
 elif $has_pipfile; then
@@ -68,7 +69,7 @@ pkg_version() {
   local pkg="$1"
   local lock ver
 
-  lock="$PROJ/poetry.lock"
+  lock="$SIGNAL_DIR/poetry.lock"
   if [[ -f "$lock" ]]; then
     ver=$(awk -v p="$pkg" '
       /^\[\[package\]\]/ { name=""; ver="" }
@@ -79,13 +80,13 @@ pkg_version() {
     [[ -n "$ver" ]] && printf '%s' "$ver" && return
   fi
 
-  lock="$PROJ/Pipfile.lock"
+  lock="$SIGNAL_DIR/Pipfile.lock"
   if [[ -f "$lock" ]]; then
     ver=$(jq -r --arg p "$pkg" '.default[$p].version // empty' "$lock" 2>/dev/null | sed 's/^==//')
     [[ -n "$ver" ]] && printf '%s' "$ver" && return
   fi
 
-  lock="$PROJ/uv.lock"
+  lock="$SIGNAL_DIR/uv.lock"
   if [[ -f "$lock" ]]; then
     ver=$(awk -v p="$pkg" '
       /^\[\[package\]\]/ { name=""; ver="" }
@@ -96,7 +97,7 @@ pkg_version() {
     [[ -n "$ver" ]] && printf '%s' "$ver" && return
   fi
 
-  lock="$PROJ/requirements.txt"
+  lock="$SIGNAL_DIR/requirements.txt"
   if [[ -f "$lock" ]]; then
     ver=$(grep -iE "^${pkg}[>=<!~\[]" "$lock" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
     [[ -n "$ver" ]] && printf '%s' "$ver" && return
@@ -108,9 +109,9 @@ django_version='' flask_version='' fastapi_version=''
 
 # Scan all dependency sources for known frameworks.
 _all_deps=''
-$has_pyproject && _all_deps+=$(cat "$PROJ/pyproject.toml" 2>/dev/null)
-$has_requirements && _all_deps+=$(cat "$PROJ/requirements.txt" 2>/dev/null)
-$has_pipfile && _all_deps+=$(cat "$PROJ/Pipfile" 2>/dev/null)
+$has_pyproject && _all_deps+=$(cat "$SIGNAL_DIR/pyproject.toml" 2>/dev/null)
+$has_requirements && _all_deps+=$(cat "$SIGNAL_DIR/requirements.txt" 2>/dev/null)
+$has_pipfile && _all_deps+=$(cat "$SIGNAL_DIR/Pipfile" 2>/dev/null)
 
 if printf '%s' "$_all_deps" | grep -qiE 'django'; then
   has_django=true; django_version=$(pkg_version "django")
@@ -131,7 +132,7 @@ printf '%s' "$_all_deps" | grep -qiE '(^|[^a-z])httpx([^a-z]|$)' && has_httpx=tr
 # Single combined source for lockfile-driven deps: poetry.lock | pdm.lock | uv.lock | requirements.txt | pyproject.toml
 _deps_file=''
 for _df in poetry.lock pdm.lock uv.lock requirements.txt pyproject.toml; do
-  [[ -f "$PROJ/$_df" ]] && _deps_file="$PROJ/$_df" && break
+  [[ -f "$SIGNAL_DIR/$_df" ]] && _deps_file="$SIGNAL_DIR/$_df" && break
 done
 
 has_pytest=false
@@ -155,11 +156,11 @@ if [[ -n "$_deps_file" ]]; then
 fi
 
 # Config-file fallbacks
-! $has_pytest && [[ -f "$PROJ/pytest.ini" ]] && has_pytest=true
-[[ -f "$PROJ/ruff.toml" || -f "$PROJ/.ruff.toml" ]] && has_ruff=true
-[[ -f "$PROJ/mypy.ini" || -f "$PROJ/.mypy.ini" ]] && has_mypy=true
-! $has_black && $has_pyproject && grep -q '^\[tool\.black\]' "$PROJ/pyproject.toml" 2>/dev/null && has_black=true
-! $has_isort && $has_pyproject && grep -q '^\[tool\.isort\]' "$PROJ/pyproject.toml" 2>/dev/null && has_isort=true
+! $has_pytest && [[ -f "$SIGNAL_DIR/pytest.ini" ]] && has_pytest=true
+[[ -f "$SIGNAL_DIR/ruff.toml" || -f "$SIGNAL_DIR/.ruff.toml" ]] && has_ruff=true
+[[ -f "$SIGNAL_DIR/mypy.ini" || -f "$SIGNAL_DIR/.mypy.ini" ]] && has_mypy=true
+! $has_black && $has_pyproject && grep -q '^\[tool\.black\]' "$SIGNAL_DIR/pyproject.toml" 2>/dev/null && has_black=true
+! $has_isort && $has_pyproject && grep -q '^\[tool\.isort\]' "$SIGNAL_DIR/pyproject.toml" 2>/dev/null && has_isort=true
 
 # SQLAlchemy is suppressed when Django is present (Django ORM is the primary)
 [[ -n "${django_version:-}" ]] && has_sqlalchemy=false

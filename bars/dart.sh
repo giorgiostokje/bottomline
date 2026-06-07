@@ -4,28 +4,29 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 bl_bar_init dart "#c5e8ff" "#0175C2" '["#042B59","#011F3F"]' \
-  "$PROJ/pubspec.yaml" "$PROJ/pubspec.lock"
+  "$SIGNAL_DIR/pubspec.yaml" "$SIGNAL_DIR/pubspec.lock"
 
-[[ ! -f "$PROJ/pubspec.yaml" ]] && exit 0
+[[ ! -f "$SIGNAL_DIR/pubspec.yaml" ]] && exit 0
 
 # Returns the locked version of a dep from pubspec.lock, or constraint from pubspec.yaml.
 pubspec_dep_version() {
   local pkg="$1"
-  if [[ -f "$PROJ/pubspec.lock" ]]; then
+  if [[ -f "$SIGNAL_DIR/pubspec.lock" ]]; then
     awk -v p="$pkg" '
       /^  [a-z_]/ { cur=substr($1,1,length($1)-1) }
       cur==p && /version:/ { match($0,/[0-9]+\.[0-9]+(\.[0-9]+)?/,a); print a[0]; exit }
-    ' "$PROJ/pubspec.lock" 2>/dev/null
+    ' "$SIGNAL_DIR/pubspec.lock" 2>/dev/null
     return
   fi
   awk -v p="$pkg" '
     $0 ~ "^[[:space:]]+"p":" { match($0,/[0-9]+\.[0-9]+(\.[0-9]+)?/,a); print a[0]; exit }
-  ' "$PROJ/pubspec.yaml" 2>/dev/null
+  ' "$SIGNAL_DIR/pubspec.yaml" 2>/dev/null
 }
 
 bl_icon_set IC_DART     $'\xef\x88\x99' '🎯'  # U+F219  nf-fa-diamond
@@ -40,16 +41,16 @@ bl_icon_set IC_CODEGEN  $'\xef\x84\xa1' '❄'   # U+F121  nf-fa-code (code-gen)
 bl_icon_set IC_DB       $'\xef\x87\x80' '🗄'   # U+F1C0  nf-fa-database
 
 # ── Parse pubspec.yaml ────────────────────────────────────────────────────────
-pkg_name=$(grep -m1 '^name:' "$PROJ/pubspec.yaml" 2>/dev/null | awk '{print $2}')
+pkg_name=$(grep -m1 '^name:' "$SIGNAL_DIR/pubspec.yaml" 2>/dev/null | awk '{print $2}')
 
-sdk_version=$(grep -A5 '^environment:' "$PROJ/pubspec.yaml" 2>/dev/null \
+sdk_version=$(grep -A5 '^environment:' "$SIGNAL_DIR/pubspec.yaml" 2>/dev/null \
   | grep -m1 'sdk:' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 
 is_flutter=false
-grep -q 'sdk:\s*flutter' "$PROJ/pubspec.yaml" 2>/dev/null && is_flutter=true
+grep -q 'sdk:\s*flutter' "$SIGNAL_DIR/pubspec.yaml" 2>/dev/null && is_flutter=true
 
 # ── Detect testing + add-ons + lints from pubspec.yaml ────────────────────────
-pubspec="$PROJ/pubspec.yaml"
+pubspec="$SIGNAL_DIR/pubspec.yaml"
 
 has_test=false
 has_flutter_test=false

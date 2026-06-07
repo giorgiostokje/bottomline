@@ -4,13 +4,14 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-bl_bar_init salesforce "#c7e0f4" "#1B96FF" '["#032D60","#0B4B8B"]' "$PROJ/sfdx-project.json" "$PROJ/.sf/config.json"
+bl_bar_init salesforce "#c7e0f4" "#1B96FF" '["#032D60","#0B4B8B"]' "$SIGNAL_DIR/sfdx-project.json" "$SIGNAL_DIR/.sf/config.json"
 
-[[ ! -f "$PROJ/sfdx-project.json" ]] && exit 0
+[[ ! -f "$SIGNAL_DIR/sfdx-project.json" ]] && exit 0
 
 bl_icon_set IC_SF   $'\xef\x83\x82' '☁️'  # U+F0C2  nf-fa-cloud
 bl_icon_set IC_ORG  $'\xef\x86\xad' '🏢'  # U+F1AD  nf-fa-building
@@ -20,7 +21,7 @@ bl_icon_set IC_PMD  $'\xef\x80\x8c' '🔍'  # U+F00C  nf-fa-check
 bl_icon_set IC_LWC  $'\xef\x84\xa1' '⚡'  # U+F121  nf-fa-code
 
 # ── Parse sfdx-project.json ───────────────────────────────────────────────────
-proj_json="$PROJ/sfdx-project.json"
+proj_json="$SIGNAL_DIR/sfdx-project.json"
 api_version=$(jq -r '.sourceApiVersion // empty' "$proj_json" 2>/dev/null)
 login_url=$(jq -r '.sfdcLoginUrl // empty' "$proj_json" 2>/dev/null)
 namespace=$(jq -r '.namespace // empty' "$proj_json" 2>/dev/null)
@@ -31,13 +32,13 @@ org_type=''
 # ── Resolve target org ────────────────────────────────────────────────────────
 target_org=''
 # Project-level config (highest priority)
-if [[ -f "$PROJ/.sf/config.json" ]]; then
-  target_org=$(jq -r '."target-org" // empty' "$PROJ/.sf/config.json" 2>/dev/null)
+if [[ -f "$SIGNAL_DIR/.sf/config.json" ]]; then
+  target_org=$(jq -r '."target-org" // empty' "$SIGNAL_DIR/.sf/config.json" 2>/dev/null)
 fi
 # Legacy project .sfdx/sfdx-config.json
-if [[ -z "$target_org" && -f "$PROJ/.sfdx/sfdx-config.json" ]]; then
+if [[ -z "$target_org" && -f "$SIGNAL_DIR/.sfdx/sfdx-config.json" ]]; then
   target_org=$(jq -r '.defaultusername // .defaultdevhubusername // empty' \
-    "$PROJ/.sfdx/sfdx-config.json" 2>/dev/null)
+    "$SIGNAL_DIR/.sfdx/sfdx-config.json" 2>/dev/null)
 fi
 # Global user config
 if [[ -z "$target_org" && -f "$HOME/.sf/config.json" ]]; then
@@ -85,15 +86,15 @@ fi
 
 # ── PMD (Apex static analysis) ────────────────────────────────────────────────
 has_pmd=false
-[[ -f "$PROJ/.pmdrc" ]] && has_pmd=true
+[[ -f "$SIGNAL_DIR/.pmdrc" ]] && has_pmd=true
 ! $has_pmd && command -v pmd > /dev/null 2>&1 && has_pmd=true
 ! $has_pmd && [[ -f "$PROJ/code-analyzer.yml" ]] && has_pmd=true
 
 # ── ESLint for LWC ───────────────────────────────────────────────────────────
 has_lwc_eslint=false
-if [[ -f "$PROJ/package.json" ]]; then
+if [[ -f "$SIGNAL_DIR/package.json" ]]; then
   if jq -e '((.dependencies // {}) + (.devDependencies // {})) | has("@salesforce/eslint-config-lwc")' \
-    "$PROJ/package.json" > /dev/null 2>&1; then
+    "$SIGNAL_DIR/package.json" > /dev/null 2>&1; then
     has_lwc_eslint=true
   fi
 fi

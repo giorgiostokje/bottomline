@@ -4,24 +4,25 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-bl_bar_init rust "#f0ddd8" "#d05a38" '["#1a0a04","#301508"]' "$PROJ/Cargo.toml" "$PROJ/Cargo.lock"
+bl_bar_init rust "#f0ddd8" "#d05a38" '["#1a0a04","#301508"]' "$SIGNAL_DIR/Cargo.toml" "$SIGNAL_DIR/Cargo.lock"
 
-[[ ! -f "$PROJ/Cargo.toml" ]] && exit 0
+[[ ! -f "$SIGNAL_DIR/Cargo.toml" ]] && exit 0
 
 # Returns the exact version of a package from Cargo.lock.
 cargo_lock_version() {
   local pkg="$1"
-  [[ ! -f "$PROJ/Cargo.lock" ]] && return
+  [[ ! -f "$SIGNAL_DIR/Cargo.lock" ]] && return
   awk -v p="$pkg" '
     /^\[\[package\]\]/ { name=""; ver="" }
     /^name = / { gsub(/"/, ""); name=substr($0, 9) }
     /^version = / { gsub(/"/, ""); ver=substr($0, 12) }
     name==p && ver!="" { print ver; exit }
-  ' "$PROJ/Cargo.lock" 2>/dev/null
+  ' "$SIGNAL_DIR/Cargo.lock" 2>/dev/null
 }
 
 bl_icon_set IC_RUST      $'\xee\x9a\x8b' '🦀'  # U+E68B  nf-seti-rust
@@ -36,13 +37,13 @@ bl_icon_set IC_PROTO     $'\xef\x80\xa2' '📡'   # U+F022  nf-fa-broadcast (gRP
 
 
 # ── Read Cargo.toml ───────────────────────────────────────────────────────────
-edition=$(awk -F'"' '/^edition[[:space:]]*=/{print $2; exit}' "$PROJ/Cargo.toml" 2>/dev/null)
+edition=$(awk -F'"' '/^edition[[:space:]]*=/{print $2; exit}' "$SIGNAL_DIR/Cargo.toml" 2>/dev/null)
 is_workspace=false
-grep -q '^\[workspace\]' "$PROJ/Cargo.toml" && is_workspace=true
+grep -q '^\[workspace\]' "$SIGNAL_DIR/Cargo.toml" && is_workspace=true
 
 
 # ── Detect frameworks/libraries from Cargo.toml ───────────────────────────────
-toml="$PROJ/Cargo.toml"
+toml="$SIGNAL_DIR/Cargo.toml"
 framework=''
 framework_display=''
 framework_version=''
@@ -93,7 +94,7 @@ $has_seaorm && seaorm_version=$(cargo_lock_version "sea-orm")
 # nextest: lockfile dep OR config OR binary
 has_nextest=false
 nextest_version=''
-if [[ -f "$PROJ/Cargo.lock" ]] && grep -q '"cargo-nextest"' "$PROJ/Cargo.lock" 2>/dev/null; then
+if [[ -f "$SIGNAL_DIR/Cargo.lock" ]] && grep -q '"cargo-nextest"' "$SIGNAL_DIR/Cargo.lock" 2>/dev/null; then
   has_nextest=true
 elif [[ -f "$PROJ/.config/nextest.toml" ]]; then
   has_nextest=true

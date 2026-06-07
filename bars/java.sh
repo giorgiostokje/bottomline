@@ -4,16 +4,17 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-bl_bar_init java "#f5e4c0" "#ed8b00" '["#1c1000","#2e1e00"]' "$PROJ/pom.xml" "$PROJ/build.gradle" "$PROJ/build.gradle.kts"
+bl_bar_init java "#f5e4c0" "#ed8b00" '["#1c1000","#2e1e00"]' "$SIGNAL_DIR/pom.xml" "$SIGNAL_DIR/build.gradle" "$SIGNAL_DIR/build.gradle.kts"
 
 has_maven=false has_gradle=false
-[[ -f "$PROJ/pom.xml" ]]             && has_maven=true
-[[ -f "$PROJ/build.gradle" ]]        && has_gradle=true
-[[ -f "$PROJ/build.gradle.kts" ]]    && has_gradle=true
+[[ -f "$SIGNAL_DIR/pom.xml" ]]             && has_maven=true
+[[ -f "$SIGNAL_DIR/build.gradle" ]]        && has_gradle=true
+[[ -f "$SIGNAL_DIR/build.gradle.kts" ]]    && has_gradle=true
 $has_maven || $has_gradle || exit 0
 
 # Extracts version from pom.xml for the named artifactId.
@@ -56,7 +57,7 @@ spring_version='' quarkus_version='' micronaut_version=''
 java_version=''
 
 if $has_maven; then
-  _pom="$PROJ/pom.xml"
+  _pom="$SIGNAL_DIR/pom.xml"
   java_version=$(grep -m1 '<java\.version>' "$_pom" 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)*')
   [[ -z "$java_version" ]] && \
     java_version=$(grep -m1 'maven\.compiler\.source' "$_pom" 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)*')
@@ -75,8 +76,8 @@ if $has_maven; then
 fi
 
 if $has_gradle; then
-  _gradle_file="$PROJ/build.gradle"
-  [[ -f "$PROJ/build.gradle.kts" ]] && _gradle_file="$PROJ/build.gradle.kts"
+  _gradle_file="$SIGNAL_DIR/build.gradle"
+  [[ -f "$SIGNAL_DIR/build.gradle.kts" ]] && _gradle_file="$SIGNAL_DIR/build.gradle.kts"
 
   if grep -q 'spring-boot\|org\.springframework' "$_gradle_file" 2>/dev/null; then
     has_spring=true
@@ -93,9 +94,9 @@ fi
 
 # ── Detect ecosystem from pom.xml or build.gradle ─────────────────────────────
 _build_files=()
-$has_maven && _build_files+=("$PROJ/pom.xml")
-$has_gradle && _build_files+=("$PROJ/build.gradle")
-[[ -f "$PROJ/build.gradle.kts" ]] && _build_files+=("$PROJ/build.gradle.kts")
+$has_maven && _build_files+=("$SIGNAL_DIR/pom.xml")
+$has_gradle && _build_files+=("$SIGNAL_DIR/build.gradle")
+[[ -f "$SIGNAL_DIR/build.gradle.kts" ]] && _build_files+=("$SIGNAL_DIR/build.gradle.kts")
 
 has_junit5=false
 has_junit4=false
@@ -131,15 +132,15 @@ $has_flyway && has_liquibase=false
 
 # Extract versions for Lombok, Checkstyle, SpotBugs, PMD
 lombok_version='' checkstyle_version='' spotbugs_version='' pmd_version=''
-if $has_maven && [[ -f "$PROJ/pom.xml" ]]; then
-  _pom="$PROJ/pom.xml"
+if $has_maven && [[ -f "$SIGNAL_DIR/pom.xml" ]]; then
+  _pom="$SIGNAL_DIR/pom.xml"
   $has_lombok     && lombok_version=$(_pom_dep_version "lombok" "$_pom")
   $has_checkstyle && checkstyle_version=$(_pom_dep_version "maven-checkstyle-plugin" "$_pom")
   $has_spotbugs   && spotbugs_version=$(_pom_dep_version "spotbugs-maven-plugin" "$_pom")
   $has_pmd        && pmd_version=$(_pom_dep_version "maven-pmd-plugin" "$_pom")
 fi
 if $has_gradle; then
-  _gf="$PROJ/build.gradle"; [[ -f "$PROJ/build.gradle.kts" ]] && _gf="$PROJ/build.gradle.kts"
+  _gf="$SIGNAL_DIR/build.gradle"; [[ -f "$SIGNAL_DIR/build.gradle.kts" ]] && _gf="$SIGNAL_DIR/build.gradle.kts"
   [[ -z "$lombok_version" ]]     && $has_lombok     && lombok_version=$(_gradle_dep_version "projectlombok:lombok:" "$_gf")
   [[ -z "$checkstyle_version" ]] && $has_checkstyle && checkstyle_version=$(_gradle_dep_version "checkstyle" "$_gf")
   [[ -z "$spotbugs_version" ]]   && $has_spotbugs   && spotbugs_version=$(_gradle_dep_version "spotbugs" "$_gf")

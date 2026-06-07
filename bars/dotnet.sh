@@ -4,20 +4,21 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-bl_bar_init dotnet "#e8d9f5" "#512BD4" '["#1a0640","#2d0e6e"]' "$PROJ/global.json" "$PROJ/Directory.Build.props" "$PROJ/Directory.Build.targets"
+bl_bar_init dotnet "#e8d9f5" "#512BD4" '["#1a0640","#2d0e6e"]' "$SIGNAL_DIR/global.json" "$SIGNAL_DIR/Directory.Build.props" "$SIGNAL_DIR/Directory.Build.targets"
 
 shopt -s nullglob
-_csproj=("$PROJ"/*.csproj)
-_sln=("$PROJ"/*.sln)
+_csproj=("$SIGNAL_DIR"/*.csproj)
+_sln=("$SIGNAL_DIR"/*.sln)
 shopt -u nullglob
 [[ ${#_csproj[@]} -eq 0 && ${#_sln[@]} -eq 0 \
-  && ! -f "$PROJ/global.json" \
-  && ! -f "$PROJ/Directory.Build.props" \
-  && ! -f "$PROJ/Directory.Build.targets" ]] && exit 0
+  && ! -f "$SIGNAL_DIR/global.json" \
+  && ! -f "$SIGNAL_DIR/Directory.Build.props" \
+  && ! -f "$SIGNAL_DIR/Directory.Build.targets" ]] && exit 0
 
 # Extracts PackageReference version from .csproj by partial package name match.
 _csproj_pkg_version() {
@@ -40,8 +41,8 @@ bl_icon_set IC_LOG     $'\xef\x81\xab' '📋'  # U+F06B  nf-fa-tag
 
 # ── SDK version ───────────────────────────────────────────────────────────────
 sdk_version=''
-if [[ -f "$PROJ/global.json" ]]; then
-  sdk_version=$(jq -r '.sdk.version // empty' "$PROJ/global.json" 2>/dev/null)
+if [[ -f "$SIGNAL_DIR/global.json" ]]; then
+  sdk_version=$(jq -r '.sdk.version // empty' "$SIGNAL_DIR/global.json" 2>/dev/null)
 fi
 if [[ -z "$sdk_version" ]] && command -v dotnet &>/dev/null; then
   _dotnet_raw=$(dotnet --version 2>/dev/null)

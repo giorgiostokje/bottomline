@@ -4,14 +4,15 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
 bl_bar_init php "#ddd6f3" "#9898e0" '["#0d0b1e","#1c1850"]' \
-  "$PROJ/composer.json" "$PROJ/composer.lock"
+  "$SIGNAL_DIR/composer.json" "$SIGNAL_DIR/composer.lock"
 
-[[ ! -f "$PROJ/composer.json" ]] && exit 0
+[[ ! -f "$SIGNAL_DIR/composer.json" ]] && exit 0
 
 bl_icon_set IC_PHP      $'\xee\x9d\xa5' '🐘'  # U+E765  nf-dev-php
 bl_icon_set IC_LARAVEL  $'\xee\x9c\xbf' '🔥'  # U+E73F  nf-dev-laravel
@@ -41,7 +42,7 @@ command -v php > /dev/null 2>&1 \
   && php_version=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>/dev/null)
 
 # Read all relevant versions in one pass over composer.lock.
-lock="$PROJ/composer.lock"
+lock="$SIGNAL_DIR/composer.lock"
 laravel_version=''
 lumen_version=''
 symfony_version=''
