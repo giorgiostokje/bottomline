@@ -260,6 +260,9 @@ bl_render_bars() {
       (
         _bl_resolve_bar_colors "$bar"
         _bl_resolve_bar_params "$bar"
+        local _signal_dir
+        _signal_dir=$(printf '%s' "$bar" | jq -r '.project_dir // empty' 2>/dev/null)
+        [[ -n "$_signal_dir" ]] && export BOTTOMLINE_SIGNAL_DIR="$_signal_dir"
         bash "$script_path"
       )
       continue
