@@ -28,6 +28,7 @@
   },
   "auto_bars": {
     "enabled": false,
+    "search_depth": 0,
     "refresh_minutes": 5,
     "scripts": [
       { "script": "c-cpp", "signals": ["CMakeLists.txt", "meson.build", "configure.ac"] },

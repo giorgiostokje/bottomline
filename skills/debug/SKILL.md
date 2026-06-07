@@ -327,8 +327,11 @@ done
 A bar that should auto-detect is missing. Check in order:
 
 ```bash
-# Is the bar's signal file actually in the project root?
-ls /path/to/project/composer.json   # (replace with your signal file)
+# Is the bar's signal file in the project root or a subdirectory?
+ls /path/to/project/composer.json              # (replace with your signal file)
+# If it's in a subdirectory, check the search_depth setting:
+jq '.auto_bars.search_depth // 0' "$HOME/.claude/bottomline.json" 2>/dev/null
+# Not set or 0? Add "search_depth": 1 to ~/.claude/bottomline.json and re-run.
 
 # Is auto-bar detection enabled?
 jq '.auto_bars.enabled' "$BL_DIR/settings.json"

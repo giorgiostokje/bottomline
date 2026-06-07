@@ -382,6 +382,18 @@ Auto-bars are disabled by default (`enabled: false` in `settings.json`).
 
 Auto-detected bars cache output in `/tmp`. `auto_bars.refresh_minutes` sets the global TTL (default: `5`). Override per bar by adding a matching entry to `auto_bars.scripts` at user or project level — e.g. `{"auto_bars":{"scripts":[{"script":"git","refresh_minutes":1}]}}`. The `git` bar defaults to `0` (live). Set `auto_bars.inherit_colors: true` to make all auto-detected bars use the merged config palette instead of their built-in language colours.
 
+#### Nested manifests (monorepo support)
+
+By default, Bottomline only looks for signal files at the project root. To detect manifests in subdirectories — common in monorepos where `Package.swift` or `Cargo.toml` lives one level down — set `auto_bars.search_depth`:
+
+```json
+{ "auto_bars": { "enabled": true, "search_depth": 1 } }
+```
+
+`search_depth` is the maximum number of subdirectory levels to search (default: `0` = root only). Heavy directories (`.git`, `node_modules`, `vendor`, `.build`, `target`, `Pods`, `DerivedData`, `dist`, `build`, `.venv`) are always pruned regardless of depth.
+
+When multiple signal files are found at different depths, the shallowest (then lexically first) match wins and its containing directory is used as the bar's manifest root. One bar per language is rendered (multi-match is a planned follow-up).
+
 #### Registered signal files
 
 The `auto_bars.scripts` array maps bar names to the signal files that trigger them. The full list is defined in the plugin's `settings.json`. All 17 language and ecosystem bars are auto-detectable; `random-facts` and `linear` have no auto-detection signal and must be added explicitly via `bars`.
@@ -538,6 +550,7 @@ All keys, their types, and which config files they belong in.
 | `bars[].refresh_minutes` | `integer` | Cache TTL in minutes for script bars that use `bl_cache_write`. All 17 built-in language and ecosystem bars respect this. `random-facts` also respects this (default: 60). `0` disables caching. For auto-detected bars, defaults to `auto_bars.refresh_minutes` unless overridden. |
 | `bars[].params` | `object` | Arbitrary key-value pairs passed to the bar script as `BOTTOMLINE_BAR_PARAMS` (JSON). String values support `$ENV_VAR` expansion and `file:<path>` resolution. Required by the `linear` bar (`api_key`, `team`). |
 | `auto_bars.enabled` | `boolean` | Enable auto-bar detection for this config level (default: `false`) |
+| `auto_bars.search_depth` | `integer` | Maximum subdirectory depth to search for signal files (default: `0` = root only). Set `1` or `2` for monorepos. Heavy dirs pruned automatically. |
 | `auto_bars.disabled` | `string[]` | Bar names to exclude from auto-detection (unioned across config levels) |
 | `auto_bars.inherit_colors` | `boolean` | When `true`, all auto-detected bars behave as `colors: "inherit"` |
 | `auto_bars.scripts` | `array` | Registry of `{ "script", "signals" }` entries — defined by the plugin; do not edit |
