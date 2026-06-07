@@ -24,7 +24,7 @@ _bl_find_in_subdirs() {
                   -o -name "DerivedData" -o -name "dist"     \
                   -o -name "build"   -o -name ".venv" \) -prune \) \
     -o -type f -name "$sig" -print 2>/dev/null \
-    | sort | head -1)
+    | awk 'BEGIN{mind=999}{d=gsub("/","/",$0); if(d<mind||(d==mind&&$0<best)){mind=d;best=$0}} END{if(best)print best}')
   [[ -n "$found" ]] && dirname "$found" && return 0
   return 1
 }
