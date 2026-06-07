@@ -4,13 +4,17 @@
 
 PROJ="${BOTTOMLINE_PROJECT_DIR:-}"
 [[ -z "$PROJ" ]] && exit 0
+# BOTTOMLINE_SIGNAL_DIR is set by auto-bar subdir detection when Package.swift
+# lives in a subdirectory of the project root.  Fall back to PROJ for root-level
+# projects so the bar works in both cases.
+SIGNAL_DIR="${BOTTOMLINE_SIGNAL_DIR:-$PROJ}"
 
 # shellcheck source=lib/helpers.sh
 source "$BOTTOMLINE_LIB/helpers.sh"
 
-bl_bar_init swift "#f5ddd8" "#f05138" '["#1c0a06","#331008"]' "$PROJ/Package.swift" "$PROJ/Package.resolved"
+bl_bar_init swift "#f5ddd8" "#f05138" '["#1c0a06","#331008"]' "$SIGNAL_DIR/Package.swift" "$SIGNAL_DIR/Package.resolved"
 
-[[ ! -f "$PROJ/Package.swift" ]] && exit 0
+[[ ! -f "$SIGNAL_DIR/Package.swift" ]] && exit 0
 
 bl_icon_set IC_SWIFT    $'\xee\x9d\x95' '🦅'
 bl_icon_set IC_VAPOR    $'\xef\x83\x90' '💧'
@@ -25,11 +29,11 @@ bl_icon_set IC_FMT      $'\xef\x80\xb1' '🖋'
 
 # ── Read Swift tools version from Package.swift first line ────────────────────
 # e.g. // swift-tools-version: 5.9
-tools_version=$(head -1 "$PROJ/Package.swift" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?')
+tools_version=$(head -1 "$SIGNAL_DIR/Package.swift" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?')
 
 # ── Detect Vapor from Package.resolved ───────────────────────────────────────
 has_vapor=false vapor_version=''
-resolved="$PROJ/Package.resolved"
+resolved="$SIGNAL_DIR/Package.resolved"
 if [[ -f "$resolved" ]]; then
   if jq -e '.pins | any(.[]; .identity == "vapor" or (.package // "") == "vapor")' \
        "$resolved" > /dev/null 2>&1; then
@@ -42,7 +46,7 @@ if [[ -f "$resolved" ]]; then
 fi
 
 # Fallback: grep Package.swift for vapor dependency declaration.
-if ! $has_vapor && grep -qi 'vapor/vapor\|\.package.*vapor' "$PROJ/Package.swift" 2>/dev/null; then
+if ! $has_vapor && grep -qi 'vapor/vapor\|\.package.*vapor' "$SIGNAL_DIR/Package.swift" 2>/dev/null; then
   has_vapor=true
 fi
 
@@ -69,7 +73,7 @@ fi
 
 # XCTest: present when Package.swift declares a .testTarget AND Quick/SwiftTesting absent
 has_xctest=false
-if [[ -f "$PROJ/Package.swift" ]] && grep -q '.testTarget' "$PROJ/Package.swift" 2>/dev/null; then
+if [[ -f "$SIGNAL_DIR/Package.swift" ]] && grep -q '.testTarget' "$SIGNAL_DIR/Package.swift" 2>/dev/null; then
   has_xctest=true
 fi
 # Layering: Quick suppresses XCTest; Swift Testing replaces XCTest in segment shown
@@ -91,10 +95,10 @@ elif command -v swiftformat > /dev/null 2>&1; then
 fi
 
 has_tca=false
-grep -qiE 'composable.architecture' "$PROJ/Package.swift" 2>/dev/null && has_tca=true
+grep -qiE 'composable.architecture' "$SIGNAL_DIR/Package.swift" 2>/dev/null && has_tca=true
 
 has_firebase=false
-grep -qi 'firebase' "$PROJ/Package.swift" 2>/dev/null && has_firebase=true
+grep -qi 'firebase' "$SIGNAL_DIR/Package.swift" 2>/dev/null && has_firebase=true
 
 # ── Swift runtime ─────────────────────────────────────────────────────────────
 swift_seg="${FG_ACCENT}${IC_SWIFT} ${FG_TEXT}Swift"

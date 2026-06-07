@@ -68,6 +68,8 @@ FG_CRIT=$(make_fg   "$(hex_to_rgb "${BOTTOMLINE_DANGER_HEX:-#e05a4e}")")
 # Collapses the cache-check + color-init prelude. Sets FG_TEXT, FG_ACCENT,
 # _bar_gradient, _bl_ttl, _bl_cache. On cache hit: prints cached output and
 # exit 0s the calling script. Reads $PROJ (must be set before calling).
+# When BOTTOMLINE_SIGNAL_DIR differs from PROJ (subdir detection), it is
+# appended to the project key so each subdir gets its own cache entry.
 # shellcheck disable=SC2153  # PROJ is set by the calling bar script
 bl_bar_init() {
   local name="$1" fb_text="$2" fb_accent="$3" fb_gradient="$4"
@@ -75,7 +77,10 @@ bl_bar_init() {
   _bl_ttl="${BOTTOMLINE_BAR_REFRESH_MINUTES:-5}"
   [[ "$_bl_ttl" =~ ^[0-9]+$ ]] || _bl_ttl=5
   if [[ "$_bl_ttl" -gt 0 ]]; then
-    _bl_cache=$(bl_cache_path "$name" "$_bl_ttl" "$PROJ" "$@")
+    local _cache_proj="$PROJ"
+    [[ -n "${BOTTOMLINE_SIGNAL_DIR:-}" && "${BOTTOMLINE_SIGNAL_DIR}" != "$PROJ" ]] && \
+      _cache_proj="${PROJ}:${BOTTOMLINE_SIGNAL_DIR}"
+    _bl_cache=$(bl_cache_path "$name" "$_bl_ttl" "$_cache_proj" "$@")
     if [[ -f "$_bl_cache" ]]; then
       cat "$_bl_cache"
       exit 0

@@ -8,6 +8,27 @@
 # Outputs: mutates CFG_BARS (prepends auto-detected entries)
 # Exports: bl_apply_auto_bars (public entry)
 
+# _bl_find_in_subdirs <cdir> <sig_glob> <max_depth>
+# Returns the directory containing the shallowest (then lexically first) file
+# matching sig_glob within subdirectories of cdir, up to max_depth levels deep.
+# Prunes .git, node_modules, vendor, .build, target, Pods, DerivedData, dist,
+# build, .venv so large/noisy dirs are never traversed.
+# Prints the parent directory and returns 0 on success; returns 1 if no match.
+_bl_find_in_subdirs() {
+  local cdir="$1" sig="$2" max_depth="$3"
+  local found
+  found=$(find "$cdir" -maxdepth "$(( max_depth + 1 ))" \
+    \( -type d \( -name ".git"       -o -name "node_modules" \
+                  -o -name "vendor"  -o -name ".build"       \
+                  -o -name "target"  -o -name "Pods"         \
+                  -o -name "DerivedData" -o -name "dist"     \
+                  -o -name "build"   -o -name ".venv" \) -prune \) \
+    -o -type f -name "$sig" -print 2>/dev/null \
+    | sort | head -1)
+  [[ -n "$found" ]] && dirname "$found" && return 0
+  return 1
+}
+
 bl_apply_auto_bars() {
   local _auto_bars_enabled
   _auto_bars_enabled=$(printf '%s' "$MERGED_CFG" | jq -r 'if .auto_bars.enabled == false then "false" else "true" end' 2>/dev/null)
@@ -41,11 +62,15 @@ bl_apply_auto_bars() {
         | jq -e --arg n "$1" 'any(.[]; . == $n)' > /dev/null 2>&1
     }
 
+    local _global_depth
+    _global_depth=$(printf '%s' "$MERGED_CFG" | jq -r '.auto_bars.search_depth // 0' 2>/dev/null)
+    [[ "$_global_depth" =~ ^[0-9]+$ ]] || _global_depth=0
+
     local _auto='[]'
     local _entry_count
     _entry_count=$(printf '%s' "$_auto_bars_cfg" | jq 'length' 2>/dev/null || echo 0)
 
-    local _ei _bar_name _matched _sig _f
+    local _ei _bar_name _matched _sig _f _found_dir _entry_depth _search_depth _sd_result
     for (( _ei=0; _ei<_entry_count; _ei++ )); do
       _bar_name=$(printf '%s' "$_auto_bars_cfg" | jq -r ".[$_ei].script // empty" 2>/dev/null)
       [[ -z "$_bar_name" ]] && continue
@@ -53,14 +78,34 @@ bl_apply_auto_bars() {
       _is_disabled "$_bar_name" && continue
 
       _matched=false
+      _found_dir="$cdir"
+
+      # Root-level detection (unchanged behaviour)
       while IFS= read -r _sig; do
         [[ -z "$_sig" ]] && continue
         for _f in "$cdir"/$_sig; do [[ -e "$_f" ]] && { _matched=true; break 2; }; done
       done < <(printf '%s' "$_auto_bars_cfg" | jq -r ".[$_ei].signals[]? // empty" 2>/dev/null)
 
+      # Subdir detection — only when root missed and search_depth > 0
+      _entry_depth=$(printf '%s' "$_auto_bars_cfg" | jq -r ".[$_ei].search_depth // empty" 2>/dev/null)
+      _search_depth="${_entry_depth:-$_global_depth}"
+      [[ "$_search_depth" =~ ^[0-9]+$ ]] || _search_depth=0
+      if ! "$_matched" && [[ "$_search_depth" -gt 0 ]]; then
+        while IFS= read -r _sig; do
+          [[ -z "$_sig" ]] && continue
+          _sd_result=$(_bl_find_in_subdirs "$cdir" "$_sig" "$_search_depth") && {
+            _matched=true
+            _found_dir="$_sd_result"
+            break
+          }
+        done < <(printf '%s' "$_auto_bars_cfg" | jq -r ".[$_ei].signals[]? // empty" 2>/dev/null)
+      fi
+
       if "$_matched"; then
         local _bar_entry
         _bar_entry=$(printf '%s' "$_auto_bars_cfg" | jq -c ".[$_ei] | del(.signals)")
+        [[ "$_found_dir" != "$cdir" ]] && \
+          _bar_entry=$(printf '%s' "$_bar_entry" | jq -c --arg d "$_found_dir" '. + {project_dir: $d}')
         [[ "$_inherit_colors" == "true" ]] && \
           _bar_entry=$(printf '%s' "$_bar_entry" | jq -c '.colors = "inherit"')
         local _global_rm _entry_rm _resolved_rm
