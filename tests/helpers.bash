@@ -124,13 +124,14 @@ teardown_fake_proj() {
 
 # Run a bar script with an isolated project directory.
 #
-#   bar_run BAR_NAME PROJ_DIR [TTL_MINUTES] [BAR_PARAMS_JSON] [BAR_SEGMENTS_JSON]
+#   bar_run BAR_NAME PROJ_DIR [TTL_MINUTES] [BAR_PARAMS_JSON] [BAR_SEGMENTS_JSON] [SIGNAL_DIR]
 #
 # PROJ_DIR must already contain any signal files the bar needs.
 # TTL_MINUTES defaults to 0 (caching disabled). Pass a positive integer to
 # exercise cache hit/miss behaviour in cache.bats.
 # BAR_PARAMS_JSON: JSON object passed as BOTTOMLINE_BAR_PARAMS (default: empty).
 # BAR_SEGMENTS_JSON: JSON array passed as BOTTOMLINE_BAR_SEGMENTS (default: empty).
+# SIGNAL_DIR: optional subdirectory for signal file detection (default: empty).
 # Sets $BAR_OUTPUT_RAW (ANSI) and $BAR_OUTPUT (stripped).
 bar_run() {
   local bar_name="$1"
@@ -138,6 +139,7 @@ bar_run() {
   local ttl="${3:-0}"
   local bar_params="${4:-}"
   local bar_segments="${5:-}"
+  local signal_dir="${6:-}"
   # Use a project-specific cache dir so cache files persist between bar_run calls
   # and are isolated between tests.  Default to /tmp when proj_dir is absent.
   local cache_dir="${proj_dir:+$proj_dir/.bl_cache}"
@@ -148,6 +150,7 @@ bar_run() {
     BOTTOMLINE_BAR_SEGMENTS="$bar_segments" \
     BOTTOMLINE_BAR_REFRESH_MINUTES="$ttl" \
     BOTTOMLINE_PROJECT_DIR="$proj_dir" \
+    BOTTOMLINE_SIGNAL_DIR="${signal_dir}" \
     BOTTOMLINE_CACHE_DIR="${cache_dir:-/tmp}" \
     BOTTOMLINE_LIB="$BOTTOMLINE_ROOT/lib" \
     BOTTOMLINE_ICON_TYPE=none \

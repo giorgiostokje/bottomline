@@ -129,3 +129,32 @@ teardown() { teardown_fake_proj; }
   [[ "$BAR_OUTPUT" == *"Firebase"* ]]
   [[ "$BAR_OUTPUT" == *"Alamofire"* ]]
 }
+
+# ── BOTTOMLINE_SIGNAL_DIR support ─────────────────────────────────────────────
+
+@test "swift: renders from nested Package.swift when BOTTOMLINE_SIGNAL_DIR points to subdir" {
+  mkdir -p "$FAKE_PROJ/Core"
+  printf '// swift-tools-version: 5.9\n' > "$FAKE_PROJ/Core/Package.swift"
+  bar_run swift "$FAKE_PROJ" 0 "" "" "$FAKE_PROJ/Core"
+  [[ "$BAR_OUTPUT" == *"Swift"* ]]
+  [[ "$BAR_OUTPUT" == *"5.9"* ]]
+}
+
+@test "swift: exits silently when SIGNAL_DIR set but Package.swift absent from it" {
+  mkdir -p "$FAKE_PROJ/Empty"
+  bar_run swift "$FAKE_PROJ" 0 "" "" "$FAKE_PROJ/Empty"
+  local stripped; stripped=$(printf '%s' "$BAR_OUTPUT" | tr -d ' \n|')
+  [ -z "$stripped" ]
+}
+
+@test "swift: cache keys differ for two sibling packages in different subdirs" {
+  mkdir -p "$FAKE_PROJ/CoreA" "$FAKE_PROJ/CoreB" "$FAKE_PROJ/.bl_cache"
+  printf '// swift-tools-version: 5.9\n' > "$FAKE_PROJ/CoreA/Package.swift"
+  printf '// swift-tools-version: 5.7\n' > "$FAKE_PROJ/CoreB/Package.swift"
+
+  bar_run swift "$FAKE_PROJ" 60 "" "" "$FAKE_PROJ/CoreA"
+  bar_run swift "$FAKE_PROJ" 60 "" "" "$FAKE_PROJ/CoreB"
+
+  local count; count=$(find -L "$FAKE_PROJ/.bl_cache" -maxdepth 1 -name "bl_swift_*.txt" 2>/dev/null | wc -l | tr -d ' ')
+  [ "$count" -ge 2 ]
+}
