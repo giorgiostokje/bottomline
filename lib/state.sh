@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # lib/state.sh — reads stdin JSON and resolves environmental state.
-# Does I/O against git and the transcript file.
+# Does I/O against git; the transcript is read by lib/usage.sh.
 #
 # Inputs : stdin (Claude Code JSON payload)
 # Outputs: input, cdir, model, transcript, effort, cw_size,
-#          ctx_used, sum_in, sum_out, sum_cache_read, sum_cache_create,
-#          web_searches, total_cost,
+#          ctx_used, ctx_from_payload, total_cost,
 #          branch, branch_url, short_dir, dir_label,
-#          five_pct, week_pct, five_rem, week_rem
+#          five_pct, week_pct, five_rem, week_rem,
+#          pc_observed, pc_warm, pc_ttl, pc_expires, pc_recache
+#          (token totals are read separately by lib/usage.sh)
 # Exports: j, secs_until_reset (internal helpers)
 
 # shellcheck disable=SC2034  # all output vars consumed by lib/segments.sh
@@ -34,51 +35,40 @@ bl_read_state() {
   local hint five_raw week_raw remote_url host path
   input=$(cat)
 
-  cdir=$(j '.workspace.current_dir'); [[ -z "$cdir" ]] && cdir=$(j '.cwd')
-
-  model=$(j '.model.display_name')
-  transcript=$(j '.transcript_path')
-  effort=$(j '.effort.level')
+  # One jq pass over the payload. Fields are joined with the ASCII unit
+  # separator (not a tab): IFS whitespace would collapse empty fields.
+  IFS=$'\x1f' read -r cdir model transcript effort hint ctx_payload total_cost \
+    five_pct week_pct five_raw week_raw \
+    pc_observed pc_warm pc_ttl pc_expires pc_recache <<<"$(
+    printf '%s' "$input" | jq -r '[
+        (.workspace.current_dir // .cwd),
+        .model.display_name,
+        .transcript_path,
+        .effort.level,
+        .context_window.context_window_size,
+        .context_window.total_input_tokens,
+        .cost.total_cost_usd,
+        .rate_limits.five_hour.used_percentage,
+        .rate_limits.seven_day.used_percentage,
+        (.rate_limits.five_hour.reset_at // .rate_limits.five_hour.resets_at // .rate_limits.five_hour.resets_in),
+        (.rate_limits.seven_day.reset_at // .rate_limits.seven_day.resets_at // .rate_limits.seven_day.resets_in),
+        .prompt_cache.caching_observed,
+        .prompt_cache.warm,
+        .prompt_cache.ttl,
+        .prompt_cache.expires_at,
+        .prompt_cache.recache_tokens_if_cold
+      ] | map(if . == null then "" else tostring end) | join("\u001f")
+    ' 2>/dev/null
+  )"
 
   cw_size=200000
-  hint=$(j '.context_window.context_window_size // empty')
   [[ -n "$hint" && "$hint" -gt 0 ]] 2>/dev/null && cw_size=$hint
 
-  total_cost=$(j '.cost.total_cost_usd')
-
-  ctx_used=0; sum_in=0; sum_out=0; sum_cache_read=0; sum_cache_create=0; web_searches=0
-  if [[ -n "$transcript" && -f "$transcript" ]]; then
-    # Subagent transcripts live beside the main one: <session>.jsonl → <session>/subagents/*.jsonl
-    local -a files=("$transcript") subs=()
-    local subdir="${transcript%.jsonl}/subagents"
-    [[ -d "$subdir" ]] && { shopt -s nullglob; subs=("$subdir"/*.jsonl); shopt -u nullglob; }
-    files+=("${subs[@]}")
-    # Claude Code writes one line per content block, each repeating the message's
-    # usage, so usage is de-duplicated by message.id (last line holds the final
-    # output count). Context usage comes from the main transcript only — subagents
-    # have their own context windows — while totals span main + subagents.
-    read -r ctx_used sum_in sum_out sum_cache_read sum_cache_create web_searches <<<"$(
-      jq -rn --arg main "$transcript" '
-        [ inputs | select(.type=="assistant" and .message.usage != null)
-          | {f: input_filename, id: .message.id, u: .message.usage} ] as $all
-        | ([ $all[] | select(.f == $main) ] | last | .u // {}) as $last
-        | ( [ $all[] | select(.id == null) ]
-          + ([ $all[] | select(.id != null) ] | group_by(.id) | map(last)) ) as $d
-        | [ $d[].u ] as $u
-        | [
-            (( ($last.input_tokens // 0) + ($last.cache_read_input_tokens // 0)
-             + ($last.cache_creation_input_tokens // 0) ) | floor),
-            ([ $u[].input_tokens // 0 ]                    | add // 0),
-            ([ $u[].output_tokens // 0 ]                   | add // 0),
-            ([ $u[].cache_read_input_tokens // 0 ]          | add // 0),
-            ([ $u[].cache_creation_input_tokens // 0 ]      | add // 0),
-            ([ $u[].server_tool_use.web_search_requests // 0 ] | add // 0)
-          ] | @tsv
-      ' "${files[@]}" 2>/dev/null
-    )"
-    ctx_used=${ctx_used:-0}; sum_in=${sum_in:-0}; sum_out=${sum_out:-0}
-    sum_cache_read=${sum_cache_read:-0}; sum_cache_create=${sum_cache_create:-0}
-    web_searches=${web_searches:-0}
+  # Context comes from the payload (same input + cache-read + cache-write sum);
+  # lib/usage.sh falls back to the transcript on Claude Code versions without it.
+  ctx_used=0; ctx_from_payload=''
+  if [[ "$ctx_payload" =~ ^[0-9]+$ ]]; then
+    ctx_used=$ctx_payload; ctx_from_payload=1
   fi
 
   branch='' branch_url=''
@@ -107,10 +97,6 @@ bl_read_state() {
   [[ -n "$HOME" ]] && short_dir="${cdir/#$HOME/~}"
   dir_label="${short_dir##*/}"; [[ -z "$dir_label" ]] && dir_label="$short_dir"
 
-  five_pct=$(j '.rate_limits.five_hour.used_percentage')
-  week_pct=$(j '.rate_limits.seven_day.used_percentage')
-  five_raw=$(j '.rate_limits.five_hour.reset_at // .rate_limits.five_hour.resets_at // .rate_limits.five_hour.resets_in // empty')
-  week_raw=$(j '.rate_limits.seven_day.reset_at // .rate_limits.seven_day.resets_at // .rate_limits.seven_day.resets_in // empty')
   five_rem=$(secs_until_reset "$five_raw")
   week_rem=$(secs_until_reset "$week_raw")
 }

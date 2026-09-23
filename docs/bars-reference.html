@@ -375,7 +375,7 @@ RESET  fg(i)   SEP  RESET              ← after last segment</code></pre>
     <tr>
       <td><code>context</code></td>
       <td>&#xF0AE; / ◈</td>
-      <td>Last assistant usage in transcript</td>
+      <td>JSON <code>.context_window.total_input_tokens</code> (last assistant usage in transcript on older Claude Code)</td>
       <td>Gauge bar (10 blocks) + token count. Threshold color from <code>segments.context</code>.</td>
     </tr>
     <tr>
@@ -393,13 +393,13 @@ RESET  fg(i)   SEP  RESET              ← after last segment</code></pre>
     <tr>
       <td><code>tokens_in</code></td>
       <td>&#xF062; / ↑</td>
-      <td>Sum of all assistant turns in transcript</td>
+      <td>Sum of all assistant turns in transcript + subagent transcripts (read incrementally)</td>
       <td>Format: <code>base_in+cache_create</code> then <code>+cache_read</code> suffix in accent.</td>
     </tr>
     <tr>
       <td><code>tokens_out</code></td>
       <td>&#xF063; / ↓</td>
-      <td>Sum of all assistant turns in transcript</td>
+      <td>Sum of all assistant turns in transcript + subagent transcripts (read incrementally)</td>
       <td>Hidden when zero.</td>
     </tr>
     <tr>
@@ -417,8 +417,14 @@ RESET  fg(i)   SEP  RESET              ← after last segment</code></pre>
     <tr>
       <td><code>cost</code></td>
       <td>&#xF0D6; / 💰</td>
-      <td>Transcript token sums × per-model pricing</td>
-      <td>Prices: Opus $15/$75, Sonnet $3/$15, Haiku $0.80/$4 per MTok in/out. Cache rates applied. Hidden when zero tokens.</td>
+      <td>JSON <code>.cost.total_cost_usd</code>; transcript token sums × per-model pricing on older Claude Code</td>
+      <td>Hidden when zero.</td>
+    </tr>
+    <tr>
+      <td><code>prompt_cache</code></td>
+      <td>&#xF2C9; / 🌡</td>
+      <td>JSON <code>.prompt_cache</code> (Claude Code v2.1.251+)</td>
+      <td><code>warm 12m</code> until the cached prefix expires (warning colour in the last fifth of the TTL) or <code>cold ↻45k</code> with tokens to re-cache. Expiry checked against the clock at render time. Hidden when caching was never observed.</td>
     </tr>
   </tbody>
 </table>

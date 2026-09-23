@@ -57,6 +57,7 @@ Themes sit above per-file color keys: when `appearance.theme` is set, it overrid
 ### Library split
 
 - **`lib/functions.sh`** — pure utilities with no global state: `fmt_n`, `fmt_k`, `fmt_remaining`, `decode_icon`. Sourced by `bottomline.sh` and loaded directly in unit tests (`source lib/functions.sh`).
+- **`lib/usage.sh`** — session token totals from the transcript (`tokens_in`/`tokens_out`, plus `cost`/`context` fallbacks on older Claude Code). Read incrementally: per-file byte offsets and running totals are cached as `bl_usage_<session>.tsv` in `$BOTTOMLINE_CACHE_DIR`, and nothing is read unless `_bl_usage_needed` says an active segment wants it. Offsets come from `stat` sizes, not from summing line lengths in jq (`jq -R` rewrites invalid UTF-8, which skews byte counts).
 - **`lib/helpers.sh`** — sources `lib/ansi.sh` (ANSI primitives: `bg3`, `fg3`, `hex_to_rgb`, `expand_bg`, `seg`, `flush`), then layers bar-side convenience: `BOTTOMLINE_*` variable resolution, `bl_bar_init`/`bl_bar_finish` (cache-check + colour-init + flush wrapper), `bl_icon_set`, `bl_seg`/`bl_data_seg`/`bl_version_seg` (segment rendering helpers), `bl_log` (timestamped logging), and the cache helpers `bl_cache_path`/`bl_cache_write`/`bl_mtime_fingerprint`. Sourced by bar scripts via `source "$BOTTOMLINE_LIB/helpers.sh"`.
 
 ### Test infrastructure

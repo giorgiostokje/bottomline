@@ -5,7 +5,9 @@
 bats_require_minimum_version 1.5.0
 load '../helpers'
 
-setup()    { setup_fake_home; }
+# The incremental usage cache (lib/usage.sh) lives under the fake HOME so it is
+# isolated per test and removed with it.
+setup()    { setup_fake_home; export BOTTOMLINE_CACHE_DIR="$FAKE_HOME/cache"; mkdir -p "$BOTTOMLINE_CACHE_DIR"; }
 teardown() { teardown_fake_home; cleanup_transcript; }
 
 # ---------------------------------------------------------------------------
@@ -113,6 +115,125 @@ _only() {
   usage_line msg_sub 150000 10 >> "$SUBAGENTS_DIR/agent-a1.jsonl"
   bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only context)"
   [[ "$BL_OUTPUT" == *"1k/200k"* ]]
+}
+
+# ---------------------------------------------------------------------------
+# context from the payload / incremental transcript reading
+# ---------------------------------------------------------------------------
+
+@test "context: payload total_input_tokens wins over the transcript" {
+  make_session
+  usage_line msg_a 90000 10 >> "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\",\"context_window\":{\"total_input_tokens\":42000,\"context_window_size\":200000}}" "$(_only context)"
+  [[ "$BL_OUTPUT" == *"42k/200k"* ]]
+}
+
+@test "context: payload value renders without a transcript" {
+  bl_run '{"context_window":{"total_input_tokens":42000,"context_window_size":1000000}}' "$(_only context)"
+  [[ "$BL_OUTPUT" == *"42k/1000k"* ]]
+}
+
+@test "usage: transcript is not read when no active segment needs it" {
+  make_session
+  usage_line msg_a 1000 10 >> "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\",\"context_window\":{\"total_input_tokens\":1000},\"cost\":{\"total_cost_usd\":1}}" "$(_only model,context,cost)"
+  [ -z "$(ls -A "$BOTTOMLINE_CACHE_DIR")" ]
+}
+
+@test "usage: transcript is read and cached when tokens_in is active" {
+  make_session
+  usage_line msg_a 1000 10 >> "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in)"
+  [[ "$BL_OUTPUT" == *"1.0k"* ]]
+  [ -f "$BOTTOMLINE_CACHE_DIR/bl_usage_session.tsv" ]
+}
+
+@test "usage: appended lines are added to cached totals" {
+  make_session
+  usage_line msg_a 1000 100 >> "$TRANSCRIPT_PATH"
+  usage_line msg_s 500 50 >> "$SUBAGENTS_DIR/agent-a1.jsonl"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in,tokens_out)"
+  [[ "$BL_OUTPUT" == *"1.5k"* && "$BL_OUTPUT" == *"150"* ]]
+
+  usage_line msg_b 2000 200 >> "$TRANSCRIPT_PATH"
+  usage_line msg_t 700 70 >> "$SUBAGENTS_DIR/agent-a2.jsonl"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in,tokens_out)"
+  [[ "$BL_OUTPUT" == *"4.2k"* && "$BL_OUTPUT" == *"420"* ]]
+}
+
+@test "usage: a message's usage split across refreshes is counted once" {
+  make_session
+  usage_line msg_a 1000 5 >> "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in,tokens_out)"
+  { usage_line msg_a 1000 200; usage_line msg_a 1000 300; } >> "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in,tokens_out)"
+  [[ "$BL_OUTPUT" == *"1.0k"* && "$BL_OUTPUT" != *"2.0k"* && "$BL_OUTPUT" != *"3.0k"* ]]
+  [[ "$BL_OUTPUT" == *"300"* && "$BL_OUTPUT" != *"505"* ]]
+}
+
+@test "usage: a half-written final line is picked up once complete" {
+  make_session
+  usage_line msg_a 1000 100 >> "$TRANSCRIPT_PATH"
+  local line; line=$(usage_line msg_b 2000 200)
+  printf '%s' "${line:0:40}" >> "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in)"
+  [[ "$BL_OUTPUT" == *"1.0k"* ]]
+
+  printf '%s\n' "${line:40}" >> "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in)"
+  [[ "$BL_OUTPUT" == *"3.0k"* ]]
+}
+
+@test "usage: invalid UTF-8 in the transcript does not break incremental reads" {
+  make_session
+  usage_line msg_a 1000 100 >> "$TRANSCRIPT_PATH"
+  printf '{"type":"user","message":{"content":"\xff\xfe bytes"}}\n' >> "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in)"
+  usage_line msg_b 2000 200 >> "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in)"
+  [[ "$BL_OUTPUT" == *"3.0k"* ]]
+  local off size
+  off=$(cut -d $'\x1f' -f3 "$BOTTOMLINE_CACHE_DIR/bl_usage_session.tsv")
+  size=$(wc -c < "$TRANSCRIPT_PATH" | tr -d ' ')
+  [ "$off" -eq "$size" ]
+}
+
+@test "usage: a rewritten (shorter) transcript is re-read from the start" {
+  make_session
+  { usage_line msg_a 1000 100; usage_line msg_b 2000 200; } >> "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in)"
+  [[ "$BL_OUTPUT" == *"3.0k"* ]]
+  usage_line msg_c 500 5 > "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in)"
+  [[ "$BL_OUTPUT" == *"500"* && "$BL_OUTPUT" != *"3.5k"* ]]
+}
+
+@test "usage: a damaged cache is discarded and rebuilt" {
+  make_session
+  usage_line msg_a 1000 100 >> "$TRANSCRIPT_PATH"
+  local key size
+  key=$(stat -c '%d:%i' "$TRANSCRIPT_PATH" 2>/dev/null || stat -f '%d:%i' "$TRANSCRIPT_PATH")
+  size=$(wc -c < "$TRANSCRIPT_PATH" | tr -d ' ')
+  # Matching path, inode and offset, but a state that is not JSON
+  printf '%s\x1f%s\x1f%s\x1f{not json\n' "$TRANSCRIPT_PATH" "$key" "$size" \
+    > "$BOTTOMLINE_CACHE_DIR/bl_usage_session.tsv"
+  usage_line msg_b 2000 200 >> "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in)"
+  [ ! -f "$BOTTOMLINE_CACHE_DIR/bl_usage_session.tsv" ]
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in)"
+  [[ "$BL_OUTPUT" == *"3.0k"* ]]
+  [ -f "$BOTTOMLINE_CACHE_DIR/bl_usage_session.tsv" ]
+}
+
+@test "usage: a subagent transcript that disappears drops out of the totals" {
+  make_session
+  usage_line msg_a 1000 100 >> "$TRANSCRIPT_PATH"
+  usage_line msg_s 500 50 >> "$SUBAGENTS_DIR/agent-a1.jsonl"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in)"
+  [[ "$BL_OUTPUT" == *"1.5k"* ]]
+  rm "$SUBAGENTS_DIR/agent-a1.jsonl"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in)"
+  [[ "$BL_OUTPUT" == *"1.0k"* && "$BL_OUTPUT" != *"1.5k"* ]]
 }
 
 @test "tokens_out: shows only output tokens, no cache suffix" {
@@ -325,4 +446,85 @@ _cost_run() {
   bl_run '{"cost":{"total_cost_usd":0}}' "$(_only cost)"
   stripped=$(printf '%s' "$BL_OUTPUT" | tr -d ' \n')
   [ -z "$stripped" ]
+}
+
+# ---------------------------------------------------------------------------
+# prompt_cache
+# ---------------------------------------------------------------------------
+
+# _pc_json JSON-FRAGMENT — payload with a prompt_cache object built from the fragment
+_pc_json() { printf '{"prompt_cache":{"caching_observed":true,%s}}' "$1"; }
+
+@test "prompt_cache: warm shows time until expiry" {
+  local exp=$(( $(date +%s) + 725 ))
+  bl_run "$(_pc_json "\"warm\":true,\"ttl\":\"1h\",\"expires_at\":$exp")" "$(_only prompt_cache)"
+  [[ "$BL_OUTPUT" == *"warm 12m"* ]]
+  # Well inside the TTL: accent, not warning
+  [[ "$BL_OUTPUT_RAW" != *$'\e[38;2;244;162;97m'* ]]
+}
+
+@test "prompt_cache: last fifth of the TTL is shown in warning colour" {
+  local exp=$(( $(date +%s) + 40 ))
+  bl_run "$(_pc_json "\"warm\":true,\"ttl\":\"5m\",\"expires_at\":$exp")" "$(_only prompt_cache)"
+  [[ "$BL_OUTPUT" == *"warm <1m"* ]]
+  [[ "$BL_OUTPUT_RAW" == *$'\e[38;2;244;162;97m<1m'* ]]
+}
+
+@test "prompt_cache: expired prefix renders cold even if the payload says warm" {
+  local exp=$(( $(date +%s) - 10 ))
+  bl_run "$(_pc_json "\"warm\":true,\"ttl\":\"5m\",\"expires_at\":$exp,\"recache_tokens_if_cold\":45000")" "$(_only prompt_cache)"
+  [[ "$BL_OUTPUT" == *"cold ↻45k"* ]]
+  [[ "$BL_OUTPUT" != *"warm"* ]]
+  [[ "$BL_OUTPUT_RAW" == *$'\e[38;2;244;162;97mcold'* ]]
+}
+
+@test "prompt_cache: cold without a recache estimate shows no qualifier" {
+  bl_run "$(_pc_json '"warm":false,"expires_at":null,"recache_tokens_if_cold":null')" "$(_only prompt_cache)"
+  [[ "$BL_OUTPUT" == *"cold"* && "$BL_OUTPUT" != *"↻"* ]]
+}
+
+@test "prompt_cache: warm without expires_at shows no countdown" {
+  bl_run "$(_pc_json '"warm":true')" "$(_only prompt_cache)"
+  [[ "$BL_OUTPUT" == *"warm"* ]]
+  [[ "$BL_OUTPUT" != *"m"*"m"* ]]
+}
+
+@test "prompt_cache: hidden when caching was never observed" {
+  bl_run '{"prompt_cache":{"caching_observed":false,"warm":false}}' "$(_only prompt_cache)"
+  stripped=$(printf '%s' "$BL_OUTPUT" | tr -d ' \n')
+  [ -z "$stripped" ]
+}
+
+@test "prompt_cache: hidden when the payload has no prompt_cache" {
+  bl_run '{}' "$(_only prompt_cache)"
+  stripped=$(printf '%s' "$BL_OUTPUT" | tr -d ' \n')
+  [ -z "$stripped" ]
+}
+
+# ---------------------------------------------------------------------------
+# shipped defaults
+# ---------------------------------------------------------------------------
+
+@test "defaults: prompt_cache shows, token counters do not, transcript is not read" {
+  make_session
+  usage_line msg_a 1500 800 >> "$TRANSCRIPT_PATH"
+  local exp=$(( $(date +%s) + 600 ))
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\",\"context_window\":{\"total_input_tokens\":1500},\"cost\":{\"total_cost_usd\":0.42},\"prompt_cache\":{\"caching_observed\":true,\"warm\":true,\"ttl\":\"1h\",\"expires_at\":$exp}}"
+  [[ "$BL_OUTPUT" == *"warm 10m"* || "$BL_OUTPUT" == *"warm 9m"* ]]
+  [[ "$BL_OUTPUT" != *"1.5k"* && "$BL_OUTPUT" != *"800"* ]]
+  [[ "$BL_OUTPUT" == *'$0.42'* ]]
+  # Everything the defaults need is in the payload (as with current Claude Code)
+  [ -z "$(ls -A "$BOTTOMLINE_CACHE_DIR")" ]
+}
+
+@test "defaults: fallback list matches settings.json segments.enabled" {
+  local shipped fallback
+  shipped=$(jq -r '.segments.enabled[]' "$BOTTOMLINE_ROOT/settings.json")
+  fallback=$(
+    source "$BOTTOMLINE_ROOT/lib/segments.sh"
+    CFG_ITEMS='' CFG_HIDDEN=''
+    bl_resolve_active_segments
+    printf '%s' "$ACTIVE_SEGS"
+  )
+  [ "$shipped" = "$fallback" ]
 }
