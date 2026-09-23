@@ -6,15 +6,17 @@
 #          FG_TEXT, FG_ACCENT, FG_WARN, FG_CRIT (set by lib/colors.sh),
 #          IC_MODEL, IC_EFFORT, IC_CONTEXT, IC_DIRECTORY, IC_GIT_BRANCH,
 #          IC_TOKENS_IN, IC_TOKENS_OUT, IC_USAGE_5H, IC_USAGE_7D,
-#          IC_COST (set by lib/icons.sh),
+#          IC_COST, IC_PROMPT_CACHE (set by lib/icons.sh),
 #          model, effort, cw_size, ctx_used, sum_in, sum_out,
 #          sum_cache_read, sum_cache_create, web_searches, total_cost,
 #          branch, branch_url,
-#          cdir, dir_label, five_pct, week_pct, five_rem, week_rem
-#          (all set by lib/state.sh)
-# Outputs: writes ANSI to stdout via flush; mutates _sc array (from lib/ansi.sh)
-# Exports: gauge, threshold_resolve (internal),
-#          build_* (internal), bl_render_main_line (public entry)
+#          cdir, dir_label, five_pct, week_pct, five_rem, week_rem,
+#          pc_observed, pc_warm, pc_ttl, pc_expires, pc_recache
+#          (set by lib/state.sh; token totals by lib/usage.sh)
+# Outputs: ACTIVE_SEGS; writes ANSI to stdout via flush; mutates _sc array
+#          (from lib/ansi.sh)
+# Exports: gauge, threshold_resolve, _bl_seg_active (internal), build_* (internal),
+#          bl_resolve_active_segments, bl_render_main_line (public entries)
 
 # shellcheck disable=SC2154  # vars set by lib/state.sh and lib/config.sh
 # shellcheck disable=SC2034  # THR_COLOR_ANSI, THR_ICON set by threshold_resolve
@@ -157,6 +159,40 @@ build_cost() {
   add_seg "${FG_ACCENT}${IC_COST} ${FG_TEXT}${cost_fmt}"
 }
 
+# Prompt cache state of the main conversation (Claude Code v2.1.251+).
+# Warm: time until the cached prefix expires, in warning colour for the last
+# fifth of its TTL. Cold: what the next request will re-cache. The expiry is
+# checked against the clock at render time rather than trusting .warm, so the
+# segment goes cold on its own while the session idles (given a statusLine
+# refreshInterval). Hidden when the payload has no prompt_cache or caching was
+# never observed.
+build_prompt_cache() {
+  [[ "$pc_observed" == "true" ]] || return
+  local now rem ttl_secs=300 lbl
+  now=$(date +%s)
+  case "$pc_ttl" in
+    *h) [[ "${pc_ttl%h}" =~ ^[0-9]+$ ]] && ttl_secs=$(( ${pc_ttl%h} * 3600 )) ;;
+    *m) [[ "${pc_ttl%m}" =~ ^[0-9]+$ ]] && ttl_secs=$(( ${pc_ttl%m} * 60 )) ;;
+  esac
+
+  if [[ "$pc_expires" =~ ^[0-9]+$ ]] && (( pc_expires > now )) \
+     || [[ -z "$pc_expires" && "$pc_warm" == "true" ]]; then
+    lbl="${FG_ACCENT}${IC_PROMPT_CACHE} ${FG_TEXT}warm"
+    if [[ -n "$pc_expires" ]]; then
+      rem=$(( pc_expires - now ))
+      local rem_c="$FG_ACCENT" rem_s
+      (( rem * 5 <= ttl_secs )) && rem_c="$FG_WARN"
+      if (( rem < 60 )); then rem_s='<1m'; else rem_s=$(fmt_remaining "$rem"); fi
+      lbl+=" ${N}${rem_c}${rem_s}"
+    fi
+  else
+    lbl="${FG_ACCENT}${IC_PROMPT_CACHE} ${FG_WARN}cold"
+    [[ "$pc_recache" =~ ^[0-9]+$ ]] && (( pc_recache > 0 )) \
+      && lbl+=" ${N}${FG_ACCENT}↻$(fmt_k "$pc_recache")"
+  fi
+  add_seg "$lbl"
+}
+
 bl_estimate_cost() {
   local price_in price_out price_cache_read price_cache_write
   local maj=0 min=0
@@ -215,26 +251,26 @@ bl_estimate_cost() {
     }'
 }
 
+# Resolves the ordered list of segments to render (segments.enabled, falling
+# back to the built-in default, which mirrors settings.json, minus
+# segments.disabled) into ACTIVE_SEGS, one name per line. Called once, after config is loaded; lib/usage.sh reads it too.
+bl_resolve_active_segments() {
+  ACTIVE_SEGS=$(jq -rn --argjson items "${CFG_ITEMS:-null}" --argjson hidden "${CFG_HIDDEN:-null}" '
+    (if ($items | type) == "array" and ($items | length) > 0 then $items
+     else ["model", "effort", "context", "prompt_cache", "directory", "git_branch",
+           "usage_5h", "usage_7d", "cost"] end)
+    - (if ($hidden | type) == "array" then $hidden else [] end)
+    | .[] | strings
+  ' 2>/dev/null)
+}
+
+_bl_seg_active() {
+  [[ $'\n'"$ACTIVE_SEGS"$'\n' == *$'\n'"$1"$'\n'* ]]
+}
+
 bl_render_main_line() {
-  _is_seg_hidden() {
-    [[ -z "$CFG_HIDDEN" || "$CFG_HIDDEN" == "null" ]] && return 1
-    printf '%s' "$CFG_HIDDEN" | jq -e --arg n "$1" 'any(.[]; . == $n)' > /dev/null 2>&1
-  }
-
-  _items_out=$(printf '%s' "$CFG_ITEMS" | jq -r '.[]' 2>/dev/null)
-  [[ -z "$_items_out" ]] && _items_out="model
-effort
-context
-directory
-git_branch
-tokens_in
-tokens_out
-usage_5h
-usage_7d"
-
+  local _item
   while IFS= read -r _item; do
-    [[ -z "$_item" ]] && continue
-    _is_seg_hidden "$_item" && continue
     case "$_item" in
       model)     build_model     ;;
       effort)    build_effort    ;;
@@ -246,10 +282,9 @@ usage_7d"
       usage_5h)    build_usage_5h   ;;
       usage_7d)  build_usage_7d  ;;
       cost)      build_cost      ;;
+      prompt_cache) build_prompt_cache ;;
     esac
-  done <<< "$_items_out"
-  unset -f _is_seg_hidden
-  unset _item _items_out
+  done <<< "$ACTIVE_SEGS"
 
   flush "$CFG_BG"
 }

@@ -246,7 +246,7 @@ A theme is a named JSON file in `<plugin-dir>/themes/` that overrides colour set
 | `type` | `nerd` \| `emoji` \| `none` | Icon set to use |
 | `overrides` | `{ "<segment>": "<codepoint>" }` | Per-segment icon override — 4–5 hex digits (e.g. `"e0b4"`) or a literal glyph |
 
-Override keys are segment names (`model`, `effort`, `context`, `directory`, `git_branch`, `tokens_in`, `tokens_out`, `usage_5h`, `usage_7d`, `cost`) plus `warn` and `danger` (cross-segment indicators). A shared `tokens` key overrides both `tokens_in` and `tokens_out`; a specific key wins.
+Override keys are segment names (`model`, `effort`, `context`, `directory`, `git_branch`, `tokens_in`, `tokens_out`, `usage_5h`, `usage_7d`, `cost`, `prompt_cache`) plus `warn` and `danger` (cross-segment indicators). A shared `tokens` key overrides both `tokens_in` and `tokens_out`; a specific key wins.
 
 ---
 
@@ -259,7 +259,7 @@ Control which segments are shown and in what order:
 ```json
 {
   "segments": {
-    "enabled": ["model", "effort", "context", "directory", "git_branch", "tokens_in", "tokens_out", "usage_5h", "usage_7d", "cost"]
+    "enabled": ["model", "effort", "context", "prompt_cache", "directory", "git_branch", "usage_5h", "usage_7d", "cost"]
   }
 }
 ```
@@ -270,7 +270,7 @@ Available segment names:
 |---|---|
 | `model` | Active Claude model name |
 | `effort` | Current effort level with configurable per-level colour and icon |
-| `context` | Context window fill gauge + `used/total` in thousands |
+| `context` | Context window fill gauge + `used/total` in thousands, from Claude Code's `context_window` (falls back to the transcript on versions that don't send it) |
 | `directory` | Current project directory name (clickable link in supporting terminals) |
 | `git_branch` | Current git branch (clickable link to remote on GitHub/GitLab/Bitbucket) |
 | `tokens_in` | Freshly processed input tokens (uncached + cache-write) for the session including subagents, with cache-read hits shown as a `+` suffix |
@@ -278,13 +278,18 @@ Available segment names:
 | `usage_5h` | 5-hour rate limit percentage + time until reset |
 | `usage_7d` | 7-day rate limit percentage + time until reset |
 | `cost` | Session cost as reported by Claude Code (includes subagents); estimated from the transcript on older Claude Code versions |
+| `prompt_cache` | Prompt cache state of the main conversation: `warm` with time until the cached prefix expires (warning colour in the last fifth of its TTL), or `cold` with the tokens the next request will re-cache (`↻45k`). Needs Claude Code v2.1.251+ |
+
+`tokens_in` and `tokens_out` are not shown by default; add them to `enabled` to see raw session token counts. They are the only segments that read the session transcript (plus `cost` and `context` on Claude Code versions that don't report them). The transcript is read incrementally: each file's byte offset and running totals are cached in `$BOTTOMLINE_CACHE_DIR` (default `/tmp`) as `bl_usage_<session>.tsv`, so a refresh parses only what was appended since the previous one. Leave both token segments off and the transcript is never opened.
+
+`prompt_cache` counts down against the clock, so it only stays current while the session is idle if the status line refreshes on a timer. `/bottomline:setup` sets `"refreshInterval": 60` on `statusLine`; add it yourself if you wired the status line by hand.
 
 #### Disabling segments
 
 `disabled` is unioned across all config levels — a project can suppress a segment without re-listing the user's disabled set:
 
 ```json
-{ "segments": { "disabled": ["cost", "tokens_in", "tokens_out"] } }
+{ "segments": { "disabled": ["cost", "prompt_cache"] } }
 ```
 
 #### Separator

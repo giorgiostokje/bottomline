@@ -5,7 +5,7 @@
 # Inputs : CFG_ICON_TYPE, CFG_ICON_OVR, CFG_SEP_RAW (set by lib/config.sh)
 # Outputs: IC_MODEL, IC_EFFORT, IC_CONTEXT, IC_DIRECTORY, IC_GIT_BRANCH,
 #          IC_TOKENS_IN, IC_TOKENS_OUT, IC_USAGE_5H, IC_USAGE_7D,
-#          IC_COST, IC_DANGER, SEP
+#          IC_COST, IC_PROMPT_CACHE, IC_DANGER, SEP
 # Exports: get_icon (function)
 
 # shellcheck disable=SC2034  # output vars consumed by lib/segments.sh
@@ -16,10 +16,11 @@ NF_MODEL=$'\xef\x8b\x9b'   NF_BOLT=$'\xef\x83\xa7'   NF_CTX=$'\xef\x82\xae'
 NF_DIR=$'\xef\x81\xbc'     NF_GIT=$'\xee\x82\xa0'    NF_UP=$'\xef\x81\xa2'
 NF_DOWN=$'\xef\x81\xa3'    NF_CLOCK=$'\xef\x80\x97'  NF_CAL=$'\xef\x81\xb3'
 NF_COST=$'\xef\x83\x96'    NF_WARN=$'\xef\x81\xb1'   NF_DANGER=$'\xef\x81\x9e'
+NF_THERMO=$'\xef\x8b\x89'  # U+F2C9  nf-fa-thermometer_half
 
 EM_MODEL='🖥'  EM_BOLT='⚡'  EM_CTX='◈'   EM_DIR='📁'  EM_GIT='⎇'
 EM_UP='↑'      EM_DOWN='↓'  EM_CLOCK='⏱' EM_CAL='📅'  EM_COST='💰'
-EM_WARN='⚠'   EM_DANGER='🛑'
+EM_WARN='⚠'   EM_DANGER='🛑' EM_THERMO='🌡'
 
 get_icon() {
   local name="$1" override
@@ -37,6 +38,7 @@ get_icon() {
         tokens_out) printf '%s' "$NF_DOWN"   ;; usage_5h)  printf '%s' "$NF_CLOCK"  ;;
         usage_7d)   printf '%s' "$NF_CAL"    ;; cost)      printf '%s' "$NF_COST"   ;;
         warn)       printf '%s' "$NF_WARN"   ;; danger)    printf '%s' "$NF_DANGER" ;;
+        prompt_cache) printf '%s' "$NF_THERMO" ;;
         *)          printf '%s' "$name"      ;;
       esac ;;
     emoji)
@@ -47,6 +49,7 @@ get_icon() {
         tokens_out) printf '%s' "$EM_DOWN"   ;; usage_5h)  printf '%s' "$EM_CLOCK"  ;;
         usage_7d)   printf '%s' "$EM_CAL"    ;; cost)      printf '%s' "$EM_COST"   ;;
         warn)       printf '%s' "$EM_WARN"   ;; danger)    printf '%s' "$EM_DANGER" ;;
+        prompt_cache) printf '%s' "$EM_THERMO" ;;
         *)          printf '%s' "$name"      ;;
       esac ;;
     none) printf '' ;;
@@ -59,6 +62,7 @@ bl_init_icons() {
   IC_TOKENS_IN=$(get_icon tokens_in) IC_TOKENS_OUT=$(get_icon tokens_out)
   IC_USAGE_5H=$(get_icon usage_5h)   IC_USAGE_7D=$(get_icon usage_7d)
   IC_COST=$(get_icon cost)           IC_DANGER=$(get_icon danger)
+  IC_PROMPT_CACHE=$(get_icon prompt_cache)
 
   [[ -n "$CFG_SEP_RAW" ]] && SEP=$(decode_icon "$CFG_SEP_RAW")
 }

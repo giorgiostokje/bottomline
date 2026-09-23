@@ -121,14 +121,14 @@ When the user wants colours that match a project's brand or a visual idea, ask t
 | `overrides` | `{ "segment": "hex-codepoint or glyph" }` | Per-segment icon overrides |
 
 Keys are segment names: `model`, `effort`, `context`, `directory`, `git_branch`,
-`tokens_in`, `tokens_out` (both also respond to the shared `tokens` override key), `usage_5h`, `usage_7d`, `cost`.
+`tokens_in`, `tokens_out` (both also respond to the shared `tokens` override key), `usage_5h`, `usage_7d`, `cost`, `prompt_cache`.
 `warn` and `danger` are cross-segment state indicators and are also overridable.
 
 ### `segments`
 
 | Key | Description |
 |---|---|
-| `enabled` | Ordered array of segment names to render. Available: `model`, `effort`, `context`, `directory`, `git_branch`, `tokens_in`, `tokens_out`, `usage_5h`, `usage_7d`, `cost` |
+| `enabled` | Ordered array of segment names to render. Available: `model`, `effort`, `context`, `directory`, `git_branch`, `tokens_in`, `tokens_out`, `usage_5h`, `usage_7d`, `cost`, `prompt_cache`. Default: `model`, `effort`, `context`, `prompt_cache`, `directory`, `git_branch`, `usage_5h`, `usage_7d`, `cost` (`tokens_in`/`tokens_out` are opt-in) |
 | `disabled` | Array of segment names to suppress (union across all config levels) |
 | `separator` | Hex codepoint (e.g. `"e0b4"`) or literal glyph for the segment separator |
 | `effort` | Per-level colour/icon: `{ "xhigh": { "color": "warning", "icon": { "nerd": "f071", "emoji": "26a0" } } }` |

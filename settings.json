@@ -17,10 +17,9 @@
       "model",
       "effort",
       "context",
+      "prompt_cache",
       "directory",
       "git_branch",
-      "tokens_in",
-      "tokens_out",
       "usage_5h",
       "usage_7d",
       "cost"

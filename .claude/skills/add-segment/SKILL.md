@@ -70,20 +70,18 @@ Write the builder. Choose the pattern that fits:
 **Simple (static value from JSON input):**
 ```bash
 build_<name>() {
-  local val; val=$(j '.<json_path>')
-  [[ -z "$val" ]] && return
-  add_seg "${FG_ACCENT}${IC_<NAME>} ${FG_TEXT}${val}"
+  [[ -z "$<name>_val" ]] && return   # read in bl_read_state (see below)
+  add_seg "${FG_ACCENT}${IC_<NAME>} ${FG_TEXT}${<name>_val}"
 }
 ```
 
 **With threshold colouring:**
 ```bash
 build_<name>() {
-  local val; val=$(j '.<json_path>')
-  [[ -z "$val" ]] && return
-  local int_val; int_val=$(printf '%.0f' "$val")
+  [[ -z "$<name>_val" ]] && return
+  local int_val; int_val=$(printf '%.0f' "$<name>_val")
   threshold_resolve "$CFG_<NAME>_THR" "$int_val"
-  add_seg "${FG_ACCENT}${IC_<NAME>} ${THR_COLOR_ANSI}${val}"
+  add_seg "${FG_ACCENT}${IC_<NAME>} ${THR_COLOR_ANSI}${<name>_val}"
 }
 ```
 
@@ -96,27 +94,26 @@ build_<name>() {
 }
 ```
 
-Also add the new segment name to the `_items_out` default list and to the `case` statement in `bl_render_main_line()`:
+Also add the new segment name to the `case` statement in `bl_render_main_line()`, and — only if it should render when no config sets `segments.enabled` — to the fallback list in `bl_resolve_active_segments()`:
 
 ```bash
-# _items_out default string — add "<name>" on its own line
-[[ -z "$_items_out" ]] && _items_out="model
-...
-<name>"
-
 # case statement
 <name>) build_<name> ;;
 ```
+
+**Payload fields:** `bl_read_state()` in `lib/state.sh` reads the whole payload in one jq pass. Add the field to that array (and a variable to its `read`) instead of calling `j` in the builder — each `j` call forks jq on every refresh. Use `(.a // .b)` alternatives, never `empty`: an element that produces nothing shifts every later field.
+
+**Transcript totals:** if the segment needs `sum_*` or `web_searches`, add it to `_bl_usage_needed()` in `lib/usage.sh`; the transcript is not read otherwise.
 
 ---
 
 ## 6. `settings.json` — defaults
 
-Add the segment name to `segments.enabled`:
+If the segment should show out of the box, add it to `segments.enabled` — and to the matching fallback list in `bl_resolve_active_segments()` (step 5). Segments that are niche or cost a transcript read (`tokens_in`, `tokens_out`) stay opt-in: documented, but not in the default list.
 
 ```json
-"enabled": ["model", "effort", "context", "directory", "git_branch",
-            "tokens_in", "tokens_out", "usage_5h", "usage_7d", "cost", "<name>"]
+"enabled": ["model", "effort", "context", "prompt_cache", "directory",
+            "git_branch", "usage_5h", "usage_7d", "cost", "<name>"]
 ```
 
 If the segment has threshold configuration, add its default entry under `segments`:
@@ -180,7 +177,8 @@ If the segment uses a threshold config, add a third test asserting the correct c
 - [ ] Both `nerd` and `emoji` cases in `get_icon()` in `lib/icons.sh`
 - [ ] `IC_<NAME>` resolved var added to `bl_init_icons()` in `lib/icons.sh`
 - [ ] Config var declared in `bl_load_config()` in `lib/config.sh` (if needed)
-- [ ] `build_<name>()` written in `lib/segments.sh`; added to `_items_out` default and render `case`
+- [ ] `build_<name>()` written in `lib/segments.sh`; added to the render `case` (and the `bl_resolve_active_segments` fallback if it is a default)
+- [ ] Payload fields added to the jq pass in `bl_read_state()`; `_bl_usage_needed()` updated if it uses transcript totals
 - [ ] `settings.json` `enabled` list updated; threshold defaults added if needed
 - [ ] `skills/configure/SKILL.md` icon override list and segment reference updated
 - [ ] `skills/debug/SKILL.md` `$vsegs` array updated

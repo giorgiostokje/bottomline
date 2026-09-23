@@ -139,6 +139,26 @@ for manual installs).
 If it is `"not configured"` or points elsewhere, run the **setup** skill to
 wire it correctly.
 
+Then check the refresh timer:
+
+```bash
+jq '.statusLine.refreshInterval // "not set"' "$HOME/.claude/settings.json"
+```
+
+Without a `refreshInterval`, Claude Code re-runs the status line only on
+session events, so time-based segments freeze while the session is idle. The
+`prompt_cache` segment (shown by default) then keeps showing `warm` with a stale
+countdown after the cache has actually gone cold — and the rate-limit reset
+times stop counting down. If it is `"not set"` and `prompt_cache` is enabled in
+the merged config (step 7), **ask the user** before adding it:
+
+```bash
+tmp=$(mktemp) \
+  && jq '.statusLine.refreshInterval = 60' "$HOME/.claude/settings.json" > "$tmp" \
+  && mv "$tmp" "$HOME/.claude/settings.json" \
+  && echo "✓ statusLine.refreshInterval set to 60 seconds"
+```
+
 ## 5. jq on PATH
 
 ```bash
@@ -248,7 +268,7 @@ for _f in "$HOME/.claude/bottomline.json" "$(pwd)/.claude/bottomline.json"; do
     def vhex: type == "string" and test("^#[0-9a-fA-F]{6}$");
     def vcolor: . == "text" or . == "accent" or . == "warning" or . == "danger" or vhex;
     def vcp: type == "string" and test("^[0-9a-fA-F]{4,5}$");
-    ["model","effort","context","directory","git_branch","tokens_in","tokens_out","usage_5h","usage_7d","cost"] as $vsegs |
+    ["model","effort","context","directory","git_branch","tokens_in","tokens_out","usage_5h","usage_7d","cost","prompt_cache"] as $vsegs |
     [
       # hex color values must be #rrggbb
       ( (.appearance.colors // {}) | to_entries[]

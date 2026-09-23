@@ -29,6 +29,8 @@ source "$_BL_DIR/lib/icons.sh"
 source "$_BL_DIR/lib/state.sh"
 # shellcheck source=lib/segments.sh
 source "$_BL_DIR/lib/segments.sh"
+# shellcheck source=lib/usage.sh
+source "$_BL_DIR/lib/usage.sh"
 # shellcheck source=lib/auto-bars.sh
 source "$_BL_DIR/lib/auto-bars.sh"
 # shellcheck source=lib/bars.sh
@@ -36,6 +38,8 @@ source "$_BL_DIR/lib/bars.sh"
 
 bl_read_state
 bl_load_config
+bl_resolve_active_segments
+bl_read_usage
 bl_init_colors
 bl_init_icons
 bl_render_main_line
