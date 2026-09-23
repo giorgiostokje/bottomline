@@ -99,10 +99,33 @@ make_transcript() {
     "$in" "$out" "$cache_read" "$cache_create" "$web_search" > "$TRANSCRIPT_PATH"
 }
 
+# usage_line id in out [cache_read] [cache_create] — one assistant transcript line
+# carrying message.id, as Claude Code writes it (once per content block).
+usage_line() {
+  printf '{"type":"assistant","message":{"id":"%s","usage":{"input_tokens":%d,"output_tokens":%d,"cache_read_input_tokens":%d,"cache_creation_input_tokens":%d}}}\n' \
+    "$1" "$2" "$3" "${4:-0}" "${5:-0}"
+}
+
+# make_session — creates a session layout mirroring ~/.claude/projects/<proj>/:
+#   $SESSION_DIR/session.jsonl            (main transcript, $TRANSCRIPT_PATH, empty)
+#   $SESSION_DIR/session/subagents/       ($SUBAGENTS_DIR)
+# Append usage_line output to either. Cleaned up by cleanup_transcript.
+make_session() {
+  SESSION_DIR=$(mktemp -d)
+  TRANSCRIPT_PATH="$SESSION_DIR/session.jsonl"
+  SUBAGENTS_DIR="$SESSION_DIR/session/subagents"
+  mkdir -p "$SUBAGENTS_DIR"
+  : > "$TRANSCRIPT_PATH"
+}
+
 cleanup_transcript() {
   if [[ -n "${TRANSCRIPT_PATH:-}" ]]; then
     rm -f "$TRANSCRIPT_PATH"
     TRANSCRIPT_PATH=''
+  fi
+  if [[ -n "${SESSION_DIR:-}" ]]; then
+    rm -rf "$SESSION_DIR"
+    SESSION_DIR=''
   fi
 }
 

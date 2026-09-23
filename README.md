@@ -273,11 +273,11 @@ Available segment names:
 | `context` | Context window fill gauge + `used/total` in thousands |
 | `directory` | Current project directory name (clickable link in supporting terminals) |
 | `git_branch` | Current git branch (clickable link to remote on GitHub/GitLab/Bitbucket) |
-| `tokens_in` | Freshly processed input tokens (uncached + cache-write) for the session, with cache-read hits shown as a `+` suffix |
-| `tokens_out` | Output tokens for the session |
+| `tokens_in` | Freshly processed input tokens (uncached + cache-write) for the session including subagents, with cache-read hits shown as a `+` suffix |
+| `tokens_out` | Output tokens for the session, including subagents |
 | `usage_5h` | 5-hour rate limit percentage + time until reset |
 | `usage_7d` | 7-day rate limit percentage + time until reset |
-| `cost` | Estimated session cost (Sonnet/Opus/Haiku pricing) |
+| `cost` | Session cost as reported by Claude Code (includes subagents); estimated from the transcript on older Claude Code versions |
 
 #### Disabling segments
 
