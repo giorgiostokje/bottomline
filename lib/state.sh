@@ -5,7 +5,7 @@
 # Inputs : stdin (Claude Code JSON payload)
 # Outputs: input, cdir, model, transcript, effort, cw_size,
 #          ctx_used, sum_in, sum_out, sum_cache_read, sum_cache_create,
-#          web_searches,
+#          web_searches, total_cost,
 #          branch, branch_url, short_dir, dir_label,
 #          five_pct, week_pct, five_rem, week_rem
 # Exports: j, secs_until_reset (internal helpers)
@@ -44,12 +44,27 @@ bl_read_state() {
   hint=$(j '.context_window.context_window_size // empty')
   [[ -n "$hint" && "$hint" -gt 0 ]] 2>/dev/null && cw_size=$hint
 
+  total_cost=$(j '.cost.total_cost_usd')
+
   ctx_used=0; sum_in=0; sum_out=0; sum_cache_read=0; sum_cache_create=0; web_searches=0
   if [[ -n "$transcript" && -f "$transcript" ]]; then
+    # Subagent transcripts live beside the main one: <session>.jsonl → <session>/subagents/*.jsonl
+    local -a files=("$transcript") subs=()
+    local subdir="${transcript%.jsonl}/subagents"
+    [[ -d "$subdir" ]] && { shopt -s nullglob; subs=("$subdir"/*.jsonl); shopt -u nullglob; }
+    files+=("${subs[@]}")
+    # Claude Code writes one line per content block, each repeating the message's
+    # usage, so usage is de-duplicated by message.id (last line holds the final
+    # output count). Context usage comes from the main transcript only — subagents
+    # have their own context windows — while totals span main + subagents.
     read -r ctx_used sum_in sum_out sum_cache_read sum_cache_create web_searches <<<"$(
-      jq -rs '
-        [ .[] | select(.type=="assistant") | .message.usage // empty ] as $u
-        | ($u | last) as $last
+      jq -rn --arg main "$transcript" '
+        [ inputs | select(.type=="assistant" and .message.usage != null)
+          | {f: input_filename, id: .message.id, u: .message.usage} ] as $all
+        | ([ $all[] | select(.f == $main) ] | last | .u // {}) as $last
+        | ( [ $all[] | select(.id == null) ]
+          + ([ $all[] | select(.id != null) ] | group_by(.id) | map(last)) ) as $d
+        | [ $d[].u ] as $u
         | [
             (( ($last.input_tokens // 0) + ($last.cache_read_input_tokens // 0)
              + ($last.cache_creation_input_tokens // 0) ) | floor),
@@ -59,7 +74,7 @@ bl_read_state() {
             ([ $u[].cache_creation_input_tokens // 0 ]      | add // 0),
             ([ $u[].server_tool_use.web_search_requests // 0 ] | add // 0)
           ] | @tsv
-      ' "$transcript" 2>/dev/null
+      ' "${files[@]}" 2>/dev/null
     )"
     ctx_used=${ctx_used:-0}; sum_in=${sum_in:-0}; sum_out=${sum_out:-0}
     sum_cache_read=${sum_cache_read:-0}; sum_cache_create=${sum_cache_create:-0}

@@ -8,7 +8,8 @@
 #          IC_TOKENS_IN, IC_TOKENS_OUT, IC_USAGE_5H, IC_USAGE_7D,
 #          IC_COST (set by lib/icons.sh),
 #          model, effort, cw_size, ctx_used, sum_in, sum_out,
-#          sum_cache_read, sum_cache_create, web_searches, branch, branch_url,
+#          sum_cache_read, sum_cache_create, web_searches, total_cost,
+#          branch, branch_url,
 #          cdir, dir_label, five_pct, week_pct, five_rem, week_rem
 #          (all set by lib/state.sh)
 # Outputs: writes ANSI to stdout via flush; mutates _sc array (from lib/ansi.sh)
@@ -127,27 +128,61 @@ build_usage_7d() {
   add_seg "$lbl"
 }
 
-# Estimated session spend. Per-MTok rates and the $10/1,000 web-search rate are
-# from https://platform.claude.com/docs/en/about-claude/pricing.
-# Cache-write rate is the 5-minute write (1.25x input), which is what Claude Code
-# uses; the 1-hour write rate is not modelled. Pricing differs by model *version*
-# (Opus 4.5+ vs 4.1, Haiku 4.5 vs 3.5), so the version is parsed from the model
-# string ("Opus 4.8" or id form "claude-opus-4-8"). Unknown models fall back to
-# the current pricing for their family (Sonnet rates for an unrecognised family).
-# Not captured (no usage-field signal): fast-mode premium, code-execution hours.
+# Session spend. Claude Code reports its own running total in
+# .cost.total_cost_usd: it covers every model and version (including
+# subagents running on other models), fast mode, 1-hour cache writes and any
+# org modelPricing overrides, so it is used whenever present.
+#
+# Fallback for Claude Code versions without that field: estimate from the
+# transcript totals, priced at the *current* model's rates. Per-MTok rates and
+# the $10/1,000 web-search rate are from
+# https://platform.claude.com/docs/en/about-claude/pricing. Cache writes use the
+# 5-minute rate (1.25x input). The version is parsed from the model string
+# ("Opus 4.8" or id form "claude-opus-4-8"); unknown versions get the current
+# pricing for their family, unknown families get Sonnet rates.
 build_cost() {
-  (( sum_in + sum_out + sum_cache_read + sum_cache_create + ${web_searches:-0} <= 0 )) && return
+  local c
+  if [[ -n "$total_cost" ]]; then
+    c=$total_cost
+  else
+    (( sum_in + sum_out + sum_cache_read + sum_cache_create + ${web_searches:-0} <= 0 )) && return
+    c=$(bl_estimate_cost)
+  fi
+  local cost_fmt
+  cost_fmt=$(awk -v c="$c" 'BEGIN {
+      if (c + 0 <= 0)     exit 1
+      if (c < 0.005) printf "< $0.01"
+      else           printf "$%.2f", c
+    }') || return
+  add_seg "${FG_ACCENT}${IC_COST} ${FG_TEXT}${cost_fmt}"
+}
+
+bl_estimate_cost() {
   local price_in price_out price_cache_read price_cache_write
   local maj=0 min=0
-  [[ "$model" =~ ([0-9]+)[.-]([0-9]+) ]] && { maj=${BASH_REMATCH[1]}; min=${BASH_REMATCH[2]}; }
+  if [[ "$model" =~ ([0-9]+)([.-]([0-9]+))? ]]; then
+    maj=${BASH_REMATCH[1]}
+    # A trailing date suffix ("-20241022") is not a minor version
+    [[ -n "${BASH_REMATCH[3]}" && ${#BASH_REMATCH[3]} -le 2 ]] && min=$((10#${BASH_REMATCH[3]}))
+  fi
   case "$model" in
+    *Fable*|*fable*|*Mythos*|*mythos*)
+      if (( maj == 5 && min == 0 )); then
+        price_in=10; price_out=50; price_cache_read=1.00; price_cache_write=12.50
+      else
+        # Fable 5.1+ — cheaper cache reads
+        price_in=10; price_out=50; price_cache_read=0.25; price_cache_write=12.50
+      fi ;;
     *Opus*|*opus*)
       if (( maj > 0 && (maj < 4 || (maj == 4 && min <= 1)) )); then
         # Opus 4.1 and earlier — legacy pricing
         price_in=15; price_out=75; price_cache_read=1.50; price_cache_write=18.75
-      else
-        # Opus 4.5+ — current pricing
+      elif (( maj == 5 && min == 0 || maj == 4 )); then
+        # Opus 4.5 – 5
         price_in=5;  price_out=25; price_cache_read=0.50; price_cache_write=6.25
+      else
+        # Opus 5.5+ — current pricing
+        price_in=4;  price_out=20; price_cache_read=0.20; price_cache_write=5.00
       fi ;;
     *Haiku*|*haiku*)
       if (( maj > 0 && maj < 4 )); then
@@ -157,12 +192,18 @@ build_cost() {
         # Haiku 4.5+ — current pricing
         price_in=1;    price_out=5; price_cache_read=0.10; price_cache_write=1.25
       fi ;;
+    *Sonnet*|*sonnet*)
+      if (( maj > 0 && maj < 5 )); then
+        # Sonnet 3.x / 4 / 4.5 / 4.6
+        price_in=3; price_out=15; price_cache_read=0.30; price_cache_write=3.75
+      else
+        # Sonnet 5+ — current pricing
+        price_in=2; price_out=10; price_cache_read=0.20; price_cache_write=2.50
+      fi ;;
     *)
-      # Sonnet (4 / 4.5 / 4.6) and default
       price_in=3; price_out=15; price_cache_read=0.30; price_cache_write=3.75 ;;
   esac
-  local cost_fmt
-  cost_fmt=$(awk \
+  awk \
     -v in_tok="$sum_in"  -v out_tok="$sum_out" \
     -v cr="$sum_cache_read" -v cw="$sum_cache_create" \
     -v ws="${web_searches:-0}" \
@@ -170,11 +211,8 @@ build_cost() {
     -v pcr="$price_cache_read" -v pcw="$price_cache_write" \
     'BEGIN {
       # ws*10000/1e6 == ws * ($10 / 1000 searches) == ws * $0.01
-      c = (in_tok*pi + out_tok*po + cr*pcr + cw*pcw + ws*10000) / 1000000
-      if (c < 0.005) printf "< $0.01"
-      else           printf "$%.2f", c
-    }')
-  add_seg "${FG_ACCENT}${IC_COST} ${FG_TEXT}${cost_fmt}"
+      printf "%.6f", (in_tok*pi + out_tok*po + cr*pcr + cw*pcw + ws*10000) / 1000000
+    }'
 }
 
 bl_render_main_line() {

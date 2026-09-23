@@ -86,6 +86,35 @@ _only() {
   [[ "$BL_OUTPUT" == *"1.5k"* ]]
 }
 
+# Claude Code repeats a message's usage on every content-block line; only the
+# last line per message.id counts.
+@test "tokens_in: repeated lines for one message.id are counted once" {
+  make_session
+  { usage_line msg_a 1000 5 0 0; usage_line msg_a 1000 200 0 0; usage_line msg_a 1000 300 0 0; } >> "$TRANSCRIPT_PATH"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in,tokens_out)"
+  [[ "$BL_OUTPUT" == *"1.0k"* ]]
+  [[ "$BL_OUTPUT" != *"3.0k"* ]]
+  [[ "$BL_OUTPUT" == *"300"* ]]
+}
+
+@test "tokens_in/out: subagent transcripts are included in totals" {
+  make_session
+  usage_line msg_main 1000 100 >> "$TRANSCRIPT_PATH"
+  usage_line msg_sub1 2000 200 >> "$SUBAGENTS_DIR/agent-a1.jsonl"
+  usage_line msg_sub2 3000 300 >> "$SUBAGENTS_DIR/agent-a2.jsonl"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_in,tokens_out)"
+  [[ "$BL_OUTPUT" == *"6.0k"* ]]
+  [[ "$BL_OUTPUT" == *"600"* ]]
+}
+
+@test "context: subagent usage does not count toward main context window" {
+  make_session
+  usage_line msg_main 1000 10 >> "$TRANSCRIPT_PATH"
+  usage_line msg_sub 150000 10 >> "$SUBAGENTS_DIR/agent-a1.jsonl"
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only context)"
+  [[ "$BL_OUTPUT" == *"1k/200k"* ]]
+}
+
 @test "tokens_out: shows only output tokens, no cache suffix" {
   make_transcript 0 200 0 300
   bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\"}" "$(_only tokens_out)"
@@ -204,6 +233,42 @@ _cost_run() {
   [[ "$BL_OUTPUT" == *'$3.00'* ]]
 }
 
+@test "cost: Opus 5 input priced at \$5/MTok" {
+  make_transcript 1000000 0
+  _cost_run "claude-opus-5"
+  [[ "$BL_OUTPUT" == *'$5.00'* ]]
+}
+
+@test "cost: Opus 5.5 input priced at \$4/MTok" {
+  make_transcript 1000000 0
+  _cost_run "Opus 5.5"
+  [[ "$BL_OUTPUT" == *'$4.00'* ]]
+}
+
+@test "cost: Sonnet 5 input priced at \$2/MTok" {
+  make_transcript 1000000 0
+  _cost_run "claude-sonnet-5"
+  [[ "$BL_OUTPUT" == *'$2.00'* ]]
+}
+
+@test "cost: Fable 5.1 input priced at \$10/MTok" {
+  make_transcript 1000000 0
+  _cost_run "Fable 5.1"
+  [[ "$BL_OUTPUT" == *'$10.00'* ]]
+}
+
+@test "cost: Fable output priced at \$50/MTok" {
+  make_transcript 0 1000000
+  _cost_run "claude-fable-5"
+  [[ "$BL_OUTPUT" == *'$50.00'* ]]
+}
+
+@test "cost: dated model id is not mistaken for a minor version" {
+  make_transcript 1000000 0
+  _cost_run "claude-opus-5-20260401"
+  [[ "$BL_OUTPUT" == *'$5.00'* ]]
+}
+
 @test "cost: unknown model falls back to Sonnet pricing" {
   make_transcript 1000000 0
   _cost_run "some-future-model"
@@ -231,6 +296,33 @@ _cost_run() {
 @test "cost: hidden when no tokens and no web searches" {
   make_transcript 0 0 0 0 0
   _cost_run "Opus 4.8"
+  stripped=$(printf '%s' "$BL_OUTPUT" | tr -d ' \n')
+  [ -z "$stripped" ]
+}
+
+# ---------------------------------------------------------------------------
+# cost — Claude Code's own total (.cost.total_cost_usd) takes precedence
+# ---------------------------------------------------------------------------
+
+@test "cost: uses cost.total_cost_usd from the payload when present" {
+  make_transcript 1000000 0   # would estimate \$5.00 on Opus
+  bl_run "{\"transcript_path\":\"$TRANSCRIPT_PATH\",\"model\":{\"display_name\":\"Opus 4.8\"},\"cost\":{\"total_cost_usd\":12.345}}" "$(_only cost)"
+  [[ "$BL_OUTPUT" == *'$12.35'* ]] || [[ "$BL_OUTPUT" == *'$12.34'* ]]
+  [[ "$BL_OUTPUT" != *'$5.00'* ]]
+}
+
+@test "cost: payload total renders without a transcript" {
+  bl_run '{"cost":{"total_cost_usd":0.42}}' "$(_only cost)"
+  [[ "$BL_OUTPUT" == *'$0.42'* ]]
+}
+
+@test "cost: payload sub-cent total renders as < \$0.01" {
+  bl_run '{"cost":{"total_cost_usd":0.001}}' "$(_only cost)"
+  [[ "$BL_OUTPUT" == *'< $0.01'* ]]
+}
+
+@test "cost: hidden when payload total is zero" {
+  bl_run '{"cost":{"total_cost_usd":0}}' "$(_only cost)"
   stripped=$(printf '%s' "$BL_OUTPUT" | tr -d ' \n')
   [ -z "$stripped" ]
 }
